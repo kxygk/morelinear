@@ -1,0 +1,32 @@
+#+TITLE: Linear Systems - Part 2:  Clojure
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../static/worg.css" />
+#+options: num:nil
+# This will export a README.org file for Github, so that people that land in my repo know where to find the relevant webpage
+#+HTML_MATHJAX: path: "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"
+#+BEGIN_SRC org :tangle README.org :exports none :eval never
+  see description [[http://geokon-gh.github.io/linearsystems-part2/index.html][here]]
+#+END_SRC
+
+* Preface
+
+* Systems of linear equations
+
+* TODOs
+- add some TODOs
+* SRC_Block template
+#+BEGIN_SRC emacs-lisp :results output silent :session :tangle /src/core.clj
+  (defun matrix-template (matrix)
+"template"
+)
+#+END_SRC
+
+* End
+#+BEGIN_QUOTE
+This webpage is generated from an org-document (at ~./index.org~) that also generates all the files described. 
+
+Once opened in Emacs:\\
+- ~C-c C-e h h~ generates the webpage  \\
+- ~C-c C-v C-t~ exports the code blocks into the appropriate files\\
+- ~C-c C-c~     org-babel-execute-src-block
+- ~C-c C-v C-b~ org-babel-execute-buffer
+#+END_QUOTE
