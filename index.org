@@ -8,15 +8,128 @@
 #+END_SRC
 
 * Preface
+This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/linearsystems-part1/index.html][Part 1]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 
-* Systems of linear equations
+To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default ~core.matrix~ library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+
+As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracker in the repository, (but is no necessary is you use Emacs)
+
+Explaining Clojure is outside the scope of this project, but in short you will need to install Java and [[http://leiningen.org/][Leiningen]]. After you have both, you just clone this repository, go into it, and run ~lein run~ to run the project or ~lein repl~ to start an interactive REPL session.
+
+* Project managment
+Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
+#+BEGIN_SRC clojure :results output silent :session :tangle project.clj
+(defproject linearsystems-part2 "0.1.0-SNAPSHOT"
+  :description "linea-systems in Clojure"
+  :url "http://geokon-gh.github.io/linearsystems-part2/index.html"
+  :license {:name "Eclipse Public License"
+            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :dependencies [
+                 [org.clojure/clojure "1.9.0"]
+                 [net.mikera/core.matrix "0.62.0"]]
+  :main ^:skip-aot linearsystems-part2.core
+  :target-path "target/%s"
+  :profiles {:uberjar {:aot :all}})
+
+#+END_SRC
+The rest of the code will live in ~src/core.clj~ as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
+
+* QR
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (ns linearsystems-part2.core
+    (:require ;[denisovan.core :as den]
+              [clojure.core.matrix :refer :all])
+    (:gen-class))
+
+  ;(clojure.core.matrix/set-current-implementation :neanderthal)
+
+  (defn -main
+    "I don't do a whole lot ... yet."
+    [& args]
+    (println "Hello, World!"))
+
+
+  (defn matrix-elementary-reflector
+    "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
+    [reflection-axis]
+    (let [dimension (dimension-count reflection-axis 0)]
+      (sub (identity-matrix dimension)
+           (mul (outer-product reflection-axis reflection-axis)
+                (/ 2 (length-squared reflection-axis))))))
+
+
+  (defn matrix-elementary-coordinate-reflector
+   "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
+   [input-vector coordinate-axis] 
+   (let [vector-orthogonal-to-reflection-plane
+         (sub input-vector
+              (mul coordinate-axis
+                   (length input-vector)))]
+     (if (zero-matrix? vector-orthogonal-to-reflection-plane)
+       ;; degenerate case where the input is on the coordinate axis
+       (identity-matrix (dimension-count input-vector 0))
+       ;; normal case
+       (matrix-elementary-reflector vector-orthogonal-to-reflection-plane))))
+
+  ;;;;
+
+  (defn raise-rank
+    "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"
+    [input-matrix]
+    (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
+        (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
+              input-matrix)))
+
+  (defn raise-rank-and-insert-row
+    "Takes a submatrix and put it's in the lower right corner of a larger matrix.
+     The submatrix is 1 row and column smaller"
+    [input-matrix insert-row]
+    (join-along 0 (row-matrix insert-row)
+                (join-along 1 (column-matrix (zero-vector (column-count input-matrix)))
+                      input-matrix)))
+
+  (defn matrix-householder-QR
+    "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
+    [input-matrix]
+    (let [reflector-to-zero-out-first-column
+          (matrix-elementary-coordinate-reflector
+           (get-column input-matrix 0)
+           (get-row (identity-matrix
+                     (row-count input-matrix)) 0))
+          input-matrix-with-first-column-zeroed-out
+          (mmul reflector-to-zero-out-first-column input-matrix)]
+      (if
+          ;; Base Case: We're out of columns/rows to reduce
+          ;;            Return the reflector and the reduced column
+          (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+          [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
+          ;; Recursive step: Get the QR of the submatrix
+          ;;                 Then and combine it with your reflector and reduced matrix
+          (let [submatrix (submatrix
+                           input-matrix-with-first-column-zeroed-out
+                           1 (dec (row-count input-matrix))
+                           1 (dec (column-count input-matrix)))
+                [submatrix-Q submatrix-R] (matrix-householder-QR submatrix)]
+            [(mmul (raise-rank submatrix-Q)
+                   reflector-to-zero-out-first-column)
+             (raise-rank-and-insert-row submatrix-R
+                                        (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+
+
+  (let [test-matrix (matrix [[1 2 3] [4 5 6] [7 8 9]])
+        [Q R] (matrix-householder-QR test-matrix)]
+    (mmul (transpose Q) R))
+#+END_SRC
+
+
 
 * TODOs
 - add some TODOs
 * SRC_Block template
-#+BEGIN_SRC emacs-lisp :results output silent :session :tangle /src/core.clj
-  (defun matrix-template (matrix)
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (defn matrix-template
 "template"
+[matrix]
 )
 #+END_SRC
 

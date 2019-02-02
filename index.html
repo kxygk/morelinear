@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-03 日 00:27 -->
+<!-- 2019-02-03 日 01:12 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -144,46 +144,183 @@ for the JavaScript code in this tag.
 <div id="text-table-of-contents">
 <ul>
 <li><a href="#sec-1">Preface</a></li>
-<li><a href="#sec-2">Systems of linear equations</a></li>
-<li><a href="#sec-3">TODOs</a></li>
-<li><a href="#sec-4">SRC<sub>Block</sub> template</a></li>
-<li><a href="#sec-5">End</a></li>
+<li><a href="#sec-2">Project managment</a></li>
+<li><a href="#sec-3">QR</a></li>
+<li><a href="#sec-4">TODOs</a></li>
+<li><a href="#sec-5">SRC<sub>Block</sub> template</a></li>
+<li><a href="#sec-6">End</a></li>
 </ul>
 </div>
 </div>
 <div id="outline-container-sec-1" class="outline-2">
 <h2 id="sec-1">Preface</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/linearsystems-part1/index.html">Part 1</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
+</p>
+
+<p>
+To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default <code>core.matrix</code> library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+</p>
+
+<p>
+As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracker in the repository, (but is no necessary is you use Emacs)
+</p>
+
+<p>
+Explaining Clojure is outside the scope of this project, but in short you will need to install Java and <a href="http://leiningen.org/">Leiningen</a>. After you have both, you just clone this repository, go into it, and run <code>lein run</code> to run the project or <code>lein repl</code> to start an interactive REPL session.
+</p>
+</div>
 </div>
 
 <div id="outline-container-sec-2" class="outline-2">
-<h2 id="sec-2">Systems of linear equations</h2>
+<h2 id="sec-2">Project managment</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
+</p>
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #00af00;">defproject</span> <span style="color: #ef2929;">linearsystems-part2</span> <span style="color: #ff1f8b;">"0.1.0-SNAPSHOT"</span>
+  <span style="color: #1f5bff;">:description</span> <span style="color: #ff1f8b;">"linea-systems in Clojure"</span>
+  <span style="color: #1f5bff;">:url</span> <span style="color: #ff1f8b;">"http://geokon-gh.github.io/linearsystems-part2/index.html"</span>
+  <span style="color: #1f5bff;">:license</span> {<span style="color: #1f5bff;">:name</span> <span style="color: #ff1f8b;">"Eclipse Public License"</span>
+            <span style="color: #1f5bff;">:url</span> <span style="color: #ff1f8b;">"http://www.eclipse.org/legal/epl-v10.html"</span><span style="color: #999999;">}</span>
+  <span style="color: #1f5bff;">:dependencies</span> [
+                 [<span style="color: #18b2b2;">org.clojure</span>/clojure <span style="color: #ff1f8b;">"1.9.0"</span><span style="color: #999999;">]</span>
+                 [<span style="color: #18b2b2;">net.mikera</span>/core.matrix <span style="color: #ff1f8b;">"0.62.0"</span><span style="color: #999999;">]]</span>
+  <span style="color: #1f5bff;">:main</span> ^<span style="color: #1f5bff;">:skip-aot</span> linearsystems-part2.core
+  <span style="color: #1f5bff;">:target-path</span> <span style="color: #ff1f8b;">"target/%s"</span>
+  <span style="color: #1f5bff;">:profiles</span> {<span style="color: #1f5bff;">:uberjar</span> {<span style="color: #1f5bff;">:aot</span> <span style="color: #1f5bff;">:all</span><span style="color: #999999;">}})</span>
+</pre>
+</div>
+<p>
+The rest of the code will live in <code>src/core.clj</code> as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
+</p>
+</div>
 </div>
 
 <div id="outline-container-sec-3" class="outline-2">
-<h2 id="sec-3">TODOs</h2>
+<h2 id="sec-3">QR</h2>
 <div class="outline-text-2" id="text-3">
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #00af00;">ns</span> <span style="color: #18b2b2;">linearsystems-part2.core</span>
+  (<span style="color: #1f5bff;">:require</span> <span style="color: #b2b2b2; font-style: italic;">;[denisovan.core :as den]</span>
+            [clojure.core.matrix <span style="color: #1f5bff;">:refer</span> <span style="color: #1f5bff;">:all</span><span style="color: #999999;">])</span>
+  (<span style="color: #1f5bff;">:gen-class</span><span style="color: #999999;">))</span>
+
+<span style="color: #b2b2b2; font-style: italic;">;</span><span style="color: #b2b2b2; font-style: italic;">(clojure.core.matrix/set-current-implementation :neanderthal)</span>
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">-main</span>
+  <span style="color: #cc0000;">"I don't do a whole lot ... yet."</span>
+  [&amp; args<span style="color: #999999;">]</span>
+  (println <span style="color: #ff1f8b;">"Hello, World!"</span><span style="color: #999999;">))</span>
+
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-elementary-reflector</span>
+  <span style="color: #cc0000;">"Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"</span>
+  [reflection-axis<span style="color: #999999;">]</span>
+  (<span style="color: #00af00;">let</span> [dimension (dimension-count reflection-axis 0<span style="color: #999999;">)]</span>
+    (sub (identity-matrix dimension<span style="color: #999999;">)</span>
+         (mul (outer-product reflection-axis reflection-axis<span style="color: #999999;">)</span>
+              (/ 2 (length-squared reflection-axis<span style="color: #999999;">))))))</span>
+
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-elementary-coordinate-reflector</span>
+ <span style="color: #cc0000;">"Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"</span>
+ [input-vector coordinate-axis] 
+ (<span style="color: #00af00;">let</span> [vector-orthogonal-to-reflection-plane
+       (sub input-vector
+            (mul coordinate-axis
+                 (length input-vector<span style="color: #999999;">)))]</span>
+   (<span style="color: #00af00;">if</span> (zero-matrix? vector-orthogonal-to-reflection-plane<span style="color: #999999;">)</span>
+     <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">degenerate case where the input is on the coordinate axis</span>
+     (identity-matrix (dimension-count input-vector 0<span style="color: #999999;">))</span>
+     <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">normal case</span>
+     (matrix-elementary-reflector vector-orthogonal-to-reflection-plane<span style="color: #999999;">))))</span>
+
+<span style="color: #b2b2b2; font-style: italic;">;;;;</span>
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank</span>
+  <span style="color: #cc0000;">"Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0<span style="color: #999999;">))</span>
+      (join-along 0 (row-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
+            input-matrix<span style="color: #999999;">)))</span>
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank-and-insert-row</span>
+  <span style="color: #cc0000;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
+<span style="color: #cc0000;">   The submatrix is 1 row and column smaller"</span>
+  [input-matrix insert-row<span style="color: #999999;">]</span>
+  (join-along 0 (row-matrix insert-row<span style="color: #999999;">)</span>
+              (join-along 1 (column-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
+                    input-matrix<span style="color: #999999;">)))</span>
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-householder-QR</span>
+  <span style="color: #cc0000;">"Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #00af00;">let</span> [reflector-to-zero-out-first-column
+        (matrix-elementary-coordinate-reflector
+         (get-column input-matrix 0<span style="color: #999999;">)</span>
+         (get-row (identity-matrix
+                   (row-count input-matrix)) 0<span style="color: #999999;">))</span>
+        input-matrix-with-first-column-zeroed-out
+        (mmul reflector-to-zero-out-first-column input-matrix<span style="color: #999999;">)]</span>
+    (<span style="color: #00af00;">if</span>
+        <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">Base Case: We're out of columns/rows to reduce</span>
+        <span style="color: #b2b2b2; font-style: italic;">;;            </span><span style="color: #b2b2b2; font-style: italic;">Return the reflector and the reduced column</span>
+        (<span style="color: #00af00;">or</span> (= (column-count input-matrix) 1) (= (row-count input-matrix) 1<span style="color: #999999;">))</span>
+        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out<span style="color: #999999;">]</span>
+        <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">Recursive step: Get the QR of the submatrix</span>
+        <span style="color: #b2b2b2; font-style: italic;">;;                 </span><span style="color: #b2b2b2; font-style: italic;">Then and combine it with your reflector and reduced matrix</span>
+        (<span style="color: #00af00;">let</span> [submatrix (submatrix
+                         input-matrix-with-first-column-zeroed-out
+                         1 (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                         1 (dec (column-count input-matrix<span style="color: #999999;">)))</span>
+              [submatrix-Q submatrix-R] (matrix-householder-QR submatrix<span style="color: #999999;">)]</span>
+          [(mmul (raise-rank submatrix-Q<span style="color: #999999;">)</span>
+                 reflector-to-zero-out-first-column<span style="color: #999999;">)</span>
+           (raise-rank-and-insert-row submatrix-R
+                                      (get-row input-matrix-with-first-column-zeroed-out 0<span style="color: #999999;">))]))))</span>
+
+
+(<span style="color: #00af00;">let</span> [test-matrix (matrix [[1 2 3] [4 5 6] [7 8 9<span style="color: #999999;">]])</span>
+      [Q R] (matrix-householder-QR test-matrix<span style="color: #999999;">)]</span>
+  (mmul (transpose Q) R<span style="color: #999999;">))</span>
+</pre>
+</div>
+</div>
+</div>
+
+
+
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4">TODOs</h2>
+<div class="outline-text-2" id="text-4">
 <ul class="org-ul">
 <li>add some TODOs
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-4">
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-5">
 <div class="org-src-container">
 
-<pre class="src src-emacs-lisp">  (<span style="color: #00af00;">defun</span> <span style="color: #ef2929;">matrix-template</span> (matrix<span style="color: #999999;">)</span>
+<pre class="src src-clojure">  (<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-template</span>
 <span style="color: #cc0000;">"template"</span>
+[matrix<span style="color: #999999;">]</span>
 <span style="color: #999999;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5">End</h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">End</h2>
+<div class="outline-text-2" id="text-6">
 <blockquote>
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
@@ -208,7 +345,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-03 日 00:27</p>
+<p class="date">Created: 2019-02-03 日 01:12</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
