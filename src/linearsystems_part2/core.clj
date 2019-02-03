@@ -1,16 +1,12 @@
 
 (ns linearsystems-part2.core
-  (:require ;[denisovan.core :as den]
-            [clojure.core.matrix :refer :all])
+  (:require [clojure.core.matrix :refer :all])  ;[denisovan.core :as den]
   (:gen-class))
-
-;(clojure.core.matrix/set-current-implementation :neanderthal)
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
   (println "Hello, World!"))
-
 
 (defn matrix-elementary-reflector
   "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
@@ -19,7 +15,6 @@
     (sub (identity-matrix dimension)
          (mul (outer-product reflection-axis reflection-axis)
               (/ 2 (length-squared reflection-axis))))))
-
 
 (defn matrix-elementary-coordinate-reflector
  "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
@@ -33,8 +28,6 @@
      (identity-matrix (dimension-count input-vector 0))
      ;; normal case
      (matrix-elementary-reflector vector-orthogonal-to-reflection-plane))))
-
-;;;;
 
 (defn raise-rank
   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"
@@ -66,7 +59,7 @@
         ;;            Return the reflector and the reduced column
         (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
         [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
-        ;; Recursive step: Get the QR of the submatrix
+        ;; Recursive step: Get the Q^{-1}R of the submatrix
         ;;                 Then and combine it with your reflector and reduced matrix
         (let [submatrix (submatrix
                          input-matrix-with-first-column-zeroed-out
@@ -77,11 +70,6 @@
                  reflector-to-zero-out-first-column)
            (raise-rank-and-insert-row submatrix-R
                                       (get-row input-matrix-with-first-column-zeroed-out 0))]))))
-
-
-(let [test-matrix (matrix [[1 2 3] [4 5 6] [7 8 9]])
-      [Q R] (matrix-householder-QR test-matrix)]
-  (mmul (transpose Q) R))
 
 (defn matrix-template
 "template"
