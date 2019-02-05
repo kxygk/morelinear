@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-03 Sun 14:13 -->
+<!-- 2019-02-06 三 01:45 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -193,9 +193,11 @@ for the JavaScript code in this tag.
 <li><a href="#sec-3-2">elementary coordinate reflector</a></li>
 </ul>
 </li>
-<li><a href="#sec-4">TODOs</a></li>
-<li><a href="#sec-5">SRC<sub>Block</sub> template</a></li>
-<li><a href="#sec-6">End</a></li>
+<li><a href="#sec-4">Least Squares again</a></li>
+<li><a href="#sec-5">Reduction to Hessenberg Form</a></li>
+<li><a href="#sec-6">TODOs</a></li>
+<li><a href="#sec-7">SRC<sub>Block</sub> template</a></li>
+<li><a href="#sec-8">End</a></li>
 </ul>
 </div>
 </div>
@@ -524,18 +526,76 @@ But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> ye
 </div>
 </div>
 </div>
+
 <div id="outline-container-sec-4" class="outline-2">
-<h2 id="sec-4">TODOs</h2>
+<h2 id="sec-4">Least Squares again</h2>
 <div class="outline-text-2" id="text-4">
+<p>
+While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
+</p>
+
+<p>
+This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between <b>Ax</b> and <b>b</b> by taking the derivative of <b>(Ax-b)<sup>2</sup></b>, setting it equal to zero and solving the new system. We found that in matrix notation this gave us <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. We also say (and it should be intuitively apparent) that this gives the exact solution for <b>Ax=b</b> when it exist. Now sticking <b>QR</b> in for <b>A</b> we get <b>(QR)<sup>T</sup>QRx=(QR)<sup>T</sup>b</b> -&gt; <b>R<sup>T</sup>Q<sup>T</sup>QRx=R<sup>T</sup>Q<sup>T</sup>b</b> and this is where the orthonormality starts to finally pay off! <b>Q<sup>T</sup>=Q<sup>-1</sup></b> so <b>Q{T}Q = I</b> and so our equations just becomes <b>R<sup>T</sup>Rx=R<sup>T</sup>Q<sup>T</sup>b</b> where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c <b>R</b> and <b>R<sup>T</sup></b> are triangular)
+</p>
+
+<p>
+Notice that we did that all in theoretical equation form and how we've avoided having to actually compute <b>A<sup>T</sup>A</b> completely which is a big advantage considering getting the <b>QR</b> is more computationally challenging than doing Gaussian Elimination. Pages 346-350 also enumerate the advantages when it comes to numerical stability and computational complexity. However, the augmented matrix trick from <b>Exercise 4.6.9</b> is not mentioned.
+</p>
+</div>
+</div>
+
+<div id="outline-container-sec-5" class="outline-2">
+<h2 id="sec-5">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
+</p>
+
+<p>
+Looking back at pages <code>254</code> - <code>255</code>, it seems we should be able to take our input vector <b>x</b>, change it to a convenient basis, put it through our linear system, and then go back to the standard basis we started with. The trick will be to just build this basis so that <b>A</b> is in an easier/more-convenient form. 
+</p>
+
+<p>
+The text start on page <code>350</code> by getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal.The procedure in many ways is very similar to how we did the Householder QR decomposition, but with a small change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sup>-1</sup><sub>1</sub>A</b> - now we just need to also apply "unreflect" the result. This is very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b>. In block form this will look like
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+1 & 0\\
+0 & Q^{-1}_{1}\\
+\end{bmatrix}
+\begin{bmatrix}
+A_{1,1} & A_{1,*}\\
+A_{*,1} & A_{sub}\\
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0\\
+0 & Q^{-1}_{1}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+A_{1,1} & A_{1,*} Q^{-1}_{1}\\
+Q^{-1}_{1}A_{1,*} & Q^{-1}_{1} A_{1,*} Q^{-1}_{1}
+\end{bmatrix}
+\end{equation}
+
+<p>
+Again, as before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Here that's the vector <b>Q<sup>-1</sup><sub>1</sub>A<sub>1,*</sub></b> . Notice how it's not the whole column that's being reflected this time around - hence the off diagonal elements that emerge. Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last ime.
+</p>
+</div>
+</div>
+<div id="outline-container-sec-6" class="outline-2">
+<h2 id="sec-6">TODOs</h2>
+<div class="outline-text-2" id="text-6">
 <ul class="org-ul">
 <li>add some TODOs
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-sec-5" class="outline-2">
-<h2 id="sec-5">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-5">
+<div id="outline-container-sec-7" class="outline-2">
+<h2 id="sec-7">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-7">
 <div class="org-src-container">
 
 <pre class="src src-clojure">  (<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-template</span>
@@ -547,9 +607,9 @@ But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> ye
 </div>
 </div>
 
-<div id="outline-container-sec-6" class="outline-2">
-<h2 id="sec-6">End</h2>
-<div class="outline-text-2" id="text-6">
+<div id="outline-container-sec-8" class="outline-2">
+<h2 id="sec-8">End</h2>
+<div class="outline-text-2" id="text-8">
 <div class="q^{-1}uote">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
@@ -575,7 +635,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-03 Sun 14:13</p>
+<p class="date">Created: 2019-02-06 三 01:45</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
