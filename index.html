@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-06 Wed 14:32 -->
+<!-- 2019-02-06 Wed 15:12 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -566,13 +566,32 @@ Looking back at pages <code>254</code> - <code>255</code>, it seems we should be
 </p>
 
 <p>
-The text start on page <code>350</code> by getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal.The procedure in many ways is very similar to how we did the Householder QR decomposition, but with a small change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sup>-1</sup><sub>1</sub>A</b> - now we just need to also apply "unreflect" the result. This is very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b>. In block form this will look like
+The text start on page <code>350</code> suggests getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sup>-1</sup><sub>1</sub>A</b> - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b>.
+</p>
+
+<p>
+The complication here is that if we write a Householder reflection here for <b>Q<sup>-1</sup><sub>1</sub></b> then the diagonal terms in <b>A</b>, ie. <b>A<sub>i,i</sub></b> will all get multiplied and this is for some reason undesirable (<b>TODO</b> Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
+</p>
+
+<p>
+So if
+</p>
+\begin{equation}
+Q^{-1}_{1} =
+\begin{bmatrix}
+1 & 0\\
+0 & Q^{-1}_{1,sub}\\
+\end{bmatrix}
+\end{equation}
+
+<p>
+Then we can write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b> as:
 </p>
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1}\\
+0 & Q^{-1}_{1,sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 A_{1,1} & A_{1,*}\\
@@ -580,17 +599,33 @@ A_{*,1} & A_{sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1}\\
+0 & Q^{-1}_{1,sub}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1}\\
-Q^{-1}_{1}A_{1,*} & Q^{-1}_{1} A_{1,*} Q^{-1}_{1}
+A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
+Q^{-1}_{1,sub}A_{1,*} & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
 \end{bmatrix}
 \end{equation}
 
 <p>
-Again, as before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Here that's the vector <b>Q<sup>-1</sup><sub>1</sub>A<sub>1,*</sub></b> . Notice how it's not the whole column that's being reflected this time around - hence the off diagonal elements that emerge. Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last ime.
+As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the <b>Q<sup>-1</sup><sub>1,sub</sub>A<sub>1,*</sub></b> column term to turn into <b>[ 1 0 0 0 .. 0 ]</b>. So we can reuse <code>first-elementary-coordinate-reflector</code>  to get <b>Q<sup>-1</sup><sub>1,sub</sub></b> and then use our <code>raise rank</code> to build <b>Q<sup>-1</sup><sub>1</sub></b>
+</p>
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">hessenberg-form-first-partial-reflector</span>
+  <span style="color: #cc0000;">"Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #00af00;">let</span> [first-column (get-column input-matrix 0<span style="color: #999999;">)</span>
+        subdiagonal-column (subvector first-column 1 (dec (row-count first-column<span style="color: #999999;">)))</span>
+        orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column<span style="color: #999999;">)]</span>
+    (raise-rank orthogonal-reducer<span style="color: #999999;">)))</span>
+</pre>
+</div>
+
+
+<p>
+Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last time.
 </p>
 </div>
 </div>
@@ -645,7 +680,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-06 三 01:45</p>
+<p class="date">Created: 2019-02-06 Wed 15:12</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

@@ -264,12 +264,25 @@ The *QR* decomposition has given us a great tool for expressing a linear system 
 
 Looking back at pages ~254~ - ~255~, it seems we should be able to take our input vector *x*, change it to a convenient basis, put it through our linear system, and then go back to the standard basis we started with. The trick will be to just build this basis so that *A* is in an easier/more-convenient form. 
 
-The text start on page ~350~ by getting the linear system into the =Upper-Hessenberg Form=, which is /almost upper triangular/  with just one nonzero subdiagonal.The procedure in many ways is very similar to how we did the Householder QR decomposition, but with a small change. Whereas before we reduced the first column with a reflector - ie. *Q^{-1}_{1}A* - now we just need to also apply "unreflect" the result. This is very easy b/c the reflectors are their own inverse so we just need to instead write out *Q^{-1}_{1}AQ_{1}* as *Q^{-1}_{1}AQ^{-1}_{1}*. In block form this will look like
+The text start on page ~350~ suggests getting the linear system into the =Upper-Hessenberg Form=, which is /almost upper triangular/  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. *Q^{-1}_{1}A* - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out *Q^{-1}_{1}AQ_{1}* as *Q^{-1}_{1}AQ^{-1}_{1}*.
+
+The complication here is that if we write a Householder reflection here for *Q^{-1}_{1}* then the diagonal terms in *A*, ie. *A_{i,i}* will all get multiplied and this is for some reason undesirable (*TODO* Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
+
+So if
+\begin{equation}
+Q^{-1}_{1} =
+\begin{bmatrix}
+1 & 0\\
+0 & Q^{-1}_{1,sub}\\
+\end{bmatrix}
+\end{equation}
+
+Then we can write out *Q^{-1}_{1}AQ^{-1}_{1}* as:
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1}\\
+0 & Q^{-1}_{1,sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 A_{1,1} & A_{1,*}\\
@@ -277,16 +290,28 @@ A_{*,1} & A_{sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1}\\
+0 & Q^{-1}_{1,sub}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1}\\
-Q^{-1}_{1}A_{1,*} & Q^{-1}_{1} A_{1,*} Q^{-1}_{1}
+A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
+Q^{-1}_{1,sub}A_{1,*} & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
 \end{bmatrix}
 \end{equation}
 
-Again, as before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Here that's the vector *Q^{-1}_{1}A_{1,*}* . Notice how it's not the whole column that's being reflected this time around - hence the off diagonal elements that emerge. Once we've chose our *Q^{-1}_{1}* we calculate the submatrix *Q^{-1}_{1} A_{1,*} Q^{-1}_{1}* and then call the recursively just like last ime.
+As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q^{-1}_{1,sub}A_{1,*}* column term to turn into *[ 1 0 0 0 .. 0 ]*. So we can reuse ~first-elementary-coordinate-reflector~  to get *Q^{-1}_{1,sub}* and then use our ~raise rank~ to build *Q^{-1}_{1}*
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+    (defn hessenberg-form-first-partial-reflector
+      "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
+      [input-matrix]
+      (let [first-column (get-column input-matrix 0)
+            subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
+            orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
+        (raise-rank orthogonal-reducer)))
+#+END_SRC
+
+
+ Once we've chose our *Q^{-1}_{1}* we calculate the submatrix *Q^{-1}_{1} A_{1,*} Q^{-1}_{1}* and then call the recursively just like last time.
 * TODOs
 - add some TODOs
 * SRC_Block template

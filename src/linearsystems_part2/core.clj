@@ -74,6 +74,14 @@
            (raise-rank-and-insert-row submatrix-R
                                       (get-row input-matrix-with-first-column-zeroed-out 0))]))))
 
+(defn hessenberg-form-first-partial-reflector
+  "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
+  [input-matrix]
+  (let [first-column (get-column input-matrix 0)
+        subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
+        orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
+    (raise-rank orthogonal-reducer)))
+
 (defn matrix-template
 "template"
 [matrix]
