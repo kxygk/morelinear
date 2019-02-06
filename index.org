@@ -91,7 +91,16 @@ Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to 
 
 #+END_SRC
 
-So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix *R* of the *QR*. If we directly start to zero out things column after column with reflectors like we did in the *LU* case we would get an equation of the form  *Q^{-1}_{k}..Q^{-1}_{2}Q^{-1}_{1}A=R*. But the problem is that the *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
+So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix *R* of the *QR*. If we directly start to zero out things column after column with reflectors like we did in the *LU* case we would get an equation of the form  *Q^{-1}_{k}..Q^{-1}_{2}Q^{-1}_{1}A=R*. For the first column we can already write a *Q^{-1}_{1}* that will clear the terms under the first term
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (defn first-elementary-coordinate-reflector
+    "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
+    [input-vector]
+    (matrix-elementary-coordinate-reflector input-vector
+                                            (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
+#+END_SRC
+
+But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
 
 #+BEGIN_QUOTE
 *Note*: That *Q^{-1}* = *Q^{T}* b/c *Q* is orthonormal. So going from *Q^{-1}* to *Q* is trivial and I use them a bit interchangeably
@@ -222,10 +231,7 @@ But ofcourse we don't have the *Q^{-1}_{s}R_{s}* yet, so we need to think of thi
     "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
     [input-matrix]
     (let [reflector-to-zero-out-first-column
-          (matrix-elementary-coordinate-reflector
-           (get-column input-matrix 0)
-           (get-row (identity-matrix
-                     (row-count input-matrix)) 0))
+          (first-elementary-coordinate-reflector (get-column input-matrix 0))
           input-matrix-with-first-column-zeroed-out
           (mmul reflector-to-zero-out-first-column input-matrix)]
       (if

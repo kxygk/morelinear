@@ -29,6 +29,12 @@
      ;; normal case
      (matrix-elementary-reflector vector-orthogonal-to-reflection-plane))))
 
+(defn first-elementary-coordinate-reflector
+  "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
+  [input-vector]
+  (matrix-elementary-coordinate-reflector input-vector
+                                          (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
+
 (defn raise-rank
   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"
   [input-matrix]
@@ -48,10 +54,7 @@
   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
   [input-matrix]
   (let [reflector-to-zero-out-first-column
-        (matrix-elementary-coordinate-reflector
-         (get-column input-matrix 0)
-         (get-row (identity-matrix
-                   (row-count input-matrix)) 0))
+        (first-elementary-coordinate-reflector (get-column input-matrix 0))
         input-matrix-with-first-column-zeroed-out
         (mmul reflector-to-zero-out-first-column input-matrix)]
     (if

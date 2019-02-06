@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-06 三 01:45 -->
+<!-- 2019-02-06 Wed 14:29 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -340,7 +340,20 @@ Here <b>x</b> is our vector and <b>e<sub>1</sub></b> is the coordinate axis onto
 </div>
 
 <p>
-So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix <b>R</b> of the <b>QR</b>. If we directly start to zero out things column after column with reflectors like we did in the <b>LU</b> case we would get an equation of the form  <b>Q<sup>-1</sup><sub>k</sub>..Q<sup>-1</sup><sub>2</sub>Q<sup>-1</sup><sub>1</sub>A=R</b>. But the problem is that the <b>Q<sup>-1</sup><sub>i</sub></b>'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words <b>Q<sup>-1</sup><sub>1</sub></b> will reflect the first column onto <b>e<sub>1</sub></b>, but then the second reflector <b>Q<sup>-1</sup><sub>2</sub></b> will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write <b>Q<sup>-1</sup><sub>2</sub></b> so that it preserves the column of <b>Q<sup>-1</sup><sub>1</sub></b>
+So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix <b>R</b> of the <b>QR</b>. If we directly start to zero out things column after column with reflectors like we did in the <b>LU</b> case we would get an equation of the form  <b>Q<sup>-1</sup><sub>k</sub>..Q<sup>-1</sup><sub>2</sub>Q<sup>-1</sup><sub>1</sub>A=R</b>. For the first column we can already write a <b>Q<sup>-1</sup><sub>1</sub></b> that will clear the terms under the first term
+</p>
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">first-elementary-coordinate-reflector</span>
+  <span style="color: #cc0000;">"Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
+  [input-vector<span style="color: #999999;">]</span>
+  (matrix-elementary-coordinate-reflector input-vector
+                                          (get-row (identity-matrix (dimension-count input-vector 0)) 0<span style="color: #999999;">)))</span>
+</pre>
+</div>
+
+<p>
+But the problem is that the subsequent <b>Q<sup>-1</sup><sub>i</sub></b>'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words <b>Q<sup>-1</sup><sub>1</sub></b> will reflect the first column onto <b>e<sub>1</sub></b>, but then the second reflector <b>Q<sup>-1</sup><sub>2</sub></b> will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write <b>Q<sup>-1</sup><sub>2</sub></b> so that it preserves the column of <b>Q<sup>-1</sup><sub>1</sub></b>
 </p>
 
 <blockquote>
@@ -499,10 +512,7 @@ But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> ye
   <span style="color: #cc0000;">"Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"</span>
   [input-matrix<span style="color: #999999;">]</span>
   (<span style="color: #00af00;">let</span> [reflector-to-zero-out-first-column
-        (matrix-elementary-coordinate-reflector
-         (get-column input-matrix 0<span style="color: #999999;">)</span>
-         (get-row (identity-matrix
-                   (row-count input-matrix)) 0<span style="color: #999999;">))</span>
+        (first-elementary-coordinate-reflector (get-column input-matrix 0<span style="color: #999999;">))</span>
         input-matrix-with-first-column-zeroed-out
         (mmul reflector-to-zero-out-first-column input-matrix<span style="color: #999999;">)]</span>
     (<span style="color: #00af00;">if</span>
