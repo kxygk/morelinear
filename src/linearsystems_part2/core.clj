@@ -8,7 +8,7 @@
   [& args]
   (println "Hello, World!"))
 
-(defn matrix-elementary-reflector
+(defn elementary-reflector
   "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
   [reflection-axis]
   (let [dimension (dimension-count reflection-axis 0)]
@@ -16,7 +16,7 @@
          (mul (outer-product reflection-axis reflection-axis)
               (/ 2 (length-squared reflection-axis))))))
 
-(defn matrix-elementary-coordinate-reflector
+(defn elementary-coordinate-reflector
  "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
  [input-vector coordinate-axis] 
  (let [vector-orthogonal-to-reflection-plane
@@ -27,12 +27,12 @@
      ;; degenerate case where the input is on the coordinate axis
      (identity-matrix (dimension-count input-vector 0))
      ;; normal case
-     (matrix-elementary-reflector vector-orthogonal-to-reflection-plane))))
+     (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
 (defn first-elementary-coordinate-reflector
   "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
   [input-vector]
-  (matrix-elementary-coordinate-reflector input-vector
+  (elementary-coordinate-reflector input-vector
                                           (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
 
 (defn raise-rank
@@ -50,7 +50,7 @@
               (join-along 1 (column-matrix (zero-vector (column-count input-matrix)))
                     input-matrix)))
 
-(defn matrix-householder-QR
+(defn householder-QR
   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
   [input-matrix]
   (let [reflector-to-zero-out-first-column
@@ -68,7 +68,7 @@
                          input-matrix-with-first-column-zeroed-out
                          1 (dec (row-count input-matrix))
                          1 (dec (column-count input-matrix)))
-              [submatrix-Q submatrix-R] (matrix-householder-QR submatrix)]
+              [submatrix-Q submatrix-R] (householder-QR submatrix)]
           [(mmul (raise-rank submatrix-Q)
                  reflector-to-zero-out-first-column)
            (raise-rank-and-insert-row submatrix-R

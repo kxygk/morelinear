@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-06 Wed 14:29 -->
+<!-- 2019-02-06 Wed 14:32 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -294,7 +294,7 @@ In matrix form we'd factor out the <b>x</b> and get <b>(I-2uu<sup>t</sup>/u<sup>
 </p>
 <div class="org-src-container">
 
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-elementary-reflector</span>
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">elementary-reflector</span>
   <span style="color: #cc0000;">"Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"</span>
   [reflection-axis<span style="color: #999999;">]</span>
   (<span style="color: #00af00;">let</span> [dimension (dimension-count reflection-axis 0<span style="color: #999999;">)]</span>
@@ -324,7 +324,7 @@ Here <b>x</b> is our vector and <b>e<sub>1</sub></b> is the coordinate axis onto
 </p>
 <div class="org-src-container">
 
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-elementary-coordinate-reflector</span>
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">elementary-coordinate-reflector</span>
  <span style="color: #cc0000;">"Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"</span>
  [input-vector coordinate-axis] 
  (<span style="color: #00af00;">let</span> [vector-orthogonal-to-reflection-plane
@@ -335,7 +335,7 @@ Here <b>x</b> is our vector and <b>e<sub>1</sub></b> is the coordinate axis onto
      <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">degenerate case where the input is on the coordinate axis</span>
      (identity-matrix (dimension-count input-vector 0<span style="color: #999999;">))</span>
      <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">normal case</span>
-     (matrix-elementary-reflector vector-orthogonal-to-reflection-plane<span style="color: #999999;">))))</span>
+     (elementary-reflector vector-orthogonal-to-reflection-plane<span style="color: #999999;">))))</span>
 </pre>
 </div>
 
@@ -347,7 +347,7 @@ So now we can build matrices that reflect vectors onto an axis. We need to lever
 <pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">first-elementary-coordinate-reflector</span>
   <span style="color: #cc0000;">"Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
   [input-vector<span style="color: #999999;">]</span>
-  (matrix-elementary-coordinate-reflector input-vector
+  (elementary-coordinate-reflector input-vector
                                           (get-row (identity-matrix (dimension-count input-vector 0)) 0<span style="color: #999999;">)))</span>
 </pre>
 </div>
@@ -508,7 +508,7 @@ But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> ye
 </p>
 <div class="org-src-container">
 
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-householder-QR</span>
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">householder-QR</span>
   <span style="color: #cc0000;">"Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"</span>
   [input-matrix<span style="color: #999999;">]</span>
   (<span style="color: #00af00;">let</span> [reflector-to-zero-out-first-column
@@ -526,7 +526,7 @@ But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> ye
                          input-matrix-with-first-column-zeroed-out
                          1 (dec (row-count input-matrix<span style="color: #999999;">))</span>
                          1 (dec (column-count input-matrix<span style="color: #999999;">)))</span>
-              [submatrix-Q submatrix-R] (matrix-householder-QR submatrix<span style="color: #999999;">)]</span>
+              [submatrix-Q submatrix-R] (householder-QR submatrix<span style="color: #999999;">)]</span>
           [(mmul (raise-rank submatrix-Q<span style="color: #999999;">)</span>
                  reflector-to-zero-out-first-column<span style="color: #999999;">)</span>
            (raise-rank-and-insert-row submatrix-R

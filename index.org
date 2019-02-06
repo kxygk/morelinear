@@ -58,7 +58,7 @@ An elementary reflector is a special matrix/linear-system which when given a vec
  -  *x - 2uu^{t}x/u^{t}u* is you subtracting that vector component twice to get the reflection
 In matrix form we'd factor out the *x* and get *(I-2uu^{t}/u^{t}u)x*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn matrix-elementary-reflector
+  (defn elementary-reflector
     "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
     [reflection-axis]
     (let [dimension (dimension-count reflection-axis 0)]
@@ -76,7 +76,7 @@ u = x + sign(x_{1})||x||e_{1}
 \end{equation}
 Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to reflect. *sign(x)||x||e_{1}* is a vector on the coordinate axis that's stretched out so that it forms a sort of isosceles triangle with *x* (in higher dimension...). Since we want the result to lie on *e_{1}* we want to reflect *x* on the line/hyperplane bisecting this triangle. The bisecting line of a isosceles triangle is perpendicular to its base - so it's perfect for our *u*! And it so happens that the the equation for the base is the equation we have
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn matrix-elementary-coordinate-reflector
+  (defn elementary-coordinate-reflector
    "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
    [input-vector coordinate-axis] 
    (let [vector-orthogonal-to-reflection-plane
@@ -87,7 +87,7 @@ Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to 
        ;; degenerate case where the input is on the coordinate axis
        (identity-matrix (dimension-count input-vector 0))
        ;; normal case
-       (matrix-elementary-reflector vector-orthogonal-to-reflection-plane))))
+       (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
 #+END_SRC
 
@@ -96,7 +96,7 @@ So now we can build matrices that reflect vectors onto an axis. We need to lever
   (defn first-elementary-coordinate-reflector
     "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
     [input-vector]
-    (matrix-elementary-coordinate-reflector input-vector
+    (elementary-coordinate-reflector input-vector
                                             (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
 #+END_SRC
 
@@ -227,7 +227,7 @@ But ofcourse we don't have the *Q^{-1}_{s}R_{s}* yet, so we need to think of thi
 
 *R* is built up similarly in parallel
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn matrix-householder-QR
+  (defn householder-QR
     "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
     [input-matrix]
     (let [reflector-to-zero-out-first-column
@@ -245,7 +245,7 @@ But ofcourse we don't have the *Q^{-1}_{s}R_{s}* yet, so we need to think of thi
                            input-matrix-with-first-column-zeroed-out
                            1 (dec (row-count input-matrix))
                            1 (dec (column-count input-matrix)))
-                [submatrix-Q submatrix-R] (matrix-householder-QR submatrix)]
+                [submatrix-Q submatrix-R] (householder-QR submatrix)]
             [(mmul (raise-rank submatrix-Q)
                    reflector-to-zero-out-first-column)
              (raise-rank-and-insert-row submatrix-R
