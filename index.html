@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-07 Thu 19:48 -->
+<!-- 2019-02-07 四 21:53 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -358,15 +358,24 @@ But the problem is that the subsequent <b>Q<sup>-1</sup><sub>i</sub></b>'s are n
 
 <blockquote>
 <p>
-<b>Note</b>: That <b>Q<sup>-1</sup></b> = <b>Q<sup>T</sup></b> b/c <b>Q</b> is orthonormal. So going from <b>Q<sup>-1</sup></b> to <b>Q</b> is trivial and I use them a bit interchangeably
+<b>Note</b>: That <b>Q<sup>-1</sup><sub>i</sub></b> = <b>Q<sup>T</sup><sub>i</sub></b> = <b>Q<sub>i</sub></b>  b/c <b>Q<sub>i</sub></b> is a reflector and therefore it's own inverse (reflecting something twice gets your the original back). So <b>Q<sup>-1</sup><sub>i</sub></b> and <b>Q<sub>i</sub></b> can be used interchangeably.
+</p>
+
+<p>
+Furthermore <b>Q<sup>-1</sup></b> = <b>(Q<sub>1</sub> Q<sub>2</sub> Q<sub>3</sub> &#x2026; Q<sub>n</sub>)<sup>-1</sup></b> = <b>Q<sup>-1</sup><sub>n</sub> &#x2026; Q<sup>-1</sup><sub>3</sub> Q<sup>-1</sup><sub>2</sub> Q<sup>-1</sup><sub>1</sub></b> <br  />
+But this <i>does not</i> equal <b>Q</b> - so you <i>can not</i> use them interchageably
+</p>
+
+<p>
+The notation that follows is admittedly a bit less consistent than I'd like - but the algorithm thought be clear nonetheless (<b>TODO</b> clean up..)
 </p>
 </blockquote>
 <p>
-<i>p. 341</i> we can write <b>Q<sup>-1</sup><sub>2</sub></b> using block matrices (Note that the book chooses to confusingly use the letter <b>R<sub>i</sub></b> where I'm using <b>Q<sup>-1</sup><sub>i</sub></b>)
+<i>p. 341</i> we can write <b>Q<sup>-1</sup><sub>2</sub></b> ( or just <b>Q<sub>2</sub></b>) using block matrices (Note that the book chooses to confusingly use the letter <b>R<sub>i</sub></b> where I'm using <b>Q<sub>i</sub></b>)
 </p>
 
 \begin{equation}
-Q^{-1}_{2}
+Q_{2}
 =
 \begin{bmatrix}
 1 & 0\\
@@ -375,7 +384,7 @@ Q^{-1}_{2}
 \end{equation}
 
 <p>
-When you look at  <b>Q<sup>-1</sup><sub>2</sub>(Q<sup>-1</sup><sub>1</sub>A)</b> in block matrix form you see that the first column and row of <b>(Q<sup>-1</sup><sub>1</sub>A)</b> is untouched and this new block <b>S</b> is multiplied with a <i>submatrix</i> of <b>Q<sup>-1</sup><sub>1</sub>A</b> (which is the <b>(Q<sup>-1</sup><sub>1</sub>A)</b> matrix with the first row/column removed). We choose this <b>S</b> to be another reflection matrix which will zero out the first column of that submatrix - which will be in the <i>second</i> column of <b>Q<sup>-1</sup><sub>1</sub>A</b>.
+When you look at  <b>Q<sub>2</sub>(Q<sub>1</sub>A)</b> in block matrix form you see that the first column and row of <b>(Q<sub>1</sub>A)</b> is untouched and this new block <b>S</b> is multiplied with a <i>submatrix</i> of <b>Q<sub>1</sub>A</b> (which is the <b>(Q<sub>1</sub>A)</b> matrix with the first row/column removed). We choose this <b>S</b> to be another reflection matrix which will zero out the first column of that submatrix - which will be in the <i>second</i> column of <b>Q<sub>1</sub>A</b>.
 </p>
 
 <p>
@@ -383,29 +392,29 @@ So a pattern start to emerge. You take a matrix <b>A</b> then you zero out the f
 </p>
 
 <p>
-On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given <b>Q<sup>-1</sup><sub>i</sub></b> matrix but <b>do not use this!!</b>. You could build each <b>Q<sup>-1</sup><sub>i</sub></b> but there is actually a much better way to build <b>Q<sup>-1</sup></b>
+On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given <b>Q<sub>i</sub></b> matrix but <b>do not use this!!</b>. You could build each <b>Q<sub>i</sub></b> but there is actually a much better way to build <b>Q<sup>-1</sup></b>
 </p>
 
 <p>
-Imagine we were give the full <b>QR</b> for the sub-matrix  - lets call it <b>Q{s}R<sub>s</sub></b>. In other words the smaller matrix <b>Q<sup>-1</sup><sub>s</sub></b>  could triangularize the sub-matrix of <b>Q<sup>-1</sup><sub>1</sub>A</b>  entirely in one go.  Well with the help of the previous formula we could put it in the place of <b>S</b> and build a matrix that represented <b>Q<sup>-1</sup><sub>rest</sub>=Q<sup>-1</sup><sub>k</sub>..Q<sup>-1</sup><sub>2</sub></b>. Then we just multiply with <b>Q<sup>-1</sup><sub>1</sub></b> to get the full <b>Q<sup>-1</sup></b> for <b>A</b>
+Imagine we were give the full <b>QR</b> for the sub-matrix  - lets call it <b>Q{s}R<sub>s</sub></b>. In other words the smaller matrix <b>Q<sub>s</sub></b>  could triangularize the sub-matrix of <b>Q<sub>1</sub>A</b>  entirely in one go.  Well with the help of the previous formula we could put it in the place of <b>S</b> and build a matrix that represented <b>Q<sub>rest</sub>=Q<sub>k</sub>..Q<sub>2</sub></b>. Then we just multiply with <b>Q<sub>1</sub></b> to get the full <b>Q<sup>-1</sup></b> for <b>A</b>
 </p>
 
 
 \begin{equation}
-Q^{-1} = Q^{-1}_{k} ... Q^{-1}_{2} Q^{-1}{1}
+Q^{-1} = Q_{k} ... Q_{2} Q_{1}
 \end{equation}
 \begin{equation}
-Q^{-1} = Q^{-1}_{rest} Q^{-1}{1}
+Q^{-1} = Q_{rest} Q_{1}
 \end{equation}
 
 \begin{equation}
 \begin{bmatrix}
-Q^{-1}_{rest}\\
+Q_{rest}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \end{equation}
 
@@ -416,10 +425,10 @@ Q^{-1}\\
 =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-Q^{-1}_{1}\\
+Q_{1}\\
 \end{bmatrix}
 \end{equation}
 
@@ -427,10 +436,10 @@ Q^{-1}_{1}\\
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-Q^{-1}_{1}\\
+Q_{1}\\
 \end{bmatrix}
 \begin{bmatrix}
 A\\
@@ -442,7 +451,7 @@ R\\
 \end{equation}
 
 <p>
-So we just need a simple function to take a <b>Q<sup>-1</sup><sub>s</sub></b> and pad it with these zeroes to build our <b>Q<sup>-1</sup><sub>rest</sub></b>
+So we just need a simple function to take a <b>Q<sub>s</sub></b> and pad it with these zeroes to build our <b>Q<sub>rest</sub></b>
 </p>
 <div class="org-src-container">
 
@@ -463,26 +472,26 @@ So we just need a simple function to take a <b>Q<sup>-1</sup><sub>s</sub></b> an
 </div>
 
 <p>
-<b>R<sub>s</sub></b>, the product of reducing the submatrix <b>Q<sup>-1</sup><sub>1</sub>A</b> can be similarly used to build <b>R</b>, however if you break up the <b>Q<sup>-1</sup><sub>1</sub>A</b> into block matrices you will see that the first row of <b>Q<sup>-1</sup><sub>1</sub>A</b> is in effect preserved and needs to be copied over
+<b>R<sub>s</sub></b>, the product of reducing the submatrix <b>Q<sub>1</sub>A</b> can be similarly used to build <b>R</b>, however if you break up the <b>Q<sub>1</sub>A</b> into block matrices you will see that the first row of <b>Q<sub>1</sub>A</b> is in effect preserved and needs to be copied over
 </p>
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
-(Q^{-1}_{1}A)_{*,1} & (Q^{-1}_{1}A)_{s,s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
-0 & Q^{-1}_{s}(Q^{-1}_{1}A)_{s,s}\\
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+(Q_{1}A)_{*,1} & (Q_{1}A)_{s,s}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+0 & Q_{s}(Q_{1}A)_{s,s}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
 0 & R_{s}\\
 \end{bmatrix}
 =
@@ -492,7 +501,7 @@ R\\
 \end{equation}
 
 <p>
-So we similarly need a little helper function here to "augment" <b>R<sub>s</sub></b> to <b>R</b> but with the first row inserted manually from <b>Q<sup>-1</sup><sub>1</sub>A</b> (done in-code late)
+So we similarly need a little helper function here to "augment" <b>R<sub>s</sub></b> to <b>R</b> but with the first row inserted manually from <b>Q<sub>1</sub>A</b> (done in-code late)
 </p>
 <div class="org-src-container">
 
@@ -518,7 +527,7 @@ So we similarly need a little helper function here to "augment" <b>R<sub>s</sub>
 </div>
 
 <p>
-But ofcourse we don't have the <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> yet, so we need to think of this method recursively. <b>Q<sup>-1</sup><sub>s</sub>R<sub>s</sub></b> is just the <b>Q<sup>-1</sup>R</b> of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of <b>Q<sup>-1</sup><sub>1</sub>A</b> and  we have both <b>Q<sup>-1</sup><sub>1</sub></b> and <b>A</b> . Once we have the submatrix, we call this procedure again and again we we will make a new <b>Q<sup>-1</sup><sub>1</sub></b> - but now for this smaller matrix. Then again we get a <b>Q<sup>-1</sup><sub>1</sub>A</b> for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the <b>Q<sup>-1</sup><sub>1</sub></b> will be the full <b>Q<sup>-1</sup></b> of <b>A</b> and <b>Q<sup>-1</sup><sub>1</sub>A = Q<sup>-1</sup>A = R</b>. So going up a step you will finally have a  <b>Q<sup>-1</sup><sub>s</sub></b> and so we know how to build a <b>Q<sup>-1</sup>R</b>. This gives us the <b>Q<sup>-1</sup><sub>s</sub></b> for the step before that, and we just continue going back and building up our <b>Q<sup>-1</sup>R</b> one submatrix at a time till we are left with the full <b>Q<sup>-1</sup>R</b>
+But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need to think of this method recursively. <b>Q<sub>s</sub>R<sub>s</sub></b> is just the <b>Q<sup>-1</sup>R</b> of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of <b>Q<sub>1</sub>A</b> and  we have both <b>Q<sub>1</sub></b> and <b>A</b> . Once we have the submatrix, we call this procedure again and again we we will make a new <b>Q<sub>1</sub></b> - but now for this smaller matrix. Then again we get a <b>Q<sub>1</sub>A</b> for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the <b>Q<sub>1</sub></b> will be the full <b>Q<sup>-1</sup></b> of <b>A</b> and <b>Q<sub>1</sub>A = Q<sup>-1</sup>A = R</b>. So going up a step you will finally have a  <b>Q<sub>s</sub></b> and so we know how to build a <b>Q<sup>-1</sup>R</b>. This gives us the <b>Q<sub>s</sub></b> for the step before that, and we just continue going back and building up our <b>Q<sup>-1</sup>R</b> one submatrix at a time till we are left with the full <b>Q<sup>-1</sup>R</b>
 </p>
 
 <p>
@@ -584,32 +593,32 @@ Looking back at pages <code>254</code> - <code>255</code>, it seems we should be
 </p>
 
 <p>
-The text start on page <code>350</code> suggests getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sup>-1</sup><sub>1</sub>A</b> - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b>.
+The text start on page <code>350</code> suggests getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sub>1</sub>A</b> - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sub>1</sub>AQ<sub>1</sub></b>.
 </p>
 
 <p>
-The complication here is that if we write a Householder reflection here for <b>Q<sup>-1</sup><sub>1</sub></b> then the diagonal terms in <b>A</b>, ie. <b>A<sub>i,i</sub></b> will all get multiplied and this is for some reason undesirable (<b>TODO</b> Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
+The complication here is that if we write a Householder reflection here for <b>Q<sub>1</sub></b> then the diagonal terms in <b>A</b>, ie. <b>A<sub>i,i</sub></b> will all get multiplied and this is for some reason undesirable (<b>TODO</b> Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
 </p>
 
 <p>
 So if
 </p>
 \begin{equation}
-Q^{-1}_{1} =
+Q_{1} =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 \end{equation}
 
 <p>
-Then we can write out <b>Q<sup>-1</sup><sub>1</sub>AQ<sup>-1</sup><sub>1</sub></b> as:
+Then we can write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as:
 </p>
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 A_{1,1} & A_{1,*}\\
@@ -617,25 +626,25 @@ A_{*,1} & A_{sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
-Q^{-1}_{1,sub}A_{1,*} & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
+A_{1,1} & A_{1,*} Q_{1,sub}\\
+Q_{1,sub}A_{1,*} & Q_{1,sub} A_{1,*} Q_{1,sub}
 \end{bmatrix}
 => =>
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
+A_{1,1} & A_{1,*} Q_{1,sub}\\
 \begin{bmatrix}
 1 \\ 0 \\ .. \\ 0
 \end{bmatrix}
- & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
+ & Q_{1,sub} A_{1,*} Q_{1,sub}
 \end{bmatrix}
 \end{equation}
 
 <p>
-As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the <b>Q<sup>-1</sup><sub>1,sub</sub>A<sub>1,-</sub></b> column block matrix product to turn into <b>[ 1 0 0 0 .. 0 ]</b> and we can reuse <code>first-elementary-coordinate-reflector</code>  to get the appropriate <b>Q<sup>-1</sup><sub>1,sub</sub></b>. Finally reusing <code>raise rank</code> we can build <b>Q<sup>-1</sup><sub>1</sub></b>
+As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the <b>Q<sub>1,sub</sub>A<sub>1,-</sub></b> column block matrix product to turn into <b>[ 1 0 0 0 .. 0 ]</b> and we can reuse <code>first-elementary-coordinate-reflector</code>  to get the appropriate <b>Q<sub>1,sub</sub></b>. Finally reusing <code>raise rank</code> we can build <b>Q<sub>1</sub></b>
 </p>
 <div class="org-src-container">
 
@@ -653,7 +662,7 @@ As before we are looking to reflect the first column onto a coordinate axis so t
 </pre>
 </div>
 <p>
-Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the <b>Q</b> matrices and pad the resulting matrices like we did for the resulting <b>R</b> matrices before.
+Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1</sub> A<sub>1,*</sub> Q<sub>1</sub></b> and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the <b>Q</b> matrices and pad the resulting matrices like we did for the resulting <b>R</b> matrices before.
 </p>
 <div class="org-src-container">
 
@@ -736,7 +745,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-07 Thu 19:48</p>
+<p class="date">Created: 2019-02-07 四 21:53</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

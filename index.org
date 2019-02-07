@@ -103,12 +103,17 @@ So now we can build matrices that reflect vectors onto an axis. We need to lever
 But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
 
 #+BEGIN_QUOTE
-*Note*: That *Q^{-1}* = *Q^{T}* b/c *Q* is orthonormal. So going from *Q^{-1}* to *Q* is trivial and I use them a bit interchangeably
+*Note*: That *Q^{-1}_{i}* = *Q^{T}_{i}* = *Q_{i}*  b/c *Q_{i}* is a reflector and therefore it's own inverse (reflecting something twice gets your the original back). So *Q^{-1}_{i}* and *Q_{i}* can be used interchangeably.
+
+Furthermore *Q^{-1}* = *(Q_1 Q_2 Q_3 ... Q_n)^{-1}* = *Q^{-1}_{n} ... Q^{-1}_{3} Q^{-1}_{2} Q^{-1}_{1}* \\
+But this /does not/ equal *Q* - so you /can not/ use them interchageably
+
+The notation that follows is admittedly a bit less consistent than I'd like - but the algorithm thought be clear nonetheless (*TODO* clean up..)
 #+END_QUOTE
-/p. 341/ we can write *Q^{-1}_{2}* using block matrices (Note that the book chooses to confusingly use the letter *R_{i}* where I'm using *Q^{-1}_{i}*)
+/p. 341/ we can write *Q^{-1}_{2}* ( or just *Q_{2}*) using block matrices (Note that the book chooses to confusingly use the letter *R_{i}* where I'm using *Q_{i}*)
 
 \begin{equation}
-Q^{-1}_{2}
+Q_{2}
 =
 \begin{bmatrix}
 1 & 0\\
@@ -116,30 +121,30 @@ Q^{-1}_{2}
 \end{bmatrix}
 \end{equation}
 
-When you look at  *Q^{-1}_{2}(Q^{-1}_{1}A)* in block matrix form you see that the first column and row of *(Q^{-1}_{1}A)* is untouched and this new block *S* is multiplied with a /submatrix/ of *Q^{-1}_{1}A* (which is the *(Q^{-1}_{1}A)* matrix with the first row/column removed). We choose this *S* to be another reflection matrix which will zero out the first column of that submatrix - which will be in the /second/ column of *Q^{-1}_{1}A*.
+When you look at  *Q_{2}(Q_{1}A)* in block matrix form you see that the first column and row of *(Q_{1}A)* is untouched and this new block *S* is multiplied with a /submatrix/ of *Q_{1}A* (which is the *(Q_{1}A)* matrix with the first row/column removed). We choose this *S* to be another reflection matrix which will zero out the first column of that submatrix - which will be in the /second/ column of *Q_{1}A*.
 
 So a pattern start to emerge. You take a matrix *A* then you zero out the first column, then you take a submatrix, zero out its first column and then get the next smaller submatrix, zero out its first column.. etc. What's left to figure out is how to combine everything back together to get the full *Q^{-1}R* matrices we want.
 
-On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given *Q^{-1}_{i}* matrix but *do not use this!!*. You could build each *Q^{-1}_{i}* but there is actually a much better way to build *Q^{-1}*
+On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given *Q_{i}* matrix but *do not use this!!*. You could build each *Q_{i}* but there is actually a much better way to build *Q^{-1}*
 
-Imagine we were give the full *QR* for the sub-matrix  - lets call it *Q{s}R_{s}*. In other words the smaller matrix *Q^{-1}_{s}*  could triangularize the sub-matrix of *Q^{-1}_{1}A*  entirely in one go.  Well with the help of the previous formula we could put it in the place of *S* and build a matrix that represented *Q^{-1}_{rest}=Q^{-1}_{k}..Q^{-1}_{2}*. Then we just multiply with *Q^{-1}_{1}* to get the full *Q^{-1}* for *A*
+Imagine we were give the full *QR* for the sub-matrix  - lets call it *Q{s}R_{s}*. In other words the smaller matrix *Q_{s}*  could triangularize the sub-matrix of *Q_{1}A*  entirely in one go.  Well with the help of the previous formula we could put it in the place of *S* and build a matrix that represented *Q_{rest}=Q_{k}..Q_{2}*. Then we just multiply with *Q_{1}* to get the full *Q^{-1}* for *A*
 
 
 \begin{equation}
-Q^{-1} = Q^{-1}_{k} ... Q^{-1}_{2} Q^{-1}{1}
+Q^{-1} = Q_{k} ... Q_{2} Q_{1}
 \end{equation}
 \begin{equation}
-Q^{-1} = Q^{-1}_{rest} Q^{-1}{1}
+Q^{-1} = Q_{rest} Q_{1}
 \end{equation}
 
 \begin{equation}
 \begin{bmatrix}
-Q^{-1}_{rest}\\
+Q_{rest}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \end{equation}
 
@@ -150,10 +155,10 @@ Q^{-1}\\
 =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-Q^{-1}_{1}\\
+Q_{1}\\
 \end{bmatrix}
 \end{equation}
 
@@ -161,10 +166,10 @@ Q^{-1}_{1}\\
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-Q^{-1}_{1}\\
+Q_{1}\\
 \end{bmatrix}
 \begin{bmatrix}
 A\\
@@ -175,7 +180,7 @@ R\\
 \end{bmatrix}
 \end{equation}
 
-So we just need a simple function to take a *Q^{-1}_{s}* and pad it with these zeroes to build our *Q^{-1}_{rest}*
+So we just need a simple function to take a *Q_{s}* and pad it with these zeroes to build our *Q_{rest}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn raise-rank
     "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
@@ -192,25 +197,25 @@ So we just need a simple function to take a *Q^{-1}_{s}* and pad it with these z
         (dec rank)))))
 #+END_SRC
 
-*R_{s}*, the product of reducing the submatrix *Q^{-1}_{1}A* can be similarly used to build *R*, however if you break up the *Q^{-1}_{1}A* into block matrices you will see that the first row of *Q^{-1}_{1}A* is in effect preserved and needs to be copied over
+*R_{s}*, the product of reducing the submatrix *Q_{1}A* can be similarly used to build *R*, however if you break up the *Q_{1}A* into block matrices you will see that the first row of *Q_{1}A* is in effect preserved and needs to be copied over
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{s}\\
+0 & Q_{s}\\
 \end{bmatrix}
 \begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
-(Q^{-1}_{1}A)_{*,1} & (Q^{-1}_{1}A)_{s,s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
-0 & Q^{-1}_{s}(Q^{-1}_{1}A)_{s,s}\\
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+(Q_{1}A)_{*,1} & (Q_{1}A)_{s,s}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-(Q^{-1}_{1}A)_{1,1} & (Q^{-1}_{1}A)_{1,*}\\
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+0 & Q_{s}(Q_{1}A)_{s,s}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
 0 & R_{s}\\
 \end{bmatrix}
 =
@@ -219,7 +224,7 @@ R\\
 \end{bmatrix}
 \end{equation}
 
-So we similarly need a little helper function here to "augment" *R_{s}* to *R* but with the first row inserted manually from *Q^{-1}_{1}A* (done in-code late)
+So we similarly need a little helper function here to "augment" *R_{s}* to *R* but with the first row inserted manually from *Q_{1}A* (done in-code late)
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
 
   (defn raise-rank-and-insert-row-column
@@ -242,7 +247,7 @@ So we similarly need a little helper function here to "augment" *R_{s}* to *R* b
          insert-row))
 #+END_SRC
 
-But ofcourse we don't have the *Q^{-1}_{s}R_{s}* yet, so we need to think of this method recursively. *Q^{-1}_{s}R_{s}* is just the *Q^{-1}R* of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of *Q^{-1}_{1}A* and  we have both *Q^{-1}_{1}* and *A* . Once we have the submatrix, we call this procedure again and again we we will make a new *Q^{-1}_{1}* - but now for this smaller matrix. Then again we get a *Q^{-1}_{1}A* for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the *Q^{-1}_{1}* will be the full *Q^{-1}* of *A* and *Q^{-1}_{1}A = Q^{-1}A = R*. So going up a step you will finally have a  *Q^{-1}_{s}* and so we know how to build a *Q^{-1}R*. This gives us the *Q^{-1}_{s}* for the step before that, and we just continue going back and building up our *Q^{-1}R* one submatrix at a time till we are left with the full *Q^{-1}R*
+But ofcourse we don't have the *Q_{s}R_{s}* yet, so we need to think of this method recursively. *Q_{s}R_{s}* is just the *Q^{-1}R* of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of *Q_{1}A* and  we have both *Q_{1}* and *A* . Once we have the submatrix, we call this procedure again and again we we will make a new *Q_{1}* - but now for this smaller matrix. Then again we get a *Q_{1}A* for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the *Q_{1}* will be the full *Q^{-1}* of *A* and *Q_{1}A = Q^{-1}A = R*. So going up a step you will finally have a  *Q_{s}* and so we know how to build a *Q^{-1}R*. This gives us the *Q_{s}* for the step before that, and we just continue going back and building up our *Q^{-1}R* one submatrix at a time till we are left with the full *Q^{-1}R*
 
 *R* is built up similarly in parallel
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
@@ -283,25 +288,25 @@ The *QR* decomposition has given us a great tool for expressing a linear system 
 
 Looking back at pages ~254~ - ~255~, it seems we should be able to take our input vector *x*, change it to a convenient basis, put it through our linear system, and then go back to the standard basis we started with. The trick will be to just build this basis so that *A* is in an easier/more-convenient form. 
 
-The text start on page ~350~ suggests getting the linear system into the =Upper-Hessenberg Form=, which is /almost upper triangular/  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. *Q^{-1}_{1}A* - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out *Q^{-1}_{1}AQ_{1}* as *Q^{-1}_{1}AQ^{-1}_{1}*.
+The text start on page ~350~ suggests getting the linear system into the =Upper-Hessenberg Form=, which is /almost upper triangular/  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. *Q_{1}A* - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out *Q_{1}AQ_{1}* as *Q_{1}AQ_{1}*.
 
-The complication here is that if we write a Householder reflection here for *Q^{-1}_{1}* then the diagonal terms in *A*, ie. *A_{i,i}* will all get multiplied and this is for some reason undesirable (*TODO* Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
+The complication here is that if we write a Householder reflection here for *Q_{1}* then the diagonal terms in *A*, ie. *A_{i,i}* will all get multiplied and this is for some reason undesirable (*TODO* Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
 
 So if
 \begin{equation}
-Q^{-1}_{1} =
+Q_{1} =
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 \end{equation}
 
-Then we can write out *Q^{-1}_{1}AQ^{-1}_{1}* as:
+Then we can write out *Q_{1}AQ_{1}* as:
 
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 A_{1,1} & A_{1,*}\\
@@ -309,24 +314,24 @@ A_{*,1} & A_{sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 1 & 0\\
-0 & Q^{-1}_{1,sub}\\
+0 & Q_{1,sub}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
-Q^{-1}_{1,sub}A_{1,*} & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
+A_{1,1} & A_{1,*} Q_{1,sub}\\
+Q_{1,sub}A_{1,*} & Q_{1,sub} A_{1,*} Q_{1,sub}
 \end{bmatrix}
 => =>
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
+A_{1,1} & A_{1,*} Q_{1,sub}\\
 \begin{bmatrix}
 1 \\ 0 \\ .. \\ 0
 \end{bmatrix}
- & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
+ & Q_{1,sub} A_{1,*} Q_{1,sub}
 \end{bmatrix}
 \end{equation}
 
-As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q^{-1}_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-elementary-coordinate-reflector~  to get the appropriate *Q^{-1}_{1,sub}*. Finally reusing ~raise rank~ we can build *Q^{-1}_{1}*
+As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-elementary-coordinate-reflector~  to get the appropriate *Q_{1,sub}*. Finally reusing ~raise rank~ we can build *Q_{1}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn hessenberg-form-first-partial-reflector
     "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
@@ -340,7 +345,7 @@ As before we are looking to reflect the first column onto a coordinate axis so t
           orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
       (raise-rank orthogonal-reducer))))
 #+END_SRC
- Once we've chose our *Q^{-1}_{1}* we calculate the submatrix *Q^{-1}_{1} A_{1,*} Q^{-1}_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
+ Once we've chose our *Q_{1}* we calculate the submatrix *Q_{1} A_{1,*} Q_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn hessenberg-form-reduction
     "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
