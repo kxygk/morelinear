@@ -49,13 +49,24 @@
                               input-matrix))
       (dec rank)))))
 
+(defn raise-rank-and-insert-row-column
+  "Takes a submatrix and put it's in the lower right corner of a larger matrix.
+  The submatrix is 1 row and column smaller.
+  First insert a column (size of input-matrix  and then a row (size + 1)"
+  [input-matrix insert-column insert-row]
+  (join-along 0 (row-matrix insert-row)
+              (join-along 1 (column-matrix insert-column)
+                          input-matrix)))
+
 (defn raise-rank-and-insert-row
   "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-   The submatrix is 1 row and column smaller"
-  [input-matrix insert-row]
-  (join-along 0 (row-matrix insert-row)
-              (join-along 1 (column-matrix (zero-vector (column-count input-matrix)))
-                    input-matrix)))
+  The submatrix is 1 row and column smaller
+  First insert a column of zeroes and then the passed in row (size + 1)"
+      [input-matrix insert-row]
+      (raise-rank-and-insert-row-column
+       input-matrix
+       (zero-vector (column-count input-matrix))
+       insert-row))
 
 (defn householder-QR
   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
@@ -84,10 +95,39 @@
 (defn hessenberg-form-first-partial-reflector
   "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
   [input-matrix]
+  (if
+      ;; Degenerate Case: 1 x 1 matrix
+      (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+    [[ 1 ]]
   (let [first-column (get-column input-matrix 0)
         subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
         orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
-    (raise-rank orthogonal-reducer)))
+    (raise-rank orthogonal-reducer))))
+
+(defn hessenberg-form-reduction
+  "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
+[input-matrix]
+(let [reflector-to-zero-out-first-column
+      (hessenberg-form-first-partial-reflector input-matrix)
+      input-matrix-with-first-column-zeroed-out
+      (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]
+  (if
+      ;; Base Case: We're out of columns/rows to reduce
+      ;;            Return the reflector and the reduced column
+      (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+      [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
+      ;; Recursive step: Get the Q^{-1}R of the submatrix
+      ;;                 Then and combine it with your reflector and reduced matrix
+      (let [submatrix (submatrix
+                       input-matrix-with-first-column-zeroed-out
+                       1 (dec (row-count input-matrix))
+                       1 (dec (column-count input-matrix)))
+            [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]
+        [(mmul (raise-rank submatrix-P)
+               reflector-to-zero-out-first-column)
+         (raise-rank-and-insert-row-column submatrix-H
+                                   (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))
+                                   (get-row input-matrix-with-first-column-zeroed-out 0))]))))
 
 (defn matrix-template
 "template"

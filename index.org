@@ -221,13 +221,25 @@ R\\
 
 So we similarly need a little helper function here to "augment" *R_{s}* to *R* but with the first row inserted manually from *Q^{-1}_{1}A* (done in-code late)
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+
+  (defn raise-rank-and-insert-row-column
+    "Takes a submatrix and put it's in the lower right corner of a larger matrix.
+    The submatrix is 1 row and column smaller.
+    First insert a column (size of input-matrix  and then a row (size + 1)"
+    [input-matrix insert-column insert-row]
+    (join-along 0 (row-matrix insert-row)
+                (join-along 1 (column-matrix insert-column)
+                            input-matrix)))
+
   (defn raise-rank-and-insert-row
     "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-     The submatrix is 1 row and column smaller"
-    [input-matrix insert-row]
-    (join-along 0 (row-matrix insert-row)
-                (join-along 1 (column-matrix (zero-vector (column-count input-matrix)))
-                      input-matrix)))
+    The submatrix is 1 row and column smaller
+    First insert a column of zeroes and then the passed in row (size + 1)"
+        [input-matrix insert-row]
+        (raise-rank-and-insert-row-column
+         input-matrix
+         (zero-vector (column-count input-matrix))
+         insert-row))
 #+END_SRC
 
 But ofcourse we don't have the *Q^{-1}_{s}R_{s}* yet, so we need to think of this method recursively. *Q^{-1}_{s}R_{s}* is just the *Q^{-1}R* of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of *Q^{-1}_{1}A* and  we have both *Q^{-1}_{1}* and *A* . Once we have the submatrix, we call this procedure again and again we we will make a new *Q^{-1}_{1}* - but now for this smaller matrix. Then again we get a *Q^{-1}_{1}A* for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the *Q^{-1}_{1}* will be the full *Q^{-1}* of *A* and *Q^{-1}_{1}A = Q^{-1}A = R*. So going up a step you will finally have a  *Q^{-1}_{s}* and so we know how to build a *Q^{-1}R*. This gives us the *Q^{-1}_{s}* for the step before that, and we just continue going back and building up our *Q^{-1}R* one submatrix at a time till we are left with the full *Q^{-1}R*
@@ -316,17 +328,45 @@ A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
 
 As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q^{-1}_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-elementary-coordinate-reflector~  to get the appropriate *Q^{-1}_{1,sub}*. Finally reusing ~raise rank~ we can build *Q^{-1}_{1}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-    (defn hessenberg-form-first-partial-reflector
-      "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
-      [input-matrix]
-      (let [first-column (get-column input-matrix 0)
-            subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
-            orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
-        (raise-rank orthogonal-reducer)))
+  (defn hessenberg-form-first-partial-reflector
+    "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
+    [input-matrix]
+    (if
+        ;; Degenerate Case: 1 x 1 matrix
+        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+      [[ 1 ]]
+    (let [first-column (get-column input-matrix 0)
+          subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
+          orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
+      (raise-rank orthogonal-reducer))))
 #+END_SRC
-
-
- Once we've chose our *Q^{-1}_{1}* we calculate the submatrix *Q^{-1}_{1} A_{1,*} Q^{-1}_{1}* and then call the recursively just like last time.
+ Once we've chose our *Q^{-1}_{1}* we calculate the submatrix *Q^{-1}_{1} A_{1,*} Q^{-1}_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (defn hessenberg-form-reduction
+    "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
+  [input-matrix]
+  (let [reflector-to-zero-out-first-column
+        (hessenberg-form-first-partial-reflector input-matrix)
+        input-matrix-with-first-column-zeroed-out
+        (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]
+    (if
+        ;; Base Case: We're out of columns/rows to reduce
+        ;;            Return the reflector and the reduced column
+        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
+        ;; Recursive step: Get the Q^{-1}R of the submatrix
+        ;;                 Then and combine it with your reflector and reduced matrix
+        (let [submatrix (submatrix
+                         input-matrix-with-first-column-zeroed-out
+                         1 (dec (row-count input-matrix))
+                         1 (dec (column-count input-matrix)))
+              [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]
+          [(mmul (raise-rank submatrix-P)
+                 reflector-to-zero-out-first-column)
+           (raise-rank-and-insert-row-column submatrix-H
+                                     (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))
+                                     (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+#+END_SRC
 * TODOs
 - add some TODOs
 * SRC_Block template

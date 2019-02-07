@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-07 Thu 18:11 -->
+<!-- 2019-02-07 Thu 19:48 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -496,13 +496,24 @@ So we similarly need a little helper function here to "augment" <b>R<sub>s</sub>
 </p>
 <div class="org-src-container">
 
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank-and-insert-row</span>
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank-and-insert-row-column</span>
   <span style="color: #cc0000;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
-<span style="color: #cc0000;">   The submatrix is 1 row and column smaller"</span>
-  [input-matrix insert-row<span style="color: #999999;">]</span>
+<span style="color: #cc0000;">  The submatrix is 1 row and column smaller.</span>
+<span style="color: #cc0000;">  First insert a column (size of input-matrix  and then a row (size + 1)"</span>
+  [input-matrix insert-column insert-row<span style="color: #999999;">]</span>
   (join-along 0 (row-matrix insert-row<span style="color: #999999;">)</span>
-              (join-along 1 (column-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
-                    input-matrix<span style="color: #999999;">)))</span>
+              (join-along 1 (column-matrix insert-column<span style="color: #999999;">)</span>
+                          input-matrix<span style="color: #999999;">)))</span>
+
+(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank-and-insert-row</span>
+  <span style="color: #cc0000;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
+<span style="color: #cc0000;">  The submatrix is 1 row and column smaller</span>
+<span style="color: #cc0000;">  First insert a column of zeroes and then the passed in row (size + 1)"</span>
+      [input-matrix insert-row<span style="color: #999999;">]</span>
+      (raise-rank-and-insert-row-column
+       input-matrix
+       (zero-vector (column-count input-matrix<span style="color: #999999;">))</span>
+       insert-row<span style="color: #999999;">))</span>
 </pre>
 </div>
 
@@ -631,17 +642,47 @@ As before we are looking to reflect the first column onto a coordinate axis so t
 <pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">hessenberg-form-first-partial-reflector</span>
   <span style="color: #cc0000;">"Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"</span>
   [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #00af00;">if</span>
+      <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">Degenerate Case: 1 x 1 matrix</span>
+      (<span style="color: #00af00;">or</span> (= (column-count input-matrix) 1) (= (row-count input-matrix) 1<span style="color: #999999;">))</span>
+    [[ 1 <span style="color: #999999;">]]</span>
   (<span style="color: #00af00;">let</span> [first-column (get-column input-matrix 0<span style="color: #999999;">)</span>
         subdiagonal-column (subvector first-column 1 (dec (row-count first-column<span style="color: #999999;">)))</span>
         orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column<span style="color: #999999;">)]</span>
-    (raise-rank orthogonal-reducer<span style="color: #999999;">)))</span>
+    (raise-rank orthogonal-reducer<span style="color: #999999;">))))</span>
 </pre>
 </div>
-
-
 <p>
-Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last time.
+Once we've chose our <b>Q<sup>-1</sup><sub>1</sub></b> we calculate the submatrix <b>Q<sup>-1</sup><sub>1</sub> A<sub>1,*</sub> Q<sup>-1</sup><sub>1</sub></b> and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the <b>Q</b> matrices and pad the resulting matrices like we did for the resulting <b>R</b> matrices before.
 </p>
+<div class="org-src-container">
+
+<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">hessenberg-form-reduction</span>
+  <span style="color: #cc0000;">"Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"</span>
+[input-matrix<span style="color: #999999;">]</span>
+(<span style="color: #00af00;">let</span> [reflector-to-zero-out-first-column
+      (hessenberg-form-first-partial-reflector input-matrix<span style="color: #999999;">)</span>
+      input-matrix-with-first-column-zeroed-out
+      (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column<span style="color: #999999;">))]</span>
+  (<span style="color: #00af00;">if</span>
+      <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">Base Case: We're out of columns/rows to reduce</span>
+      <span style="color: #b2b2b2; font-style: italic;">;;            </span><span style="color: #b2b2b2; font-style: italic;">Return the reflector and the reduced column</span>
+      (<span style="color: #00af00;">or</span> (= (column-count input-matrix) 1) (= (row-count input-matrix) 1<span style="color: #999999;">))</span>
+      [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out<span style="color: #999999;">]</span>
+      <span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">Recursive step: Get the Q^{-1}R of the submatrix</span>
+      <span style="color: #b2b2b2; font-style: italic;">;;                 </span><span style="color: #b2b2b2; font-style: italic;">Then and combine it with your reflector and reduced matrix</span>
+      (<span style="color: #00af00;">let</span> [submatrix (submatrix
+                       input-matrix-with-first-column-zeroed-out
+                       1 (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                       1 (dec (column-count input-matrix<span style="color: #999999;">)))</span>
+            [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix<span style="color: #999999;">)]</span>
+        [(mmul (raise-rank submatrix-P<span style="color: #999999;">)</span>
+               reflector-to-zero-out-first-column<span style="color: #999999;">)</span>
+         (raise-rank-and-insert-row-column submatrix-H
+                                   (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out<span style="color: #999999;">)))</span>
+                                   (get-row input-matrix-with-first-column-zeroed-out 0<span style="color: #999999;">))]))))</span>
+</pre>
+</div>
 </div>
 </div>
 <div id="outline-container-sec-6" class="outline-2">
@@ -695,7 +736,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-07 Thu 18:11</p>
+<p class="date">Created: 2019-02-07 Thu 19:48</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
