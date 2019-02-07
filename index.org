@@ -304,9 +304,17 @@ A_{*,1} & A_{sub}\\
 A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
 Q^{-1}_{1,sub}A_{1,*} & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
 \end{bmatrix}
+=> =>
+\begin{bmatrix}
+A_{1,1} & A_{1,*} Q^{-1}_{1,sub}\\
+\begin{bmatrix}
+1 \\ 0 \\ .. \\ 0
+\end{bmatrix}
+ & Q^{-1}_{1,sub} A_{1,*} Q^{-1}_{1,sub}
+\end{bmatrix}
 \end{equation}
 
-As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q^{-1}_{1,sub}A_{1,*}* column term to turn into *[ 1 0 0 0 .. 0 ]*. So we can reuse ~first-elementary-coordinate-reflector~  to get *Q^{-1}_{1,sub}* and then use our ~raise rank~ to build *Q^{-1}_{1}*
+As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q^{-1}_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-elementary-coordinate-reflector~  to get the appropriate *Q^{-1}_{1,sub}*. Finally reusing ~raise rank~ we can build *Q^{-1}_{1}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
     (defn hessenberg-form-first-partial-reflector
       "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
