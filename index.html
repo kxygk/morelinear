@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
 <title>Linear Systems - Part 2:  Clojure</title>
-<!-- 2019-02-06 Wed 15:12 -->
+<!-- 2019-02-07 Thu 18:04 -->
 <meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta  name="generator" content="Org-mode" />
 <meta  name="author" content="George Kontsevich" />
@@ -447,11 +447,18 @@ So we just need a simple function to take a <b>Q<sup>-1</sup><sub>s</sub></b> an
 <div class="org-src-container">
 
 <pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">raise-rank</span>
-  <span style="color: #cc0000;">"Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0<span style="color: #999999;">))</span>
-      (join-along 0 (row-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
-            input-matrix<span style="color: #999999;">)))</span>
+  <span style="color: #cc0000;">"Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)</span>
+<span style="color: #cc0000;">  Optionally pass in a RANK variable to pad with that many rows (default: 1)"</span>
+  ([input-matrix<span style="color: #999999;">]</span>
+   (raise-rank input-matrix 1<span style="color: #999999;">))</span>
+  ([input-matrix rank<span style="color: #999999;">]</span>
+   (<span style="color: #00af00;">if</span> (zero? rank<span style="color: #999999;">)</span>
+     input-matrix
+     (raise-rank
+      (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0<span style="color: #999999;">))</span>
+                  (join-along 0 (row-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
+                              input-matrix<span style="color: #999999;">))</span>
+      (dec rank<span style="color: #999999;">)))))</span>
 </pre>
 </div>
 
@@ -680,7 +687,7 @@ Once opened in Emacs:<br  />
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-06 Wed 15:12</p>
+<p class="date">Created: 2019-02-07 Thu 18:04</p>
 <p class="creator"><a href="http://www.gnu.org/software/emacs/">Emacs</a> 25.2.2 (<a href="http://orgmode.org">Org</a> mode 8.2.10)</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>

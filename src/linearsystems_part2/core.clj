@@ -36,11 +36,18 @@
                                           (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
 
 (defn raise-rank
-  "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)"
-  [input-matrix]
-  (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
-      (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
-            input-matrix)))
+  "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
+  Optionally pass in a RANK variable to pad with that many rows (default: 1)"
+  ([input-matrix]
+   (raise-rank input-matrix 1))
+  ([input-matrix rank]
+   (if (zero? rank)
+     input-matrix
+     (raise-rank
+      (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
+                  (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
+                              input-matrix))
+      (dec rank)))))
 
 (defn raise-rank-and-insert-row
   "Takes a submatrix and put it's in the lower right corner of a larger matrix.
