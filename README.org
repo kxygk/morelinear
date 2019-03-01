@@ -1,15 +1,14 @@
 #+TITLE: Linear Systems - Part 2:  Clojure
-#+HTML_DOCTYPE: html5
 #+DESCRIPTION: Some linear algebra in Clojure - source at https://github.com/geokon-gh/linearsystems-part2
-#+OPTIONS: html-style:nil
 
+#+EXPORT_FILE_NAME: index.html
+#+HTML_DOCTYPE: html5
+#+HTML_LINK_UP: ..
+#+HTML_LINK_HOME: ..
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../static/worg.css" />
-#+options: num:nil
-# This will export a README.org file for Github, so that people that land in my repo know where to find the relevant webpage
 #+HTML_MATHJAX: path: "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"
-#+BEGIN_SRC org :tangle README.org :exports none :eval never
-  see description [[http://geokon-gh.github.io/linearsystems-part2/index.html][here]]
-#+END_SRC
+#+OPTIONS: html-style:nil
+#+OPTIONS: num:nil
 
 * Preface
 This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/linearsystems-part1/index.html][Part 1]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.

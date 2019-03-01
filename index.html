@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-02-22 五 18:01 -->
+<!-- 2019-03-01 五 18:27 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Linear Systems - Part 2:  Clojure</title>
@@ -80,31 +80,36 @@ for the JavaScript code in this tag.
         src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
-<div id="content">
+<div id="org-div-home-and-up">
+ <a accesskey="h" href=".."> UP </a>
+ |
+ <a accesskey="H" href=".."> HOME </a>
+</div><div id="content">
 <h1 class="title">Linear Systems - Part 2:  Clojure</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3cd0a36">Preface</a></li>
-<li><a href="#org0bb3a65">Project managment</a></li>
-<li><a href="#org0440444">Householder QR</a>
+<li><a href="#orgb73d454">Preface</a></li>
+<li><a href="#org6f9a67a">Project managment</a></li>
+<li><a href="#orgf407599">Householder QR</a>
 <ul>
-<li><a href="#orge36035d">elementary reflector</a></li>
-<li><a href="#orgacc623b">elementary coordinate reflector</a></li>
+<li><a href="#org4c90dcb">elementary reflector</a></li>
+<li><a href="#org03c1d3a">elementary coordinate reflector</a></li>
 </ul>
 </li>
-<li><a href="#org839dd3a">Least Squares again</a></li>
-<li><a href="#orgf360145">Reduction to Hessenberg Form</a></li>
-<li><a href="#orgd5adc4c"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#orge71e67c">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org54d6690">End</a></li>
+<li><a href="#org64d3ffc">Least Squares again</a></li>
+<li><a href="#org861a11f">Reduction to Hessenberg Form</a></li>
+<li><a href="#orgec387c4"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org3a3145e">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org8db04f2">End</a></li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org3cd0a36" class="outline-2">
-<h2 id="org3cd0a36">Preface</h2>
-<div class="outline-text-2" id="text-org3cd0a36">
+
+<div id="outline-container-orgb73d454" class="outline-2">
+<h2 id="orgb73d454">Preface</h2>
+<div class="outline-text-2" id="text-orgb73d454">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/linearsystems-part1/index.html">Part 1</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -123,9 +128,9 @@ Explaining Clojure is outside the scope of this project, but in short you will n
 </div>
 </div>
 
-<div id="outline-container-org0bb3a65" class="outline-2">
-<h2 id="org0bb3a65">Project managment</h2>
-<div class="outline-text-2" id="text-org0bb3a65">
+<div id="outline-container-org6f9a67a" class="outline-2">
+<h2 id="org6f9a67a">Project managment</h2>
+<div class="outline-text-2" id="text-org6f9a67a">
 <p>
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
 </p>
@@ -165,18 +170,18 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-org0440444" class="outline-2">
-<h2 id="org0440444">Householder QR</h2>
-<div class="outline-text-2" id="text-org0440444">
+<div id="outline-container-orgf407599" class="outline-2">
+<h2 id="orgf407599">Householder QR</h2>
+<div class="outline-text-2" id="text-orgf407599">
 <p>
 An alternate method to build a <b>QR</b> matrix is to take a more direct approach like in the <b>LU</b> and to zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal too. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were not  orthonormal so we didn't have this same guarantee (for a simple example consider row-addition: it's not orthogonal and its norm isn't equal to 1)
 </p>
 </div>
 
 
-<div id="outline-container-orge36035d" class="outline-3">
-<h3 id="orge36035d">elementary reflector</h3>
-<div class="outline-text-3" id="text-orge36035d">
+<div id="outline-container-org4c90dcb" class="outline-3">
+<h3 id="org4c90dcb">elementary reflector</h3>
+<div class="outline-text-3" id="text-org4c90dcb">
 <p>
 An elementary reflector is a special matrix/linear-system which when given a vector produces its reflection across a hyperplane. The hyperplane is orthogonal to some reference vector <b>u</b>. The textbook has a nice illustration for the <b>R<sup>3</sup></b> case , but to understand it in higher dimensions you need to break up the problem. The hyperplane you reflect over is the <i>not-in-span-of</i> <b>u</b> space. So in effect to get the reflection you are taking the component of your vector that's in the direction of <b>u</b> and subtracting it twice to create its reflection. If the input vector is <b>x</b> then:
 </p>
@@ -202,9 +207,9 @@ In matrix form we'd factor out the <b>x</b> and get <b>(I-2uu<sup>t</sup>/u<sup>
 </div>
 </div>
 
-<div id="outline-container-orgacc623b" class="outline-3">
-<h3 id="orgacc623b">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orgacc623b">
+<div id="outline-container-org03c1d3a" class="outline-3">
+<h3 id="org03c1d3a">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-org03c1d3a">
 <p>
 To build an upper triangular matrix we need to zero out values below the diagonal. The way we're going to do is by reflecting those columns onto coordinate axis. Ocne a vector is on a coordinate axis then its other components are naturally zero!
 </p>
@@ -457,9 +462,9 @@ But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need
 </div>
 </div>
 
-<div id="outline-container-org839dd3a" class="outline-2">
-<h2 id="org839dd3a">Least Squares again</h2>
-<div class="outline-text-2" id="text-org839dd3a">
+<div id="outline-container-org64d3ffc" class="outline-2">
+<h2 id="org64d3ffc">Least Squares again</h2>
+<div class="outline-text-2" id="text-org64d3ffc">
 <p>
 While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
 </p>
@@ -474,9 +479,9 @@ Notice that we did that all in theoretical equation form and how we've avoided h
 </div>
 </div>
 
-<div id="outline-container-orgf360145" class="outline-2">
-<h2 id="orgf360145">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-orgf360145">
+<div id="outline-container-org861a11f" class="outline-2">
+<h2 id="org861a11f">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-org861a11f">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -585,17 +590,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-orgd5adc4c" class="outline-2">
-<h2 id="orgd5adc4c"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-orgd5adc4c">
+<div id="outline-container-orgec387c4" class="outline-2">
+<h2 id="orgec387c4"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-orgec387c4">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orge71e67c" class="outline-2">
-<h2 id="orge71e67c">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-orge71e67c">
+<div id="outline-container-org3a3145e" class="outline-2">
+<h2 id="org3a3145e">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org3a3145e">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-template</span>
 <span style="color: #cc0000;">"template"</span>
@@ -606,9 +611,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-org54d6690" class="outline-2">
-<h2 id="org54d6690">End</h2>
-<div class="outline-text-2" id="text-org54d6690">
+<div id="outline-container-org8db04f2" class="outline-2">
+<h2 id="org8db04f2">End</h2>
+<div class="outline-text-2" id="text-org8db04f2">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
@@ -630,7 +635,7 @@ Once opened in Emacs:<br>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-02-22 五 18:01</p>
+<p class="date">Created: 2019-03-01 五 18:27</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
