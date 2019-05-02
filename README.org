@@ -1,5 +1,5 @@
 #+TITLE: Linear Systems - Part 2:  Clojure
-#+DESCRIPTION: Some linear algebra in Clojure - source at https://github.com/geokon-gh/linearsystems-part2
+#+DESCRIPTION: Some linear algebra in Clojure
 
 #+EXPORT_FILE_NAME: index.html
 #+HTML_DOCTYPE: html5
@@ -13,94 +13,141 @@
 * Preface
 This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/linearsystems-part1/index.html][Part 1]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 
-To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default ~core.matrix~ library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+** Neanderthal
+To carry on working a bit less encumbered with my own mistakes and to push my comfort zone a bit, I've switched over to Clojure and the ~neanderthal~ library. The library provides a wrapper for the Intel ~BLAS~ library called ~Intel MKL~. It's probably the most optimized solution out there for running linear algebra on the CPU. If you look at [[https://neanderthal.uncomplicate.org/codox/uncomplicate.neanderthal.core.html][the documentation]], some additional functionality that I was missing is now available, but at the same time lots of little conveniences are missing. Typically this means that this functionality is either not a good idea to use on the CPU and we will need to look for alternate solutions, or there is no good general solution and we need to deal with it on a case-by-case basis.
 
-As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracker in the repository, (but is no necessary is you use Emacs)
+#+BEGIN_QUOTE
+*Note* I don't /actually/ know how to use BLAS/Neanderthal properly and I'm winging it and figuring things out as I go along. If there are mistakes please please make an issue
+#+END_QUOTE
 
-Explaining Clojure is outside the scope of this project, but in short you will need to install Java and [[http://leiningen.org/][Leiningen]]. After you have both, you just clone this repository, go into it, and run ~lein run~ to run the project or ~lein repl~ to start an interactive REPL session.
+As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracked in the repository, (but is not necessary is you use Emacs)
+
+Explaining Clojure is outside the scope of this project, but in short you will need to install Java and [[http://leiningen.org/][Leiningen]] and the intel MKL (on Ubuntu 18.10 and higher this is a lot easier b/c it's all available on the offical repo). After you have both, you just clone this repository, go into it, and run ~lein run~ to run the project or ~lein repl~ to start an interactive REPL session.
 
 * Project managment
-Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
+Project management in Clojure is done through a top level ~project.clj~ file which specifies dependencies and other destails.
 #+BEGIN_SRC clojure :results output silent :session :tangle project.clj
-(defproject linearsystems-part2 "0.1.0-SNAPSHOT"
-  :description "linea-systems in Clojure"
-  :url "http://geokon-gh.github.io/linearsystems-part2/index.html"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [
-                 [org.clojure/clojure "1.9.0"]
-                 [net.mikera/core.matrix "0.62.0"]]
-  :main ^:skip-aot linearsystems-part2.core
-  :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  (defproject linearsystems-part2 "0.1.0-SNAPSHOT"
+    :description "linea-systems in Clojure"
+    :url "http://geokon-gh.github.io/linearsystems-part2/index.html"
+    :license {:name "Eclipse Public License"
+	      :url "http://www.eclipse.org/legal/epl-v10.html"}
+    :dependencies [[org.clojure/clojure "1.10.0"]
+		   [uncomplicate/neanderthal "0.22.0"]]
+    :main ^:skip-aot linearsystems-part2.core
+    :target-path "target/%s"
+    :profiles {:uberjar {:aot :all}})
 
 #+END_SRC
 The rest of the code will live in ~src/core.clj~ as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
-We start by declaring the project namespace and including all of ~core.matrix~. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
+We start by declaring the project namespace and including all of ~neanderthal~. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (ns linearsystems-part2.core
-    (:require [clojure.core.matrix :refer :all])  ;[denisovan.core :as den]
+    (:use [uncomplicate.neanderthal core native])
     (:gen-class))
 
-  (defn -main
-    "I don't do a whole lot ... yet."
-    [& args]
-    (println "Hello, World!"))
+    (defn -main
+      "I don't do a whole lot ... yet."
+      [& args]
+      (println "Hello, World!"))
 
 #+END_SRC
 The ~-main~ is just a placeholder for the moment
+
 * Householder QR
-An alternate method to build a *QR* matrix is to take a more direct approach like in the *LU* and to zero out columns to build an upper triangular *R*. The difference from the *LU* is that now instead of using row operations to get zeroes we will restrict ourselves to using *elementary reflectors*. Their key property is that they are orthonormal, so when we carry out a series of reflections *Q_{1}Q_{2}..Q_{k}A* we can combine them into one matrix which will be guaranteed to be orthonormal too. In the *LU*'s Gaussian elimination the elementary matrices we used were not  orthonormal so we didn't have this same guarantee (for a simple example consider row-addition: it's not orthogonal and its norm isn't equal to 1)
+An alternate method to build a *QR* matrix is to take a more direct approach like we did for the *LU* case and to zero out columns to build an upper triangular *R*. The difference from the *LU* is that now instead of using row operations to get zeroes we will restrict ourselves to using *elementary reflectors*. Their key property is that they are orthonormal, so when we carry out a series of reflections *Q_{1}Q_{2}..Q_{k}A* we can combine them into one matrix which will be guaranteed to be orthonormal too. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this make some intuitive sense. In the *LU*'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of severl elementary matrices gives another elementary matrix.
 
 
 ** elementary reflector
-An elementary reflector is a special matrix/linear-system which when given a vector produces its reflection across a hyperplane. The hyperplane is orthogonal to some reference vector *u*. The textbook has a nice illustration for the *R^3* case , but to understand it in higher dimensions you need to break up the problem. The hyperplane you reflect over is the /not-in-span-of/ *u* space. So in effect to get the reflection you are taking the component of your vector that's in the direction of *u* and subtracting it twice to create its reflection. If the input vector is *x* then:
- - *u^{t}x* is the amount of *x* in the direction of *u* (a scalar)
- -  *uu^{t}x* is the vector component in the direction of *u* (a vector)
+
+An /elementary reflector/ is a matrix/linear-system which when given a vector produces its reflection across a /N-1/ dimensional hyperplane. In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. The textbook, on page 324, has a nice illustration for the *R^3* case. The key takeaway if you take a plane through the origin in 3D, there is one unique vector coming out of the origin that's orthogonal to this plane. This same property holds for higher dimensions. Defining a plane as a set of /N-1/ vectors is a bit clumsy and inconvenient for us. We can extend the 3D case and see that very /N-1/ dimensional hyperplane will have one unique orthogonal vector that fills out this remaining /N^[th}/ dimension. So to make our life a bit easier, instead of saying the elementary reflector reflects across a plane, we will say it reflects across a plane orthogonal to a given vector *u*. And the hyperplane will just be the /not-in-span-of/ *u* space. 
+
+Now given an input vector *x* to build its reflection across the hyperplane we get its component in the direction of *u* (the component orthogonal to the plane) and then subtract that component twice from itself to make a new vector that points at its reflection on the other side of the plane. The steps go as follows:
+ -  *u^{t}x*/||u||* is the amount of *x* in the direction of *u* (a scalar)
+ -  *uu^{t}x/||u||^{2}* is the vector component in the direction of *u* (a vector)
+ -  Here we can subsitute the inner product *u^{t}u* for *||u||^2* as they are equivalent and both scalars
  -  *uu^{t}x/u^{t}u* is the same vector normalized (a vector)
  -  *x - 2uu^{t}x/u^{t}u* is you subtracting that vector component twice to get the reflection
-In matrix form we'd factor out the *x* and get *(I-2uu^{t}/u^{t}u)x*
+ -  *(I-2uu^{t}/u^{t}u)x* is how we'd factor the *x* back out
+ -  *(I-2uu^{t}/u^{t}u)* is the remaining reflector matrix. It's defined uniquely by the *u* vector
+Now given any *x* we can multiply it by *(I-2uu^{t}/u^{t}u)* and get it's reflection across the hyperplane orthogonal to *u*. (We will see in the next section that we can't safely assume *u* is unit length - otherwise we could drop the normalizing inner product term)
+*** the code
+This will be our first foray into working with Intel BLAS and neanderthal and it's good to have a big picture understanding of how working with this library will be quite different from working in ELisp. First of all we will need to be a lot more conscious of where our data is and we will need to make more effort in avoiding any needless copying. The available functions are split into several general categories. There are functions that change data in place (they end in an ~!~), there are generally identical functions that will copy the result into a new matrix/vector/etc. and finally there are functions that provide a new interface to the same underlying data. 
+
+Next, unlike in MATLAB, vectors are not treated just as column matrices as you see in most literature. A good explanation of this design decision is here: https://github.com/mikera/core.matrix/wiki/Vectors-vs.-matrices and here: https://groups.google.com/d/topic/numerical-clojure/zebBCa68eTw/discussion
+
+To start we need to make an identity matrix. For some reason this isn't part of =Neanderthal= nor =IntelMKL=. I'm not quite sure why, maybe because depending on your use-case you will want to put it in a different matrix container (triangular, dense, symmetrical etc.). For our case we just use the diagonal. If this becomes problematic later we can revisit this
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn elementary-reflector
-    "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
-    [reflection-axis]
-    (let [dimension (dimension-count reflection-axis 0)]
-      (sub (identity-matrix dimension)
-           (mul (outer-product reflection-axis reflection-axis)
-                (/ 2 (length-squared reflection-axis))))))
+  (defn identity-matrix
+    "Create an identity matrix of DIMENSION"
+    [dimension]
+    (entry! (dgd dimension) 1))
+#+END_SRC
+ - ~dgd~ creates a /diagonal matrix/ (this is a more compact matrix representation than a full dense matrix)
+ - ~entry!~ set the values in the matrix to some value
+
+Next we will need to add a ~outer-product~ function to calculate the *uu^{t}* in our reflection matrix equation. Again, for some reason this isn't an existing function =neaderthal= or =Intel BLAS=
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (defn outer-product
+    "Returns the outer product of a vector"
+    [input-vector]
+    (let [dimension (dim input-vector)]
+      (mm (view-ge input-vector dimension 1) (view-ge input-vector 1 dimension))))
 #+END_SRC
 
-** elementary coordinate reflector
-To build an upper triangular matrix we need to zero out values below the diagonal. The way we're going to do is by reflecting those columns onto coordinate axis. Ocne a vector is on a coordinate axis then its other components are naturally zero!
+So given a ~vector~ input we will use ~view-ge~ to make it "look like" a column and row vector. The underlying data will remain the same and no additional computation should be done at this point, but the resulting column and row will behave exactly as a column and row should. Then we can carry out the outer product with ~mm~ which returns the result in a new matrix (an in-place mutliplication with ~mm!~ makes no sense and isn't possible)
 
-So now we would like to take this idea of the reflector matrix a bit further and find a way to construct one that will reflect the input vector straight on to a particular coordinate axis. So it needs to have an orthogonal hyperplane that's right between the vector and coordinate axis. This part is a bit hard to picture, but the equation for the vector orthogonal to the reflection plane is
+Next we write out the rest of the calculation and create an elementary reflector:
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+  (defn elementary-reflector
+    "Build a matrix that will reflect vectors across the hyperplane orthogonal to REFLECTION-AXIS"
+    [reflection-axis]
+    (let [outer-product-matrix (outer-product reflection-axis)]
+      (axpy!
+       (dia (identity-matrix (dim reflection-axis)))
+       (dia (scal! (/ -2 (dot reflection-axis reflection-axis))
+		   outer-product-matrix)))
+      outer-product-matrix))
+#+END_SRC
+
+ - ~dim~ returns the number of elements in the input vector
+ - ~axpy!~ in an in-place addition where the values are added to the second matrix. Here we're carrying out the subtraction step in *(I-2uu^{t}/u^{t}u)* . Since *I* is diagonal and we used ~dgd~ to put in a diagonal matrix, it wouldn't make sense to write the result in to it b/c the result will be non-diagonal, so we have *I* in the first term and the rest in the second term.
+ - ~dia~ makes the diagonal elements of a matrix look like a vector. Just like ~view-ge~ before, this is ust a new view to the same underlying data in the input matrix
+ - ~scal!~ is an in-place multiplication of a matrix by a scalar. Here the scalar is *-2/u^{t}u* and the matrix is the outer product *uu^{t}*.
+
+** elementary coordinate reflector
+Circling back to our original intent, we were trying to use reflectors to build an upper triangular matrix (the *Q* in the *QR*). And we were going to do this in a similar way to how we used Gaussian elimination to build the *L* matrix in the *LU* - ie. by taking our input matrix *A* and zeroing out values below the diagonal. If we just restricting ourselves for the time being to the first column in our input matrix, ie. *A_{*,1}*, if we could build a special elementary reflector *Q_{1}* that reflected it on to the elementary vector *e_{1}* (that's *[ 1 0 0 0.. 0 ]* ), then natrually we could write out *Q_{1}A_{*,1}=e_{1}* and furthermore if we multiply it agains the full matrix *A*, ie. *Q_{1}A*, then the first column would be zeroed out! So this would be a good first step
+
+So lets write a function that will take a vector and reflect it onto a coordinate axis. Then we will give it the first column vector and get *Q_{1}*. To make this works, what we need to do is find the hyperplane that lies between the vector and the coordinate axis. If we build a reflector matrix based on this hyper plane then the vector will reflect onto the coordinate axis and vice versa.
+
+The part is a bit hard to picture, but if you have two vectors and you want to make a plane that goes right between them, then you can make the two vectors the same length and add them together. This will give you a vector that goes right between the two. If however you subtract these two equal-length vectors, then you will get a vector orthogonal to that bisection vector/plane.
+
 \begin{equation}
-u = x + sign(x_{1})||x||e_{1}
+u = x - sign(x_{1})||x||e_{1}
 \end{equation}
-Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to reflect. *sign(x)||x||e_{1}* is a vector on the coordinate axis that's stretched out so that it forms a sort of isosceles triangle with *x* (in higher dimension...). Since we want the result to lie on *e_{1}* we want to reflect *x* on the line/hyperplane bisecting this triangle. The bisecting line of a isosceles triangle is perpendicular to its base - so it's perfect for our *u*! And it so happens that the the equation for the base is the equation we have
+
+And this is precisely the orthogonal vector we need to feed in to our previous function to build a reflector
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn elementary-coordinate-reflector
-   "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
-   [input-vector coordinate-axis] 
-   (let [vector-orthogonal-to-reflection-plane
-         (sub input-vector
-              (mul coordinate-axis
-                   (length input-vector)))]
-     (if (zero-matrix? vector-orthogonal-to-reflection-plane)
-       ;; degenerate case where the input is on the coordinate axis
-       (identity-matrix (dimension-count input-vector 0))
-       ;; normal case
-       (elementary-reflector vector-orthogonal-to-reflection-plane))))
-
+    "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
+    [input-vector coordinate-axis]
+    (scal! (nrm2 input-vector) coordinate-axis)   ; scale coordinate axis
+    (if (= input-vector coordinate-axis) ; degenerate case
+      (identity-matrix (dim input-vector))                           ; return identity matrix
+      (do (axpy! -1                      ; make input-vector orthogonal to the bisecting plane
+		 coordinate-axis
+		 input-vector)
+	  (elementary-reflector input-vector)))) ; return the reflector
 #+END_SRC
 
 So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix *R* of the *QR*. If we directly start to zero out things column after column with reflectors like we did in the *LU* case we would get an equation of the form  *Q^{-1}_{k}..Q^{-1}_{2}Q^{-1}_{1}A=R*. For the first column we can already write a *Q^{-1}_{1}* that will clear the terms under the first term
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn first-elementary-coordinate-reflector
-    "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
-    [input-vector]
-    (elementary-coordinate-reflector input-vector
-                                            (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
+  ;; (defn first-elementary-coordinate-reflector
+  ;;   "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
+  ;;   [input-vector]
+  ;;   (elementary-coordinate-reflector input-vector
+  ;;                                          (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
 #+END_SRC
 
 But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
@@ -185,19 +232,19 @@ R\\
 
 So we just need a simple function to take a *Q_{s}* and pad it with these zeroes to build our *Q_{rest}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn raise-rank
-    "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
-    Optionally pass in a RANK variable to pad with that many rows (default: 1)"
-    ([input-matrix]
-     (raise-rank input-matrix 1))
-    ([input-matrix rank]
-     (if (zero? rank)
-       input-matrix
-       (raise-rank
-        (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
-                    (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
-                                input-matrix))
-        (dec rank)))))
+  ;; (defn raise-rank
+  ;;   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
+  ;;   Optionally pass in a RANK variable to pad with that many rows (default: 1)"
+  ;;   ([input-matrix]
+  ;;    (raise-rank input-matrix 1))
+  ;;   ([input-matrix rank]
+  ;;    (if (zero? rank)
+  ;;      input-matrix
+  ;;      (raise-rank
+  ;;       (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
+  ;;                   (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
+  ;;                               input-matrix))
+  ;;       (dec rank)))))
 #+END_SRC
 
 *R_{s}*, the product of reducing the submatrix *Q_{1}A* can be similarly used to build *R*, however if you break up the *Q_{1}A* into block matrices you will see that the first row of *Q_{1}A* is in effect preserved and needs to be copied over
@@ -230,53 +277,53 @@ R\\
 So we similarly need a little helper function here to "augment" *R_{s}* to *R* but with the first row inserted manually from *Q_{1}A* (done in-code late)
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
 
-  (defn raise-rank-and-insert-row-column
-    "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-    The submatrix is 1 row and column smaller.
-    First insert a column (size of input-matrix  and then a row (size + 1)"
-    [input-matrix insert-column insert-row]
-    (join-along 0 (row-matrix insert-row)
-                (join-along 1 (column-matrix insert-column)
-                            input-matrix)))
+  ;; (defn raise-rank-and-insert-row-column
+  ;;   "Takes a submatrix and put it's in the lower right corner of a larger matrix.
+  ;;   The submatrix is 1 row and column smaller.
+  ;;   First insert a column (size of input-matrix  and then a row (size + 1)"
+  ;;   [input-matrix insert-column insert-row]
+  ;;   (join-along 0 (row-matrix insert-row)
+  ;;               (join-along 1 (column-matrix insert-column)
+  ;;                           input-matrix)))
 
-  (defn raise-rank-and-insert-row
-    "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-    The submatrix is 1 row and column smaller
-    First insert a column of zeroes and then the passed in row (size + 1)"
-        [input-matrix insert-row]
-        (raise-rank-and-insert-row-column
-         input-matrix
-         (zero-vector (column-count input-matrix))
-         insert-row))
+  ;; (defn raise-rank-and-insert-row
+  ;;   "Takes a submatrix and put it's in the lower right corner of a larger matrix.
+  ;;   The submatrix is 1 row and column smaller
+  ;;   First insert a column of zeroes and then the passed in row (size + 1)"
+  ;;       [input-matrix insert-row]
+  ;;       (raise-rank-and-insert-row-column
+  ;;        input-matrix
+  ;;        (zero-vector (column-count input-matrix))
+  ;;        insert-row))
 #+END_SRC
 
 But ofcourse we don't have the *Q_{s}R_{s}* yet, so we need to think of this method recursively. *Q_{s}R_{s}* is just the *Q^{-1}R* of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of *Q_{1}A* and  we have both *Q_{1}* and *A* . Once we have the submatrix, we call this procedure again and again we we will make a new *Q_{1}* - but now for this smaller matrix. Then again we get a *Q_{1}A* for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the *Q_{1}* will be the full *Q^{-1}* of *A* and *Q_{1}A = Q^{-1}A = R*. So going up a step you will finally have a  *Q_{s}* and so we know how to build a *Q^{-1}R*. This gives us the *Q_{s}* for the step before that, and we just continue going back and building up our *Q^{-1}R* one submatrix at a time till we are left with the full *Q^{-1}R*
 
 *R* is built up similarly in parallel
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn householder-QR
-    "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
-    [input-matrix]
-    (let [reflector-to-zero-out-first-column
-          (first-elementary-coordinate-reflector (get-column input-matrix 0))
-          input-matrix-with-first-column-zeroed-out
-          (mmul reflector-to-zero-out-first-column input-matrix)]
-      (if
-          ;; Base Case: We're out of columns/rows to reduce
-          ;;            Return the reflector and the reduced column
-          (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-          [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
-          ;; Recursive step: Get the Q^{-1}R of the submatrix
-          ;;                 Then and combine it with your reflector and reduced matrix
-          (let [submatrix (submatrix
-                           input-matrix-with-first-column-zeroed-out
-                           1 (dec (row-count input-matrix))
-                           1 (dec (column-count input-matrix)))
-                [submatrix-Q submatrix-R] (householder-QR submatrix)]
-            [(mmul (raise-rank submatrix-Q)
-                   reflector-to-zero-out-first-column)
-             (raise-rank-and-insert-row submatrix-R
-                                        (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+  ;; (defn householder-QR
+  ;;   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
+  ;;   [input-matrix]
+  ;;   (let [reflector-to-zero-out-first-column
+  ;;         (first-elementary-coordinate-reflector (get-column input-matrix 0))
+  ;;         input-matrix-with-first-column-zeroed-out
+  ;;         (mmul reflector-to-zero-out-first-column input-matrix)]
+  ;;     (if
+  ;;         ;; Base Case: We're out of columns/rows to reduce
+  ;;         ;;            Return the reflector and the reduced column
+  ;;         (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+  ;;         [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
+  ;;         ;; Recursive step: Get the Q^{-1}R of the submatrix
+  ;;         ;;                 Then and combine it with your reflector and reduced matrix
+  ;;         (let [submatrix (submatrix
+  ;;                          input-matrix-with-first-column-zeroed-out
+  ;;                          1 (dec (row-count input-matrix))
+  ;;                          1 (dec (column-count input-matrix)))
+  ;;               [submatrix-Q submatrix-R] (householder-QR submatrix)]
+  ;;           [(mmul (raise-rank submatrix-Q)
+  ;;                  reflector-to-zero-out-first-column)
+  ;;            (raise-rank-and-insert-row submatrix-R
+  ;;                                       (get-row input-matrix-with-first-column-zeroed-out 0))]))))
 #+END_SRC
 
 * Least Squares again
@@ -336,44 +383,44 @@ A_{1,1} & A_{1,*} Q_{1,sub}\\
 
 As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-elementary-coordinate-reflector~  to get the appropriate *Q_{1,sub}*. Finally reusing ~raise rank~ we can build *Q_{1}*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn hessenberg-form-first-partial-reflector
-    "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
-    [input-matrix]
-    (if
-        ;; Degenerate Case: 1 x 1 matrix
-        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-      [[ 1 ]]
-    (let [first-column (get-column input-matrix 0)
-          subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
-          orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
-      (raise-rank orthogonal-reducer))))
+  ;; (defn hessenberg-form-first-partial-reflector
+  ;;   "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
+  ;;   [input-matrix]
+  ;;   (if
+  ;;       ;; Degenerate Case: 1 x 1 matrix
+  ;;       (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+  ;;     [[ 1 ]]
+  ;;   (let [first-column (get-column input-matrix 0)
+  ;;         subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
+  ;;         orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
+  ;;     (raise-rank orthogonal-reducer))))
 #+END_SRC
  Once we've chose our *Q_{1}* we calculate the submatrix *Q_{1} A_{1,*} Q_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (defn hessenberg-form-reduction
-    "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
-  [input-matrix]
-  (let [reflector-to-zero-out-first-column
-        (hessenberg-form-first-partial-reflector input-matrix)
-        input-matrix-with-first-column-zeroed-out
-        (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]
-    (if
-        ;; Base Case: We're out of columns/rows to reduce
-        ;;            Return the reflector and the reduced column
-        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
-        ;; Recursive step: Get the Q^{-1}R of the submatrix
-        ;;                 Then and combine it with your reflector and reduced matrix
-        (let [submatrix (submatrix
-                         input-matrix-with-first-column-zeroed-out
-                         1 (dec (row-count input-matrix))
-                         1 (dec (column-count input-matrix)))
-              [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]
-          [(mmul (raise-rank submatrix-P)
-                 reflector-to-zero-out-first-column)
-           (raise-rank-and-insert-row-column submatrix-H
-                                     (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))
-                                     (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+  ;; (defn hessenberg-form-reduction
+  ;;   "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
+  ;; [input-matrix]
+  ;; (let [reflector-to-zero-out-first-column
+  ;;       (hessenberg-form-first-partial-reflector input-matrix)
+  ;;       input-matrix-with-first-column-zeroed-out
+  ;;       (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]
+  ;;   (if
+  ;;       ;; Base Case: We're out of columns/rows to reduce
+  ;;       ;;            Return the reflector and the reduced column
+  ;;       (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
+  ;;       [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
+  ;;       ;; Recursive step: Get the Q^{-1}R of the submatrix
+  ;;       ;;                 Then and combine it with your reflector and reduced matrix
+  ;;       (let [submatrix (submatrix
+  ;;                        input-matrix-with-first-column-zeroed-out
+  ;;                        1 (dec (row-count input-matrix))
+  ;;                        1 (dec (column-count input-matrix)))
+  ;;             [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]
+  ;;         [(mmul (raise-rank submatrix-P)
+  ;;                reflector-to-zero-out-first-column)
+  ;;          (raise-rank-and-insert-row-column submatrix-H
+  ;;                                    (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))
+  ;;                                    (get-row input-matrix-with-first-column-zeroed-out 0))]))))
 #+END_SRC
 * TODOs
 - add some TODOs
