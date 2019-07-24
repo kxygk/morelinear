@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-23 Tue 18:01 -->
+<!-- 2019-07-25 Thu 07:43 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Linear Systems - Part 2:  Clojure</title>
@@ -91,44 +91,48 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3db92ca">Preface</a>
+<li><a href="#org4c85296">Preface</a>
 <ul>
-<li><a href="#org469ae62">Neanderthal</a></li>
+<li><a href="#orgea32694">Neanderthal</a></li>
 </ul>
 </li>
-<li><a href="#org4f0a484">Project managment</a></li>
-<li><a href="#org0613ecb">Householder QR</a>
+<li><a href="#org9235c5a">Project managment</a></li>
+<li><a href="#orgc6f03de">Householder QR</a>
 <ul>
-<li><a href="#org273d1a5">elementary reflector</a>
+<li><a href="#org32eb5e6">elementary reflector</a>
 <ul>
-<li><a href="#orgcaa5976">the code</a></li>
+<li><a href="#orge36bdd6">the code</a></li>
 </ul>
 </li>
-<li><a href="#org5223199">elementary coordinate reflector</a></li>
+<li><a href="#orgb469a98">elementary coordinate reflector</a></li>
+<li><a href="#orge168066">Zeroing the first column</a></li>
+<li><a href="#org07fd774">Zeroing out the second column</a>
+<ul>
+<li><a href="#orgacb19fc">Reducing to R in code</a></li>
 </ul>
 </li>
-<li><a href="#orgd96d4ee">Least Squares again</a></li>
-<li><a href="#org4952a8e">Reduction to Hessenberg Form</a></li>
-<li><a href="#org0e8de7b"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org2cf6ce8">SRC<sub>Block</sub> template</a></li>
-<li><a href="#orgaa38fcf">End</a></li>
+</ul>
+</li>
+<li><a href="#orge0e0735"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org09a2706">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org7d47db7">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org3db92ca" class="outline-2">
-<h2 id="org3db92ca">Preface</h2>
-<div class="outline-text-2" id="text-org3db92ca">
+<div id="outline-container-org4c85296" class="outline-2">
+<h2 id="org4c85296">Preface</h2>
+<div class="outline-text-2" id="text-org4c85296">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/linearsystems-part1/index.html">Part 1</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
 </div>
 
-<div id="outline-container-org469ae62" class="outline-3">
-<h3 id="org469ae62">Neanderthal</h3>
-<div class="outline-text-3" id="text-org469ae62">
+<div id="outline-container-orgea32694" class="outline-3">
+<h3 id="orgea32694">Neanderthal</h3>
+<div class="outline-text-3" id="text-orgea32694">
 <p>
-To carry on working a bit less encumbered with my own mistakes and to push my comfort zone a bit, I've switched over to Clojure and the <code>neanderthal</code> library. The library provides a wrapper for the Intel <code>BLAS</code> library called <code>Intel MKL</code>. It's probably the most optimized solution out there for running linear algebra on the CPU. If you look at <a href="https://neanderthal.uncomplicate.org/codox/uncomplicate.neanderthal.core.html">the documentation</a>, some additional functionality that I was missing is now available, but at the same time lots of little conveniences are missing. Typically this means that this functionality is either not a good idea to use on the CPU and we will need to look for alternate solutions, or there is no good general solution and we need to deal with it on a case-by-case basis.
+To carry on working a bit less encumbered with my own mistakes and to push my comfort zone a bit, I've switched over to Clojure and the <code>neanderthal</code> library. The library provides a wrapper for the Intel <code>BLAS</code> library called <code>Intel MKL</code>. It's probably the most optimized solution out there for running linear algebra on the CPU. If you look at <a href="https://neanderthal.uncomplicate.org/codox/uncomplicate.neanderthal.core.html">the documentation</a>, some additional functionality that I was missing is now available, but at the same time lots of little conveniences are missing. Typically this means that these features have performance issues and so we will need to look for alternatives.
 </p>
 
 <blockquote>
@@ -138,33 +142,33 @@ To carry on working a bit less encumbered with my own mistakes and to push my co
 </blockquote>
 
 <p>
-As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracked in the repository, (but is not necessary is you use Emacs)
+As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracked in the repository, (but is not necessary if you use Emacs)
 </p>
 
 <p>
-Explaining Clojure is outside the scope of this project, but in short you will need to install Java and <a href="http://leiningen.org/">Leiningen</a> and the intel MKL (on Ubuntu 18.10 and higher this is a lot easier b/c it's all available on the offical repo). After you have both, you just clone this repository, go into it, and run <code>lein run</code> to run the project or <code>lein repl</code> to start an interactive REPL session.
+Explaining Clojure is outside the scope of this project, but in short you will need to install Java and <a href="http://leiningen.org/">Leiningen</a> and the intel MKL (on Ubuntu 18.10 and higher this is a lot easier b/c it's all available in the offical repositories). After you have both installed, you just clone this repository, go into it, and run <code>lein run</code> to run the project or <code>lein repl</code> to start an interactive REPL session.
 </p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org4f0a484" class="outline-2">
-<h2 id="org4f0a484">Project managment</h2>
-<div class="outline-text-2" id="text-org4f0a484">
+<div id="outline-container-org9235c5a" class="outline-2">
+<h2 id="org9235c5a">Project managment</h2>
+<div class="outline-text-2" id="text-org9235c5a">
 <p>
-Project management in Clojure is done through a top level <code>project.clj</code> file which specifies dependencies and other destails.
+Project management in Clojure is done through a top level <code>leiningen</code> file <code>project.clj</code>  which specifies dependencies and other details.
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">defproject</span> <span style="color: #ef2929;">linearsystems-part2</span> <span style="color: #ff1f8b;">"0.1.0-SNAPSHOT"</span>
-  <span style="color: #1f5bff;">:description</span> <span style="color: #ff1f8b;">"linea-systems in Clojure"</span>
-  <span style="color: #1f5bff;">:url</span> <span style="color: #ff1f8b;">"http://geokon-gh.github.io/linearsystems-part2/index.html"</span>
-  <span style="color: #1f5bff;">:license</span> {<span style="color: #1f5bff;">:name</span> <span style="color: #ff1f8b;">"Eclipse Public License"</span>
-            <span style="color: #1f5bff;">:url</span> <span style="color: #ff1f8b;">"http://www.eclipse.org/legal/epl-v10.html"</span><span style="color: #999999;">}</span>
-  <span style="color: #1f5bff;">:dependencies</span> [[<span style="color: #18b2b2;">org.clojure</span>/clojure <span style="color: #ff1f8b;">"1.10.0"</span><span style="color: #999999;">]</span>
-                 [<span style="color: #18b2b2;">uncomplicate</span>/neanderthal <span style="color: #ff1f8b;">"0.22.0"</span><span style="color: #999999;">]]</span>
-  <span style="color: #1f5bff;">:main</span> ^<span style="color: #1f5bff;">:skip-aot</span> linearsystems-part2.core
-  <span style="color: #1f5bff;">:target-path</span> <span style="color: #ff1f8b;">"target/%s"</span>
-  <span style="color: #1f5bff;">:profiles</span> {<span style="color: #1f5bff;">:uberjar</span> {<span style="color: #1f5bff;">:aot</span> <span style="color: #1f5bff;">:all</span><span style="color: #999999;">}})</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defproject</span> <span style="color: #006699;">linearsystems-part2</span> <span style="color: #008000;">"0.1.0-SNAPSHOT"</span>
+  <span style="color: #D0372D;">:description</span> <span style="color: #008000;">"linea-systems in Clojure"</span>
+  <span style="color: #D0372D;">:url</span> <span style="color: #008000;">"http://geokon-gh.github.io/linearsystems-part2/index.html"</span>
+  <span style="color: #D0372D;">:license</span> {<span style="color: #D0372D;">:name</span> <span style="color: #008000;">"Eclipse Public License"</span>
+            <span style="color: #D0372D;">:url</span> <span style="color: #008000;">"http://www.eclipse.org/legal/epl-v10.html"</span><span style="color: #999999;">}</span>
+  <span style="color: #D0372D;">:dependencies</span> [[<span style="color: #6434A3;">org.clojure</span>/clojure <span style="color: #008000;">"1.10.0"</span><span style="color: #999999;">]</span>
+                 [<span style="color: #6434A3;">uncomplicate</span>/neanderthal <span style="color: #008000;">"0.22.0"</span><span style="color: #999999;">]]</span>
+  <span style="color: #D0372D;">:main</span> ^<span style="color: #D0372D;">:skip-aot</span> linearsystems-part2.core
+  <span style="color: #D0372D;">:target-path</span> <span style="color: #008000;">"target/%s"</span>
+  <span style="color: #D0372D;">:profiles</span> {<span style="color: #D0372D;">:uberjar</span> {<span style="color: #D0372D;">:aot</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">}})</span>
 
 </pre>
 </div>
@@ -173,72 +177,81 @@ The rest of the code will live in <code>src/core.clj</code> as is the convention
 We start by declaring the project namespace and including all of <code>neanderthal</code>. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">ns</span> <span style="color: #18b2b2;">linearsystems-part2.core</span>
-  (<span style="color: #1f5bff;">:use</span> [uncomplicate.neanderthal core native<span style="color: #999999;">])</span>
-  (<span style="color: #1f5bff;">:gen-class</span><span style="color: #999999;">))</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">linearsystems-part2.core</span>
+  (<span style="color: #D0372D;">:use</span> [uncomplicate.neanderthal core native<span style="color: #999999;">])</span>
+  (<span style="color: #D0372D;">:gen-class</span><span style="color: #999999;">))</span>
 
-  (<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">-main</span>
-    <span style="color: #cc0000;">"I don't do a whole lot ... yet."</span>
-    [&amp; args<span style="color: #999999;">]</span>
-    (println <span style="color: #ff1f8b;">"Hello, World!"</span><span style="color: #999999;">))</span>
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">-main</span>
+  <span style="color: #036A07;">"I don't do a whole lot ... yet."</span>
+  [&amp; args<span style="color: #999999;">]</span>
+  (println <span style="color: #008000;">"Hello, World!"</span><span style="color: #999999;">))</span>
 
 </pre>
 </div>
 <p>
-The <code>-main</code> is just a placeholder for the moment
+The <code>-main</code> is just a placeholder for the moment. With the setup out of the way, we can move on to the actual matrix magic
 </p>
 </div>
 </div>
 
-<div id="outline-container-org0613ecb" class="outline-2">
-<h2 id="org0613ecb">Householder QR</h2>
-<div class="outline-text-2" id="text-org0613ecb">
+<div id="outline-container-orgc6f03de" class="outline-2">
+<h2 id="orgc6f03de">Householder QR</h2>
+<div class="outline-text-2" id="text-orgc6f03de">
 <p>
-An alternate method to build a <b>QR</b> matrix is to take a more direct approach like we did for the <b>LU</b> case and to zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal too. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this make some intuitive sense. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of severl elementary matrices gives another elementary matrix.
+An alternate method to the Gram-Schmidt is to take a more direct approach to building a <b>QR</b> matrix - similar to how we worked on building the <b>LU</b>. We will just directly zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal as well. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this makes some intuitive sense. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of several elementary matrices gives another elementary matrix.
 </p>
 </div>
 
 
-<div id="outline-container-org273d1a5" class="outline-3">
-<h3 id="org273d1a5">elementary reflector</h3>
-<div class="outline-text-3" id="text-org273d1a5">
+<div id="outline-container-org32eb5e6" class="outline-3">
+<h3 id="org32eb5e6">elementary reflector</h3>
+<div class="outline-text-3" id="text-org32eb5e6">
 <p>
-An <i>elementary reflector</i> is a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane. In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. The textbook, on page 324, has a nice illustration for the <b>R<sup>3</sup></b> case. The key takeaway if you take a plane through the origin in 3D, there is one unique vector coming out of the origin that's orthogonal to this plane. This same property holds for higher dimensions. Defining a plane as a set of <i>N-1</i> vectors is a bit clumsy and inconvenient for us. We can extend the 3D case and see that very <i>N-1</i> dimensional hyperplane will have one unique orthogonal vector that fills out this remaining <i>N^[th}</i> dimension. So to make our life a bit easier, instead of saying the elementary reflector reflects across a plane, we will say it reflects across a plane orthogonal to a given vector <b>u</b>. And the hyperplane will just be the <i>not-in-span-of</i> <b>u</b> space. 
+An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane. In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
 
 <p>
-Now given an input vector <b>x</b> to build its reflection across the hyperplane we get its component in the direction of <b>u</b> (the component orthogonal to the plane) and then subtract that component twice from itself to make a new vector that points at its reflection on the other side of the plane. The steps go as follows:
+The first task is finding a nice concise mechanism to define a hyperplane. If our space is <b>R<sup>N</sup></b> then the hyperplane will be <b>N-1</b> dimensions and at first blush we seem to need <b>N-1</b> vectors to define it. For instance in <b>3D</b> space any two vectors not on the same line will define a <b>2D</b>. Where <b>plane = a*v<sub>1</sub> + b*v<sub>2</sub></b> <i>for all a and b</i>. But this method doesn't really scale b/c as <b>N</b> increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we just choose one, call it <b>u</b>, and let it represent that remaining <b>N<sup>th</sup></b> dimension. Now you can simply say that the hyperplane is all vectors orthogonal to <b>u</b>. Or more formally, all vectors <i>not-in-the-span</i> of <b>u</b> are the hyperplane
+</p>
+
+<p>
+Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector <b>x</b> across the hyperplane. The key insight here is that <b>x</b> can be treated as two separate vectors. One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is basically flipped to point to the other side of the plane. To do this procedure mathematically we take the component of <b>x</b> in the direction of the <b>u</b> that defines our plane and then we subtract it twice from <b>x</b>. This will give us a new vector that points at its own reflection on the other side of the plane. Breaking it down further, the steps go as followed:
 </p>
 <ul class="org-ul">
 <li><b>u<sup>t</sup>x*/||u||</b> is the amount of <b>x</b> in the direction of <b>u</b> (a scalar)</li>
-<li><b>uu<sup>t</sup>x/||u||<sup>2</sup></b> is the vector component in the direction of <b>u</b> (a vector)</li>
-<li>Here we can subsitute the inner product <b>u<sup>t</sup>u</b> for <b>||u||<sup>2</sup></b> as they are equivalent and both scalars</li>
-<li><b>uu<sup>t</sup>x/u<sup>t</sup>u</b> is the same vector normalized (a vector)</li>
-<li><b>x - 2uu<sup>t</sup>x/u<sup>t</sup>u</b> is you subtracting that vector component twice to get the reflection</li>
+<li><b>uu<sup>t</sup>x/||u||<sup>2</sup></b> is the component <b>x</b> in the direction of <b>u</b> (a vector)</li>
+<li>Here we notice that we can subsitute the inner product <b>u<sup>t</sup>u</b> for <b>||u||<sup>2</sup></b></li>
+<li><b>uu<sup>t</sup>x/u<sup>t</sup>u</b></li>
+<li><b>x - 2uu<sup>t</sup>x/u<sup>t</sup>u</b> is you subtracting that vector component twice to get its reflection</li>
 <li><b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)x</b> is how we'd factor the <b>x</b> back out</li>
-<li><b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> is the remaining reflector matrix. It's defined uniquely by the <b>u</b> vector</li>
+<li><b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> represents the reflector matrix. It's defined uniquely by the <b>u</b> vector!</li>
 </ul>
 <p>
-Now given any <b>x</b> we can multiply it by <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> and get it's reflection across the hyperplane orthogonal to <b>u</b>. (We will see in the next section that we can't safely assume <b>u</b> is unit length - otherwise we could drop the normalizing inner product term)
+Note that now that we factored out this matrix that given any new value of <b>x</b> we can multiply it by <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> and get its reflection across the hyperplane orthogonal to <b>u</b>. 
+</p>
+
+<p>
+<b>Note:</b> We will see in the next section that we can't safely assume <b>u</b> is unit length - otherwise we could drop the normalizing inner product term and everything would look much cleaner.
 </p>
 </div>
-<div id="outline-container-orgcaa5976" class="outline-4">
-<h4 id="orgcaa5976">the code</h4>
-<div class="outline-text-4" id="text-orgcaa5976">
+
+<div id="outline-container-orge36bdd6" class="outline-4">
+<h4 id="orge36bdd6">the code</h4>
+<div class="outline-text-4" id="text-orge36bdd6">
 <p>
-This will be our first foray into working with Intel BLAS and neanderthal and it's good to have a big picture understanding of how working with this library will be quite different from working in ELisp. First of all we will need to be a lot more conscious of where our data is and we will need to make more effort in avoiding any needless copying. The available functions are split into several general categories. There are functions that change data in place (they end in an <code>!</code>), there are generally identical functions that will copy the result into a new matrix/vector/etc. and finally there are functions that provide a new interface to the same underlying data. 
+This will be our first foray into working with Intel BLAS and neanderthal and it's good to have a big picture understanding of how working with this library will be quite different from working in ELisp. First of all we will need to be a lot more conscious of where our data is and we will need to make more effort in avoiding any needless copying. The available functions are split into several general categories. There are functions that change data in place (they end in an <code>!</code>), there are generally identical functions that will copy the result into a new matrix/vector/etc. and finally there are functions that don't copy or write anything but simply return a new interface to the same underlying data.
 </p>
 
 <p>
-Next, unlike in MATLAB, vectors are not treated just as column matrices as you see in most literature. A good explanation of this design decision is here: <a href="https://github.com/mikera/core.matrix/wiki/Vectors-vs.-matrices">https://github.com/mikera/core.matrix/wiki/Vectors-vs.-matrices</a> and here: <a href="https://groups.google.com/d/topic/numerical-clojure/zebBCa68eTw/discussion">https://groups.google.com/d/topic/numerical-clojure/zebBCa68eTw/discussion</a>
+Next, unlike in MATLAB, vectors are not treated just as column matrices as you see in most literature. At first this is a bit annoying, but the rational is sound and a good explanation of this design decision is here: <a href="https://github.com/mikera/core.matrix/wiki/Vectors-vs.-matrices">https://github.com/mikera/core.matrix/wiki/Vectors-vs.-matrices</a> and here: <a href="https://groups.google.com/d/topic/numerical-clojure/zebBCa68eTw/discussion">https://groups.google.com/d/topic/numerical-clojure/zebBCa68eTw/discussion</a>
 </p>
 
 <p>
-To start we need to make an identity matrix. For some reason this isn't part of <code>Neanderthal</code> nor <code>IntelMKL</code>. I'm not quite sure why, maybe because depending on your use-case you will want to put it in a different matrix container (triangular, dense, symmetrical etc.). For our case we just use the diagonal. If this becomes problematic later we can revisit this
+To start we need to make an identity matrix. For some reason this isn't part of <code>Neanderthal</code> nor <code>IntelMKL</code>. I'm not quite sure why, maybe because depending on your use-case you will want to put it in a different matrix container (triangular, dense, symmetrical etc.). In any case.. for our usecase we will just use the diagonal. If this becomes problematic later we can revisit this:
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">identity-matrix</span>
-  <span style="color: #cc0000;">"Create an identity matrix of DIMENSION"</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">identity-matrix</span>
+  <span style="color: #036A07;">"Create an identity matrix of DIMENSION"</span>
   [dimension<span style="color: #999999;">]</span>
   (entry! (dgd dimension) 1<span style="color: #999999;">))</span>
 </pre>
@@ -249,30 +262,30 @@ To start we need to make an identity matrix. For some reason this isn't part of 
 </ul>
 
 <p>
-Next we will need to add a <code>outer-product</code> function to calculate the <b>uu<sup>t</sup></b> in our reflection matrix equation. Again, for some reason this isn't an existing function <code>neaderthal</code> or <code>Intel BLAS</code>
+Next we will need to add a <code>self-outer-product</code> function to calculate the <b>uu<sup>t</sup></b> in our reflection matrix equation. At first it seems like there doesn't existing a function for this <code>neaderthal</code> or <code>Intel BLAS</code> - but it's actually kinda hidden in the <code>(rk ..)</code>. This the <b>Rank 1 Update</b> function.. which is used to update <b>QR</b> decompositions when we get new data.
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">outer-product</span>
-  <span style="color: #cc0000;">"Returns the outer product of a vector"</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">self-outer-product</span>
+  <span style="color: #036A07;">"Returns the outer product of a vector with itself"</span>
   [input-vector<span style="color: #999999;">]</span>
-  (<span style="color: #00af00;">let</span> [dimension (dim input-vector<span style="color: #999999;">)]</span>
-    (mm (view-ge input-vector dimension 1) (view-ge input-vector 1 dimension<span style="color: #999999;">))))</span>
+  (view-sy (rk input-vector
+               input-vector<span style="color: #999999;">)))</span>
 </pre>
 </div>
 
 <p>
-So given a <code>vector</code> input we will use <code>view-ge</code> to make it "look like" a column and row vector. The underlying data will remain the same and no additional computation should be done at this point, but the resulting column and row will behave exactly as a column and row should. Then we can carry out the outer product with <code>mm</code> which returns the result in a new matrix (an in-place mutliplication with <code>mm!</code> makes no sense and isn't possible)
+We have an added guarantee that the result with be symmetric b/c <b>(uu<sup>t</sup>)<sup>t</sup>=uu<sup>t</sup></b> so we can wrap the output in a <code>view-sy</code> which will make the result show up as a symmetric matrix.
 </p>
 
 <p>
-Next we write out the rest of the calculation and create an elementary reflector:
+Now that we have all the pieces we need we write out the equation for the elementary reflector. Give a <b>u</b> it'll return a reflector matrix.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">elementary-reflector</span>
-  <span style="color: #cc0000;">"Build a matrix that will reflect vectors across the hyperplane orthogonal to REFLECTION-AXIS"</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-reflector</span>
+  <span style="color: #036A07;">"Build a matrix that will reflect vectors across the hyperplane orthogonal to REFLECTION-AXIS"</span>
   [reflection-axis<span style="color: #999999;">]</span>
-  (<span style="color: #00af00;">let</span> [outer-product-matrix (outer-product reflection-axis<span style="color: #999999;">)]</span>
+  (<span style="color: #0000FF;">let</span> [outer-product-matrix (self-outer-product reflection-axis<span style="color: #999999;">)]</span>
     (axpy!
      (dia (identity-matrix (dim reflection-axis<span style="color: #999999;">)))</span>
      (dia (scal! (/ -2 (dot reflection-axis reflection-axis<span style="color: #999999;">))</span>
@@ -283,82 +296,195 @@ Next we write out the rest of the calculation and create an elementary reflector
 
 <ul class="org-ul">
 <li><code>dim</code> returns the number of elements in the input vector</li>
-<li><code>axpy!</code> in an in-place addition where the values are added to the second matrix. Here we're carrying out the subtraction step in <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> . Since <b>I</b> is diagonal and we used <code>dgd</code> to put in a diagonal matrix, it wouldn't make sense to write the result in to it b/c the result will be non-diagonal, so we have <b>I</b> in the first term and the rest in the second term.</li>
-<li><code>dia</code> makes the diagonal elements of a matrix look like a vector. Just like <code>view-ge</code> before, this is ust a new view to the same underlying data in the input matrix</li>
+<li><code>axpy!</code> in an in-place addition where the values are added "in-place" to the second matrix/vector. Here we're carrying out the subtraction step in <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b></li>
+<li><code>dia</code> makes the diagonal elements of a matrix look like a vector. This is just a new view to the same underlying data in the input matrix so that even though we're adding 2 sectors it's actually adding the diagonal elements of the matrices under the hood.</li>
 <li><code>scal!</code> is an in-place multiplication of a matrix by a scalar. Here the scalar is <b>-2/u<sup>t</sup>u</b> and the matrix is the outer product <b>uu<sup>t</sup></b>.</li>
 </ul>
-</div>
-</div>
+
+<p>
+For example:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(elementary-reflector (dv [43.0 36.0 38.0 90.0<span style="color: #999999;">]))</span>
+
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealUploMatrix[double, type:sy, mxn:4x4, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#8595;       &#8595;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.71    *       *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.24    0.80    *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.26   -0.22    0.77    *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.61   -0.51   -0.54   -0.28         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;                                       &#9499;   </span>
+
+
+(mm (elementary-reflector (dv [43.0 36.0 38.0 90.0<span style="color: #999999;">]))</span>
+  (dge 4
+       1
+       (dv [43.0 36.0 38.0 90.0<span style="color: #999999;">])))</span>
+
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealGEMatrix[double, mxn:4x1, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;     -43.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;     -36.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;     -38.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;     -90.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;               &#9499;  </span>
+</pre>
 </div>
 
-<div id="outline-container-org5223199" class="outline-3">
-<h3 id="org5223199">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-org5223199">
 <p>
-Circling back to our original intent, we were trying to use reflectors to build an upper triangular matrix (the <b>Q</b> in the <b>QR</b>). And we were going to do this in a similar way to how we used Gaussian elimination to build the <b>L</b> matrix in the <b>LU</b> - ie. by taking our input matrix <b>A</b> and zeroing out values below the diagonal. If we just restricting ourselves for the time being to the first column in our input matrix, ie. <b>A_{</b>,1}*, if we could build a special elementary reflector <b>Q<sub>1</sub></b> that reflected it on to the elementary vector <b>e<sub>1</sub></b> (that's <b>[ 1 0 0 0.. 0 ]</b> ), then natrually we could write out <b>Q<sub>1</sub>A_{</b>,1}=e<sub>1</sub>* and furthermore if we multiply it agains the full matrix <b>A</b>, ie. <b>Q<sub>1</sub>A</b>, then the first column would be zeroed out! So this would be a good first step
+This is subtle, but important: Notice how the output of <code>(elementary-reflector .. )</code> shows up as <code>#RealUploMatrix[..]</code> ie. as a symmetric matrix. Neanderthal has cascaded the original symmetric matrix <i>type</i> from <code>self-outer-product</code> all the way through all the operations we did b/c it knows they didn't change the symmetry. This is very powerful and useful! You can just imagine having to juggle the types in C/C++ .. 
 </p>
 
 <p>
-So lets write a function that will take a vector and reflect it onto a coordinate axis. Then we will give it the first column vector and get <b>Q<sub>1</sub></b>. To make this works, what we need to do is find the hyperplane that lies between the vector and the coordinate axis. If we build a reflector matrix based on this hyper plane then the vector will reflect onto the coordinate axis and vice versa.
+<b>TODO</b> - Include Plot
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgb469a98" class="outline-3">
+<h3 id="orgb469a98">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-orgb469a98">
+<p>
+Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>Q</b> in the <b>QR</b>). 
 </p>
 
 <p>
-The part is a bit hard to picture, but if you have two vectors and you want to make a plane that goes right between them, then you can make the two vectors the same length and add them together. This will give you a vector that goes right between the two. If however you subtract these two equal-length vectors, then you will get a vector orthogonal to that bisection vector/plane.
+The first thing we want to do is have a method to zero out the first column of a matrix, ie <b>A<sub> - ,1</sub></b>, If we could build a special elementary reflector <b>Q<sub>1</sub></b> that reflected that first column on to the elementary vector <b>e<sub>1</sub></b> (that's <b>[ 1 0 0 0.. 0 ]</b> ), then <b>Q<sub>1</sub>A</b> would leave everything under the the first column zeroed out
+</p>
+
+<p>
+Generalizing a bit further, we will write a function that take a given vector and a target coordinate axis and produce a reflection matrix that takes one to the other. This is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. The answer isn't all that complicated, but it's a bit hard to picture. We want to find the plane that lies between where we start and where we want to reflect to. If you have two vectors and you want to make a plane that goes right between them, then all you need to do is make the two vectors the same length and add them together. This will give you a vector that goes right between the two. If you picture it in 2D space then the two vectors add up into a diamond shape with the point lieing on the bisecting line. 
+</p>
+
+<p>
+The last catch is that to define out plane we actually want the orthogonal vector. However, if instead you subtract these two equal-length vectors, then you will find that you get a vector orthogonal to that bisection vector/plane.
 </p>
 
 \begin{equation}
-u = x - sign(x_{1})||x||e_{1}
+u = x - ||x||e_{1}
 \end{equation}
 
 <p>
-And this is precisely the orthogonal vector we need to feed in to our previous function to build a reflector
+Once you have the orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix!
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">elementary-coordinate-reflector</span>
-  <span style="color: #cc0000;">"Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-coordinate-reflector</span>
+  <span style="color: #036A07;">"Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"</span>
   [input-vector coordinate-axis<span style="color: #999999;">]</span>
-  (scal! (nrm2 input-vector) coordinate-axis)   <span style="color: #b2b2b2; font-style: italic;">; scale coordinate axis</span>
-  (<span style="color: #00af00;">if</span> (= input-vector coordinate-axis) <span style="color: #b2b2b2; font-style: italic;">; degenerate case</span>
-    (identity-matrix (dim input-vector))                           <span style="color: #b2b2b2; font-style: italic;">; return identity matrix</span>
-    (<span style="color: #00af00;">do</span> (axpy! -1                      <span style="color: #b2b2b2; font-style: italic;">; make input-vector orthogonal to the bisecting plane</span>
-               coordinate-axis
-               input-vector<span style="color: #999999;">)</span>
-        (elementary-reflector input-vector)))) <span style="color: #b2b2b2; font-style: italic;">; return the reflector</span>
+  (scal! (nrm2 input-vector) coordinate-axis)   <span style="color: #8D8D84; font-style: italic;">; scale coordinate axis</span>
+  (<span style="color: #0000FF;">if</span> (= input-vector coordinate-axis) <span style="color: #8D8D84; font-style: italic;">; degenerate case</span>
+    (identity-matrix (dim input-vector))                           <span style="color: #8D8D84; font-style: italic;">; return identity matrix</span>
+    (elementary-reflector (axpy -1                      <span style="color: #8D8D84; font-style: italic;">; make input-vector orthogonal to the bisecting plane</span>
+                                coordinate-axis
+                                input-vector<span style="color: #999999;">))))</span>
 </pre>
 </div>
-
 <p>
-So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix <b>R</b> of the <b>QR</b>. If we directly start to zero out things column after column with reflectors like we did in the <b>LU</b> case we would get an equation of the form  <b>Q<sup>-1</sup><sub>k</sub>..Q<sup>-1</sup><sub>2</sub>Q<sup>-1</sup><sub>1</sub>A=R</b>. For the first column we can already write a <b>Q<sup>-1</sup><sub>1</sub></b> that will clear the terms under the first term
+For instance we can take some random vector and say we want to reflect it onto the <b>e<sub>1</sub></b>
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure"><span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn first-elementary-coordinate-reflector</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">[input-vector]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(elementary-coordinate-reflector input-vector</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                                          </span><span style="color: #b2b2b2; font-style: italic;">(get-row (identity-matrix (dimension-count input-vector 0)) 0)))</span>
+<pre class="src src-clojure">(elementary-coordinate-reflector (dv [24 77 89 12]) (dv [1 0 0 0<span style="color: #999999;">]))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealUploMatrix[double, type:sy, mxn:4x4, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#8595;       &#8595;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.20    *       *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.64    0.49    *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.74   -0.59    0.32    *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.10   -0.08   -0.09    0.99         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;                                       &#9499;    </span>
+</pre>
+</div>
+<p>
+We got some seemingly random matrix out. If we then multiply it times out random vector, it reflects perfectly to <b>e<sub>1</sub></b>
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(mm (elementary-coordinate-reflector (dv [24 77 89 12<span style="color: #999999;">])</span>
+                                     (dv [1 0 0 0<span style="color: #999999;">]))</span>
+    (dge 4
+         1
+         (dv [24 77 89 12<span style="color: #999999;">])))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealGEMatrix[double, mxn:4x1, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;     120.71         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.00         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;               &#9499;    </span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge168066" class="outline-3">
+<h3 id="orge168066">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-orge168066">
+<p>
+Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-vector</span>
+  <span style="color: #036A07;">"Make an elemntary vector of INDEX and DIMENSION"</span>
+  [index dimension<span style="color: #999999;">]</span>
+  (dv (assoc (into [] (repeat dimension 0)) index 1<span style="color: #999999;">)))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">first-column-reflector</span>
+  <span style="color: #036A07;">"Build a matrix that will reflect the INPUT-MATRIX such that the first column end up on [ 1 0 0 .. 0 ]"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (elementary-coordinate-reflector (col input-matrix 0<span style="color: #999999;">)</span>
+                                   (elementary-vector 0 (mrows input-matrix<span style="color: #999999;">))))</span>
+
+<span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">(dv (assoc (into [] (repeat (mrows input-matrix) 0)) 0 1))</span>
 </pre>
 </div>
 
 <p>
-But the problem is that the subsequent <b>Q<sup>-1</sup><sub>i</sub></b>'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words <b>Q<sup>-1</sup><sub>1</sub></b> will reflect the first column onto <b>e<sub>1</sub></b>, but then the second reflector <b>Q<sup>-1</sup><sub>2</sub></b> will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write <b>Q<sup>-1</sup><sub>2</sub></b> so that it preserves the column of <b>Q<sup>-1</sup><sub>1</sub></b>
+Now we can test it by writing out a random matrix and zeroing out its first column
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(first-column-reflector (dge [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                              [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                              [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                              [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
+
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealUploMatrix[double, type:sy, mxn:4x4, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#8595;       &#8595;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.47    *       *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.23    0.90    *       *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.79   -0.35   -0.19    *            </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.31   -0.14   -0.46    0.82         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;                                       &#9499;  </span>
+
+(<span style="color: #0000FF;">let</span> [A (dge [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+              [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+              [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+              [28.0 38.0 73.0 20.0<span style="color: #999999;">]])]</span>
+  (mm (first-column-reflector A<span style="color: #999999;">)</span>
+      A<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">#RealGEMatrix[double, mxn:4x4, layout:column, offset:0]</span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9637;       &#8595;       &#8595;       &#8595;       &#8595;       &#9491;    </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      90.87   61.69  130.83   69.35         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.00   86.73   14.28   57.06         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;      -0.00  -25.64  -41.61   43.06         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#8594;       0.00   22.97   18.71   32.08         </span>
+<span style="color: #8D8D84;">;;    </span><span style="color: #8D8D84; font-style: italic;">&#9495;                                       &#9499;    </span>
+</pre>
+</div>
+
+<p>
+Now we hit a bit of a snag. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try <b>Q<sub>2Q</sub><sub>1A</sub></b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1A</sub></b>, but when you reflect it again it moves away from the coordinate vector.
 </p>
 
-<blockquote>
 <p>
-<b>Note</b>: That <b>Q<sup>-1</sup><sub>i</sub></b> = <b>Q<sup>T</sup><sub>i</sub></b> = <b>Q<sub>i</sub></b>  b/c <b>Q<sub>i</sub></b> is a reflector and therefore it's own inverse (reflecting something twice gets your the original back). So <b>Q<sup>-1</sup><sub>i</sub></b> and <b>Q<sub>i</sub></b> can be used interchangeably.
+In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (it would just shuffling zeroes around). Now this guarantee is gone so we need to think of a new trick.
 </p>
+</div>
+</div>
 
+<div id="outline-container-org07fd774" class="outline-3">
+<h3 id="org07fd774">Zeroing out the second column</h3>
+<div class="outline-text-3" id="text-org07fd774">
 <p>
-Furthermore <b>Q<sup>-1</sup></b> = <b>(Q<sub>1</sub> Q<sub>2</sub> Q<sub>3</sub> &#x2026; Q<sub>n</sub>)<sup>-1</sup></b> = <b>Q<sup>-1</sup><sub>n</sub> &#x2026; Q<sup>-1</sup><sub>3</sub> Q<sup>-1</sup><sub>2</sub> Q<sup>-1</sup><sub>1</sub></b> <br>
-But this <i>does not</i> equal <b>Q</b> - so you <i>can not</i> use them interchageably
-</p>
-
-<p>
-The notation that follows is admittedly a bit less consistent than I'd like - but the algorithm thought be clear nonetheless (<b>TODO</b> clean up..)
-</p>
-</blockquote>
-<p>
-<i>p. 341</i> we can write <b>Q<sup>-1</sup><sub>2</sub></b> ( or just <b>Q<sub>2</sub></b>) using block matrices (Note that the book chooses to confusingly use the letter <b>R<sub>i</sub></b> where I'm using <b>Q<sub>i</sub></b>)
+As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our <b>Q<sub>1A</sub></b> and clearing everything under the <code>(2,2)</code> position. To approach this we construct a new block matrix for <b>Q<sub>2</sub></b> that will have the form
 </p>
 
 \begin{equation}
@@ -371,326 +497,108 @@ Q_{2}
 \end{equation}
 
 <p>
-When you look at  <b>Q<sub>2</sub>(Q<sub>1</sub>A)</b> in block matrix form you see that the first column and row of <b>(Q<sub>1</sub>A)</b> is untouched and this new block <b>S</b> is multiplied with a <i>submatrix</i> of <b>Q<sub>1</sub>A</b> (which is the <b>(Q<sub>1</sub>A)</b> matrix with the first row/column removed). We choose this <b>S</b> to be another reflection matrix which will zero out the first column of that submatrix - which will be in the <i>second</i> column of <b>Q<sub>1</sub>A</b>.
-</p>
-
-<p>
-So a pattern start to emerge. You take a matrix <b>A</b> then you zero out the first column, then you take a submatrix, zero out its first column and then get the next smaller submatrix, zero out its first column.. etc. What's left to figure out is how to combine everything back together to get the full <b>Q<sup>-1</sup>R</b> matrices we want.
-</p>
-
-<p>
-On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given <b>Q<sub>i</sub></b> matrix but <b>do not use this!!</b>. You could build each <b>Q<sub>i</sub></b> but there is actually a much better way to build <b>Q<sup>-1</sup></b>
-</p>
-
-<p>
-Imagine we were give the full <b>QR</b> for the sub-matrix  - lets call it <b>Q{s}R<sub>s</sub></b>. In other words the smaller matrix <b>Q<sub>s</sub></b>  could triangularize the sub-matrix of <b>Q<sub>1</sub>A</b>  entirely in one go.  Well with the help of the previous formula we could put it in the place of <b>S</b> and build a matrix that represented <b>Q<sub>rest</sub>=Q<sub>k</sub>..Q<sub>2</sub></b>. Then we just multiply with <b>Q<sub>1</sub></b> to get the full <b>Q<sup>-1</sup></b> for <b>A</b>
+Notice how when we multiply this matrix times <b>Q<sub>1A</sub></b> the first column is left untouched and this <code>(n-1,m-1)</code> submatrix <b>S</b> will multiple times a submatrix of <b>Q<sub>1A</sub></b> which has the <code>(2,2)</code> position now in the <code>(1,1)</code> position.
 </p>
 
 
 \begin{equation}
-Q^{-1} = Q_{k} ... Q_{2} Q_{1}
-\end{equation}
-\begin{equation}
-Q^{-1} = Q_{rest} Q_{1}
-\end{equation}
-
-\begin{equation}
-\begin{bmatrix}
-Q_{rest}\\
-\end{bmatrix}
+Q_2(Q_1A)
 =
 \begin{bmatrix}
 1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\end{equation}
-
-\begin{equation}
-\begin{bmatrix}
-Q^{-1}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\begin{bmatrix}
-Q_{1}\\
-\end{bmatrix}
-\end{equation}
-
-
-\begin{equation}
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\begin{bmatrix}
-Q_{1}\\
-\end{bmatrix}
-\begin{bmatrix}
-A\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-R\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-So we just need a simple function to take a <b>Q<sub>s</sub></b> and pad it with these zeroes to build our <b>Q<sub>rest</sub></b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure"><span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn raise-rank</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">Optionally pass in a RANK variable to pad with that many rows (default: 1)"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">([input-matrix]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;    </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank input-matrix 1))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">([input-matrix rank]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;    </span><span style="color: #b2b2b2; font-style: italic;">(if (zero? rank)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;      </span><span style="color: #b2b2b2; font-style: italic;">input-matrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;      </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                   </span><span style="color: #b2b2b2; font-style: italic;">(join-along 0 (row-matrix (zero-vector (column-count input-matrix)))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                               </span><span style="color: #b2b2b2; font-style: italic;">input-matrix))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(dec rank)))))</span>
-</pre>
-</div>
-
-<p>
-<b>R<sub>s</sub></b>, the product of reducing the submatrix <b>Q<sub>1</sub>A</b> can be similarly used to build <b>R</b>, however if you break up the <b>Q<sub>1</sub>A</b> into block matrices you will see that the first row of <b>Q<sub>1</sub>A</b> is in effect preserved and needs to be copied over
-</p>
-
-\begin{equation}
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
+0 & S\\
 \end{bmatrix}
 \begin{bmatrix}
 (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-(Q_{1}A)_{*,1} & (Q_{1}A)_{s,s}\\
+0 & (Q_{1}A)_{n-1,m-1}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
 (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & Q_{s}(Q_{1}A)_{s,s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & R_{s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-R\\
+0 & S(Q_{1}A)_{n-1,m-1}\\
 \end{bmatrix}
 \end{equation}
 
 <p>
-So we similarly need a little helper function here to "augment" <b>R<sub>s</sub></b> to <b>R</b> but with the first row inserted manually from <b>Q<sub>1</sub>A</b> (done in-code late)
+In the resulting matrix the only "new" entry we need to worry about is <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> - everything else is unchanged. In this submatrix we need to clear the first column because it's the second column of our overall matrix - and we are free to choose any appropriate <b>S</b> matrix to do it. At this point the problem of choosing <b>S</b> mirrors the process we used to clear the first column - the only difference being that the dimension is one smaller
+</p>
+
+<p>
+When tackling the third column we just repeat the process but starting with the <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> matrix - so the method is starting to show some recursion
+</p>
+</div>
+
+<div id="outline-container-orgacb19fc" class="outline-4">
+<h4 id="orgacb19fc">Reducing to R in code</h4>
+<div class="outline-text-4" id="text-orgacb19fc">
+<p>
+A recursive solution is already very promising, however thanks to BLAS and <code>neanderthal</code> we can actually go one step further because their APIs allow us to reference blocks using the <code>(submatrix ..)</code> function. This gives us a new matrixobject that we can manipulate on its own, but its underlying data will remain tied to the matrix we pulled it out of. So if we start modifying the submatrix its larger parent matrix will also change in turn
+</p>
+
+<p>
+At each iteration of the algorithm, like when generating <b>Q<sub>2</sub>Q<sub>1</sub>A</b> we will want to grab the submatrix from the preceeding input matrix - so <b>(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> from <b>Q<sub>1</sub>A</b> in our example above - and we will want to "modify"/reflect this submatrix with <b>S</b> and then repeate the process with the next immediate submatrix. Looking at our <b>Q<sub>2</sub>Q<sub>1</sub>A</b> example we can already see that the rest of <b>Q<sub>1</sub>A</b> won't need to be changed - we just need to relfect that submatrix and that's it.
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">
-<span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn raise-rank-and-insert-row-column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">The submatrix is 1 row and column smaller.</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">First insert a column (size of input-matrix  and then a row (size + 1)"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">[input-matrix insert-column insert-row]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(join-along 0 (row-matrix insert-row)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;               </span><span style="color: #b2b2b2; font-style: italic;">(join-along 1 (column-matrix insert-column)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                           </span><span style="color: #b2b2b2; font-style: italic;">input-matrix)))</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">reduce-to-r</span>
+  <span style="color: #036A07;">"Reduce a matrix to a lower triangular orthonormal matrix"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">if</span> (= 1 (dim input-matrix)) <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case - 1x1 matrix .. nothing to reduce</span>
+    (input-matrix<span style="color: #999999;">)</span>
+    (<span style="color: #0000FF;">do</span> (mm! (first-column-reflector input-matrix<span style="color: #999999;">)</span>
+             input-matrix<span style="color: #999999;">)</span>
+        (<span style="color: #0000FF;">recur</span> (submatrix input-matrix
+                           1
+                           1
+                           (dec (mrows input-matrix<span style="color: #999999;">))</span>
+                           (dec(ncols input-matrix<span style="color: #999999;">)))))))</span>
 
-<span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn raise-rank-and-insert-row</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">The submatrix is 1 row and column smaller</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">First insert a column of zeroes and then the passed in row (size + 1)"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">[input-matrix insert-row]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank-and-insert-row-column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;        </span><span style="color: #b2b2b2; font-style: italic;">input-matrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;        </span><span style="color: #b2b2b2; font-style: italic;">(zero-vector (column-count input-matrix))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;        </span><span style="color: #b2b2b2; font-style: italic;">insert-row))</span>
 </pre>
 </div>
 
 <p>
-But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need to think of this method recursively. <b>Q<sub>s</sub>R<sub>s</sub></b> is just the <b>Q<sup>-1</sup>R</b> of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of <b>Q<sub>1</sub>A</b> and  we have both <b>Q<sub>1</sub></b> and <b>A</b> . Once we have the submatrix, we call this procedure again and again we we will make a new <b>Q<sub>1</sub></b> - but now for this smaller matrix. Then again we get a <b>Q<sub>1</sub>A</b> for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the <b>Q<sub>1</sub></b> will be the full <b>Q<sup>-1</sup></b> of <b>A</b> and <b>Q<sub>1</sub>A = Q<sup>-1</sup>A = R</b>. So going up a step you will finally have a  <b>Q<sub>s</sub></b> and so we know how to build a <b>Q<sup>-1</sup>R</b>. This gives us the <b>Q<sub>s</sub></b> for the step before that, and we just continue going back and building up our <b>Q<sup>-1</sup>R</b> one submatrix at a time till we are left with the full <b>Q<sup>-1</sup>R</b>
-</p>
-
-<p>
-<b>R</b> is built up similarly in parallel
+<b>WIP</b>: The above code doesn't work b/c unfortunately you can't <code>mm!</code> in place with a <a href="https://github.com/uncomplicate/neanderthal/issues/67">symmetric matrix</a>. So the algorithm needs to be reworked. It's unclear if it can be made to work in-place with no copying.
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure"><span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn householder-QR</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">[input-matrix]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(let [reflector-to-zero-out-first-column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">(first-elementary-coordinate-reflector (get-column input-matrix 0))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">input-matrix-with-first-column-zeroed-out</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">(mmul reflector-to-zero-out-first-column input-matrix)]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;     </span><span style="color: #b2b2b2; font-style: italic;">(if</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">;; Base Case: We're out of columns/rows to reduce</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">;;            Return the reflector and the reduced column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">(or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">[reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">;; Recursive step: Get the Q^{-1}R of the submatrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">;;                 Then and combine it with your reflector and reduced matrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">(let [submatrix (submatrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                          </span><span style="color: #b2b2b2; font-style: italic;">input-matrix-with-first-column-zeroed-out</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                          </span><span style="color: #b2b2b2; font-style: italic;">1 (dec (row-count input-matrix))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                          </span><span style="color: #b2b2b2; font-style: italic;">1 (dec (column-count input-matrix)))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;               </span><span style="color: #b2b2b2; font-style: italic;">[submatrix-Q submatrix-R] (householder-QR submatrix)]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;           </span><span style="color: #b2b2b2; font-style: italic;">[(mmul (raise-rank submatrix-Q)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                  </span><span style="color: #b2b2b2; font-style: italic;">reflector-to-zero-out-first-column)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;            </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank-and-insert-row submatrix-R</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                                       </span><span style="color: #b2b2b2; font-style: italic;">(get-row input-matrix-with-first-column-zeroed-out 0))]))))</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [A (dge [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                [28.0 38.0 73.0 20.0<span style="color: #999999;">]])]</span>
+    (reduce-to-r A<span style="color: #999999;">))</span>
+
+(<span style="color: #0000FF;">let</span> [A (dge [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                [28.0 38.0 73.0 20.0<span style="color: #999999;">]])]</span>
+    (mm! (first-column-reflector A<span style="color: #999999;">)</span>
+         A<span style="color: #999999;">)</span>
+
+
+
 </pre>
 </div>
-</div>
-</div>
-</div>
-
-<div id="outline-container-orgd96d4ee" class="outline-2">
-<h2 id="orgd96d4ee">Least Squares again</h2>
-<div class="outline-text-2" id="text-orgd96d4ee">
-<p>
-While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
-</p>
 
 <p>
-This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between <b>Ax</b> and <b>b</b> by taking the derivative of <b>(Ax-b)<sup>2</sup></b>, setting it equal to zero and solving the new system. We found that in matrix notation this gave us <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. We also say (and it should be intuitively apparent) that this gives the exact solution for <b>Ax=b</b> when it exist. Now sticking <b>QR</b> in for <b>A</b> we get <b>(QR)<sup>T</sup>QRx=(QR)<sup>T</sup>b</b> -&gt; <b>R<sup>T</sup>Q<sup>T</sup>QRx=R<sup>T</sup>Q<sup>T</sup>b</b> and this is where the orthonormality starts to finally pay off! <b>Q<sup>T</sup>=Q<sup>-1</sup></b> so <b>Q{T}Q = I</b> and so our equations just becomes <b>R<sup>T</sup>Rx=R<sup>T</sup>Q<sup>T</sup>b</b> where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c <b>R</b> and <b>R<sup>T</sup></b> are triangular)
-</p>
-
-<p>
-Notice that we did that all in theoretical equation form and how we've avoided having to actually compute <b>A<sup>T</sup>A</b> completely which is a big advantage considering getting the <b>QR</b> is more computationally challenging than doing Gaussian Elimination. Pages 346-350 also enumerate the advantages when it comes to numerical stability and computational complexity. However, the augmented matrix trick from <b>Exercise 4.6.9</b> is not mentioned.
+This process continues recursively to the third column and so on.. until we hit the 2x2 case and the whole matrix has been zeroed out.
 </p>
 </div>
 </div>
-
-<div id="outline-container-org4952a8e" class="outline-2">
-<h2 id="org4952a8e">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org4952a8e">
-<p>
-The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
-</p>
-
-<p>
-Looking back at pages <code>254</code> - <code>255</code>, it seems we should be able to take our input vector <b>x</b>, change it to a convenient basis, put it through our linear system, and then go back to the standard basis we started with. The trick will be to just build this basis so that <b>A</b> is in an easier/more-convenient form. 
-</p>
-
-<p>
-The text start on page <code>350</code> suggests getting the linear system into the <code>Upper-Hessenberg Form</code>, which is <i>almost upper triangular</i>  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. <b>Q<sub>1</sub>A</b> - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as <b>Q<sub>1</sub>AQ<sub>1</sub></b>.
-</p>
-
-<p>
-The complication here is that if we write a Householder reflection here for <b>Q<sub>1</sub></b> then the diagonal terms in <b>A</b>, ie. <b>A<sub>i,i</sub></b> will all get multiplied and this is for some reason undesirable (<b>TODO</b> Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
-</p>
-
-<p>
-So if
-</p>
-\begin{equation}
-Q_{1} =
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{1,sub}\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-Then we can write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as:
-</p>
-
-\begin{equation}
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{1,sub}\\
-\end{bmatrix}
-\begin{bmatrix}
-A_{1,1} & A_{1,*}\\
-A_{*,1} & A_{sub}\\
-\end{bmatrix}
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{1,sub}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-A_{1,1} & A_{1,*} Q_{1,sub}\\
-Q_{1,sub}A_{1,*} & Q_{1,sub} A_{1,*} Q_{1,sub}
-\end{bmatrix}
-=> =>
-\begin{bmatrix}
-A_{1,1} & A_{1,*} Q_{1,sub}\\
-\begin{bmatrix}
-1 \\ 0 \\ .. \\ 0
-\end{bmatrix}
- & Q_{1,sub} A_{1,*} Q_{1,sub}
-\end{bmatrix}
-\end{equation}
-
-<p>
-As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the <b>Q<sub>1,sub</sub>A<sub>1,-</sub></b> column block matrix product to turn into <b>[ 1 0 0 0 .. 0 ]</b> and we can reuse <code>first-elementary-coordinate-reflector</code>  to get the appropriate <b>Q<sub>1,sub</sub></b>. Finally reusing <code>raise rank</code> we can build <b>Q<sub>1</sub></b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure"><span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn hessenberg-form-first-partial-reflector</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">[input-matrix]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(if</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">;; Degenerate Case: 1 x 1 matrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;     </span><span style="color: #b2b2b2; font-style: italic;">[[ 1 ]]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(let [first-column (get-column input-matrix 0)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;     </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank orthogonal-reducer))))</span>
-</pre>
-</div>
-<p>
-Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1</sub> A_{1,</b>} Q<sub>1</sub>* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the <b>Q</b> matrices and pad the resulting matrices like we did for the resulting <b>R</b> matrices before.
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure"><span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(defn hessenberg-form-reduction</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">"Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"</span>
-<span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">[input-matrix]</span>
-<span style="color: #b2b2b2; font-style: italic;">;; </span><span style="color: #b2b2b2; font-style: italic;">(let [reflector-to-zero-out-first-column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(hessenberg-form-first-partial-reflector input-matrix)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">input-matrix-with-first-column-zeroed-out</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;   </span><span style="color: #b2b2b2; font-style: italic;">(if</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">;; Base Case: We're out of columns/rows to reduce</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">;;            Return the reflector and the reduced column</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">[reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">;; Recursive step: Get the Q^{-1}R of the submatrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">;;                 Then and combine it with your reflector and reduced matrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;       </span><span style="color: #b2b2b2; font-style: italic;">(let [submatrix (submatrix</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                        </span><span style="color: #b2b2b2; font-style: italic;">input-matrix-with-first-column-zeroed-out</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                        </span><span style="color: #b2b2b2; font-style: italic;">1 (dec (row-count input-matrix))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                        </span><span style="color: #b2b2b2; font-style: italic;">1 (dec (column-count input-matrix)))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;             </span><span style="color: #b2b2b2; font-style: italic;">[submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]</span>
-<span style="color: #b2b2b2; font-style: italic;">;;         </span><span style="color: #b2b2b2; font-style: italic;">[(mmul (raise-rank submatrix-P)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                </span><span style="color: #b2b2b2; font-style: italic;">reflector-to-zero-out-first-column)</span>
-<span style="color: #b2b2b2; font-style: italic;">;;          </span><span style="color: #b2b2b2; font-style: italic;">(raise-rank-and-insert-row-column submatrix-H</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                                    </span><span style="color: #b2b2b2; font-style: italic;">(subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))</span>
-<span style="color: #b2b2b2; font-style: italic;">;;                                    </span><span style="color: #b2b2b2; font-style: italic;">(get-row input-matrix-with-first-column-zeroed-out 0))]))))</span>
-</pre>
 </div>
 </div>
-</div>
-<div id="outline-container-org0e8de7b" class="outline-2">
-<h2 id="org0e8de7b"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org0e8de7b">
+
+<div id="outline-container-orge0e0735" class="outline-2">
+<h2 id="orge0e0735"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-orge0e0735">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org2cf6ce8" class="outline-2">
-<h2 id="org2cf6ce8">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org2cf6ce8">
+<div id="outline-container-org09a2706" class="outline-2">
+<h2 id="org09a2706">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org09a2706">
 <div class="org-src-container">
-<pre class="src src-clojure">  (<span style="color: #00af00;">defn</span> <span style="color: #ef2929;">matrix-template</span>
-<span style="color: #cc0000;">"template"</span>
+<pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
+<span style="color: #036A07;">"template"</span>
 [matrix<span style="color: #999999;">]</span>
 <span style="color: #999999;">)</span>
 </pre>
@@ -698,9 +606,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-orgaa38fcf" class="outline-2">
-<h2 id="orgaa38fcf">End</h2>
-<div class="outline-text-2" id="text-orgaa38fcf">
+<div id="outline-container-org7d47db7" class="outline-2">
+<h2 id="org7d47db7">End</h2>
+<div class="outline-text-2" id="text-org7d47db7">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
@@ -722,7 +630,7 @@ Once opened in Emacs:<br>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-05-02 Thu 22:06</p>
+<p class="date">Created: 2019-07-25 Thu 07:43</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
