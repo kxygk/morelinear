@@ -1,4 +1,3 @@
-
 (ns linearsystems-part2.core
   (:require [clojure.core.matrix :refer :all])  ;[denisovan.core :as den]
   (:gen-class))
@@ -30,10 +29,12 @@
      (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
 (defn first-column-reflector
-  "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
-  [input-vector]
-  (elementary-coordinate-reflector input-vector
-                                          (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
+  "Build a matrix that will reflect the INPUT-MATRIX on to the first elementary vector [ 1 0 0 .. 0 ]"
+  [input-matrix]
+  (elementary-coordinate-reflector (get-column input-matrix
+					       0)
+				   (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
+
 
 (defn raise-rank
   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)

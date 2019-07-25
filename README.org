@@ -117,10 +117,11 @@ Now putting all the pieces together, given some matrix *A* we can get back a ref
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn first-column-reflector
-    "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
-    [input-vector]
-    (elementary-coordinate-reflector input-vector
-                                            (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
+    "Build a matrix that will reflect the INPUT-MATRIX on to the first elementary vector [ 1 0 0 .. 0 ]"
+    [input-matrix]
+    (elementary-coordinate-reflector (get-column input-matrix
+						 0)
+				     (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
 #+END_SRC
 Now we hit a bit of a snag. You can use the same method to make some matrix *Q_2* that will zero out the second column, but when you combine the two and try *Q_2Q_1A* you will see that *Q_2* is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after *Q_1A*, but when you reflect it again it moves away from the coordinate vector.
 
@@ -318,7 +319,7 @@ But ofcourse we don't have the *Q_{s}R_{s}* yet, so we need to think of this met
     "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
     [input-matrix]
     (let [reflector-to-zero-out-first-column
-          (first-column-reflector (get-column input-matrix 0))
+          (first-column-reflector input-matrix)
           input-matrix-with-first-column-zeroed-out
           (mmul reflector-to-zero-out-first-column input-matrix)]
       (if
