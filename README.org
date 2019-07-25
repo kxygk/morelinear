@@ -79,6 +79,21 @@ Notice that now that we factored out the *x* we now that the matrix *(I-2uu^{t}/
            (mul (outer-product reflection-axis reflection-axis)
                 (/ 2 (length-squared reflection-axis))))))
 #+END_SRC
+For example:
+#+BEGIN_SRC clojure
+  (pm (elementary-reflector [43.0 36.0 38.0 90.0]))
+  ;; [[ 0.709 -0.244 -0.258 -0.610]
+  ;;  [-0.244  0.796 -0.216 -0.511]
+  ;;  [-0.258 -0.216  0.772 -0.539]
+  ;;  [-0.610 -0.511 -0.539 -0.277]]
+  ;; nil
+
+
+  (pm (mmul (elementary-reflector [43.0 36.0 38.0 90.0])
+	    [43.0 36.0 38.0 90.0]))
+  ;; [-43.000 -36.000 -38.000 -90.000]
+  ;; nil
+#+END_SRC
 
 ** elementary coordinate reflector
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the *Q* in the *QR*). 
@@ -110,10 +125,29 @@ Once you have the orthogonal vector to the bisecting plane, you just feed it int
        (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
 #+END_SRC
+For instance we can take some random vector and say we want to reflect it onto the *e_1*
+#+BEGIN_SRC clojure
+  (pm (elementary-coordinate-reflector [24 77 89 12]
+				       [1 0 0 0]))
+  ;; [[0.199  0.638  0.737  0.099]
+  ;;  [0.638  0.492 -0.587 -0.079]
+  ;;  [0.737 -0.587  0.321 -0.091]
+  ;;  [0.099 -0.079 -0.091  0.988]]
+  ;; nil
+#+END_SRC
+We got some seemingly random matrix out. If we then multiply it times out random vector, it reflects perfectly to *e_1*
+#+BEGIN_SRC clojure
+  (pm (mmul (elementary-coordinate-reflector [24 77 89 12]
+					     [1 0 0 0])
+	    [24 77 89 12])))
+  ;; [120.706 -0.000 -0.000 -0.000]
+  ;; nil
+#+END_SRC
+
+
 ** Zeroing the first column
 
 Now putting all the pieces together, given some matrix *A* we can get back a reflector to zero out its first column
-
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn first-column-reflector
@@ -123,6 +157,32 @@ Now putting all the pieces together, given some matrix *A* we can get back a ref
 						 0)
 				     (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
 #+END_SRC
+Now we can test it by writing out a random matrix and zeroing out its first column
+#+BEGIN_SRC clojure
+  (pm (first-column-reflector [[43.0 36.0 38.0 90.0]
+			       [21.0 98.0 55.0 48.0]
+			       [72.0 13.0 98.0 12.0]
+			       [28.0 38.0 73.0 20.0]]))
+  ;; [[0.473  0.231  0.792  0.308]
+  ;;  [0.231  0.899 -0.348 -0.135]
+  ;;  [0.792 -0.348 -0.192 -0.463]
+  ;;  [0.308 -0.135 -0.463  0.820]]
+  ;; nil
+
+
+  (let [A [[43.0 36.0 38.0 90.0]
+	   [21.0 98.0 55.0 48.0]
+	   [72.0 13.0 98.0 12.0]
+	   [28.0 38.0 73.0 20.0]]]
+    (pm (mmul (first-column-reflector A)
+	      A)))
+  ;; [[90.874  61.690 130.830 69.349]
+  ;;  [ 0.000  86.731  14.280 57.059]
+  ;;  [-0.000 -25.637 -41.613 43.058]
+  ;;  [ 0.000  22.975  18.706 32.078]]
+  ;; nil
+#+END_SRC
+
 Now we hit a bit of a snag. You can use the same method to make some matrix *Q_2* that will zero out the second column, but when you combine the two and try *Q_2Q_1A* you will see that *Q_2* is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after *Q_1A*, but when you reflect it again it moves away from the coordinate vector.
 
 In the *LU* Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (it would just shuffling zeroes around). Now this guarantee is gone so we need to think of a new trick.
