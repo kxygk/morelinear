@@ -29,7 +29,7 @@
      ;; normal case
      (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
-(defn first-elementary-coordinate-reflector
+(defn first-column-reflector
   "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
   [input-vector]
   (elementary-coordinate-reflector input-vector
@@ -72,7 +72,7 @@
   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
   [input-matrix]
   (let [reflector-to-zero-out-first-column
-        (first-elementary-coordinate-reflector (get-column input-matrix 0))
+        (first-column-reflector (get-column input-matrix 0))
         input-matrix-with-first-column-zeroed-out
         (mmul reflector-to-zero-out-first-column input-matrix)]
     (if
@@ -101,7 +101,7 @@
     [[ 1 ]]
   (let [first-column (get-column input-matrix 0)
         subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
-        orthogonal-reducer (first-elementary-coordinate-reflector subdiagonal-column)]
+        orthogonal-reducer (first-column-reflector subdiagonal-column)]
     (raise-rank orthogonal-reducer))))
 
 (defn hessenberg-form-reduction
