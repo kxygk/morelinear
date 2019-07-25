@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-25 Thu 10:09 -->
+<!-- 2019-07-25 Thu 10:45 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -11,52 +11,6 @@
 >
 <link rel="stylesheet" type="text/css" href="../web/worg.css" />
 <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
-<script type="text/javascript">
-/*
-@licstart  The following is the entire license notice for the
-JavaScript code in this tag.
-
-Copyright (C) 2012-2018 Free Software Foundation, Inc.
-
-The JavaScript code in this tag is free software: you can
-redistribute it and/or modify it under the terms of the GNU
-General Public License (GNU GPL) as published by the Free Software
-Foundation, either version 3 of the License, or (at your option)
-any later version.  The code is distributed WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
-
-As additional permission under GNU GPL version 3 section 7, you
-may distribute non-source (e.g., minimized or compacted) forms of
-that code without the copy of the GNU GPL normally required by
-section 4, provided you include this license notice and a URL
-through which recipients can access the Corresponding Source.
-
-
-@licend  The above is the entire license notice
-for the JavaScript code in this tag.
-*/
-<!--/*--><![CDATA[/*><!--*/
- function CodeHighlightOn(elem, id)
- {
-   var target = document.getElementById(id);
-   if(null != target) {
-     elem.cacheClassElem = elem.className;
-     elem.cacheClassTarget = target.className;
-     target.className = "code-highlighted";
-     elem.className   = "code-highlighted";
-   }
- }
- function CodeHighlightOff(elem, id)
- {
-   var target = document.getElementById(id);
-   if(elem.cacheClassElem)
-     elem.className = elem.cacheClassElem;
-   if(elem.cacheClassTarget)
-     target.className = elem.cacheClassTarget;
- }
-/*]]>*///-->
-</script>
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
         displayAlign: "center",
@@ -86,33 +40,33 @@ for the JavaScript code in this tag.
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
-<h1 class="title">Linear Systems in  Clojure</h1>
+<h1 class="title">MoreLinear: some linear algebra in Clojure</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org180041c">Preface</a></li>
-<li><a href="#orgb68b591">Project managment</a></li>
-<li><a href="#orga7cfb33">Householder QR</a>
+<li><a href="#orge540a1a">Preface</a></li>
+<li><a href="#orgf098de2">Project managment</a></li>
+<li><a href="#orgba70f08">Householder QR</a>
 <ul>
-<li><a href="#orgc340774">elementary reflector</a></li>
-<li><a href="#org7b75f7c">elementary coordinate reflector</a></li>
-<li><a href="#org851b933">Zeroing the first column</a></li>
-<li><a href="#orgf38ecf3">Zeroing out the second column</a></li>
+<li><a href="#org70b27dd">elementary reflector</a></li>
+<li><a href="#orga5b2b34">elementary coordinate reflector</a></li>
+<li><a href="#org5df2ecf">Zeroing the first column</a></li>
+<li><a href="#orga5f7458">Zeroing out the second column</a></li>
 </ul>
 </li>
-<li><a href="#orgfb774a7">Least Squares again</a></li>
-<li><a href="#org46d63df">Reduction to Hessenberg Form</a></li>
-<li><a href="#orgc250c6d"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org0e00aa8">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org0a473c1">End</a></li>
+<li><a href="#orgd9a0b59">Least Squares again</a></li>
+<li><a href="#orgf17dba9">Reduction to Hessenberg Form</a></li>
+<li><a href="#org36c9d8e"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org09e1bc9">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org88a76ff">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org180041c" class="outline-2">
-<h2 id="org180041c">Preface</h2>
-<div class="outline-text-2" id="text-org180041c">
+<div id="outline-container-orge540a1a" class="outline-2">
+<h2 id="orge540a1a">Preface</h2>
+<div class="outline-text-2" id="text-orge540a1a">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -131,9 +85,9 @@ Explaining Clojure is outside the scope of this project, but in short you will n
 </div>
 </div>
 
-<div id="outline-container-orgb68b591" class="outline-2">
-<h2 id="orgb68b591">Project managment</h2>
-<div class="outline-text-2" id="text-orgb68b591">
+<div id="outline-container-orgf098de2" class="outline-2">
+<h2 id="orgf098de2">Project managment</h2>
+<div class="outline-text-2" id="text-orgf098de2">
 <p>
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
 </p>
@@ -146,7 +100,7 @@ Project management in Clojure is done through a top level <code>project.clj</cod
   <span style="color: #D0372D;">:dependencies</span> [
                  [<span style="color: #6434A3;">org.clojure</span>/clojure <span style="color: #008000;">"1.10.0"</span><span style="color: #999999;">]</span>
                  [<span style="color: #6434A3;">net.mikera</span>/core.matrix <span style="color: #008000;">"0.62.0"</span><span style="color: #999999;">]]</span>
-  <span style="color: #D0372D;">:main</span> ^<span style="color: #D0372D;">:skip-aot</span> linearsystems-part2.core
+  <span style="color: #D0372D;">:main</span> ^<span style="color: #D0372D;">:skip-aot</span> morelinear.core
   <span style="color: #D0372D;">:target-path</span> <span style="color: #008000;">"target/%s"</span>
   <span style="color: #D0372D;">:profiles</span> {<span style="color: #D0372D;">:uberjar</span> {<span style="color: #D0372D;">:aot</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">}})</span>
 
@@ -173,18 +127,18 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-orga7cfb33" class="outline-2">
-<h2 id="orga7cfb33">Householder QR</h2>
-<div class="outline-text-2" id="text-orga7cfb33">
+<div id="outline-container-orgba70f08" class="outline-2">
+<h2 id="orgba70f08">Householder QR</h2>
+<div class="outline-text-2" id="text-orgba70f08">
 <p>
 An alternate method to the Gram-Schmidt is to take a more direct approach to building a <b>QR</b> matrix - similar to how we worked on building the <b>LU</b>. We will just directly zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal as well. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this makes some intuitive sense. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of several elementary matrices gives another elementary matrix.
 </p>
 </div>
 
 
-<div id="outline-container-orgc340774" class="outline-3">
-<h3 id="orgc340774">elementary reflector</h3>
-<div class="outline-text-3" id="text-orgc340774">
+<div id="outline-container-org70b27dd" class="outline-3">
+<h3 id="org70b27dd">elementary reflector</h3>
+<div class="outline-text-3" id="text-org70b27dd">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -242,9 +196,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-org7b75f7c" class="outline-3">
-<h3 id="org7b75f7c">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-org7b75f7c">
+<div id="outline-container-orga5b2b34" class="outline-3">
+<h3 id="orga5b2b34">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-orga5b2b34">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>Q</b> in the <b>QR</b>). 
 </p>
@@ -313,9 +267,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org851b933" class="outline-3">
-<h3 id="org851b933">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org851b933">
+<div id="outline-container-org5df2ecf" class="outline-3">
+<h3 id="org5df2ecf">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-org5df2ecf">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -368,9 +322,9 @@ In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c cle
 </div>
 </div>
 
-<div id="outline-container-orgf38ecf3" class="outline-3">
-<h3 id="orgf38ecf3">Zeroing out the second column</h3>
-<div class="outline-text-3" id="text-orgf38ecf3">
+<div id="outline-container-orga5f7458" class="outline-3">
+<h3 id="orga5f7458">Zeroing out the second column</h3>
+<div class="outline-text-3" id="text-orga5f7458">
 <p>
 As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our <b>Q<sub>1A</sub></b> and clearing everything under the <code>(2,2)</code> position. To approach this we construct a new block matrix for <b>Q<sub>2</sub></b> that will have the form
 </p>
@@ -414,12 +368,6 @@ In the resulting matrix the only "new" entry we need to worry about is <b>S(Q<su
 <p>
 When tackling the third column we just repeat the process but starting with the <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> matrix - so the method is starting to show some recursion
 </p>
-
-
-
-
-
-
 
 
 
@@ -634,9 +582,9 @@ But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need
 </div>
 </div>
 
-<div id="outline-container-orgfb774a7" class="outline-2">
-<h2 id="orgfb774a7">Least Squares again</h2>
-<div class="outline-text-2" id="text-orgfb774a7">
+<div id="outline-container-orgd9a0b59" class="outline-2">
+<h2 id="orgd9a0b59">Least Squares again</h2>
+<div class="outline-text-2" id="text-orgd9a0b59">
 <p>
 While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
 </p>
@@ -651,9 +599,9 @@ Notice that we did that all in theoretical equation form and how we've avoided h
 </div>
 </div>
 
-<div id="outline-container-org46d63df" class="outline-2">
-<h2 id="org46d63df">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org46d63df">
+<div id="outline-container-orgf17dba9" class="outline-2">
+<h2 id="orgf17dba9">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-orgf17dba9">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -762,17 +710,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-orgc250c6d" class="outline-2">
-<h2 id="orgc250c6d"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-orgc250c6d">
+<div id="outline-container-org36c9d8e" class="outline-2">
+<h2 id="org36c9d8e"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org36c9d8e">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org0e00aa8" class="outline-2">
-<h2 id="org0e00aa8">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org0e00aa8">
+<div id="outline-container-org09e1bc9" class="outline-2">
+<h2 id="org09e1bc9">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org09e1bc9">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
 <span style="color: #036A07;">"template"</span>
@@ -783,9 +731,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-org0a473c1" class="outline-2">
-<h2 id="org0a473c1">End</h2>
-<div class="outline-text-2" id="text-org0a473c1">
+<div id="outline-container-org88a76ff" class="outline-2">
+<h2 id="org88a76ff">End</h2>
+<div class="outline-text-2" id="text-org88a76ff">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
@@ -804,11 +752,6 @@ Once opened in Emacs:<br>
 </div>
 </div>
 </div>
-</div>
-<div id="postamble" class="status">
-<p class="author">Author: George Kontsevich</p>
-<p class="date">Created: 2019-07-25 Thu 09:54</p>
-<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
 </html>

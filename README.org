@@ -10,6 +10,8 @@
 #+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
 #+OPTIONS: html-style:nil
 #+OPTIONS: num:nil
+#+OPTIONS: html-postamble:nil
+#+OPTIONS: html-scripts:nil
 
 * Preface
 This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
