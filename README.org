@@ -1,4 +1,4 @@
-#+TITLE: Linear Systems in  Clojure
+#+TITLE: MoreLinear: some linear algebra in Clojure
 #+DESCRIPTION: Some linear algebra in Clojure
 
 #+EXPORT_FILE_NAME: index.html
