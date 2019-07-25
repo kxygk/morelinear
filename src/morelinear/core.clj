@@ -1,4 +1,4 @@
-(ns linearsystems-part2.core
+(ns morelinear.core
   (:require [clojure.core.matrix :refer :all])  ;[denisovan.core :as den]
   (:gen-class))
 
@@ -12,8 +12,8 @@
   [reflection-axis]
   (let [dimension (dimension-count reflection-axis 0)]
     (sub (identity-matrix dimension)
-         (mul (outer-product reflection-axis reflection-axis)
-              (/ 2 (length-squared reflection-axis))))))
+	 (mul (outer-product reflection-axis reflection-axis)
+	      (/ 2 (length-squared reflection-axis))))))
 
 (defn elementary-coordinate-reflector
  "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
@@ -34,7 +34,6 @@
   (elementary-coordinate-reflector (get-column input-matrix
 					       0)
 				   (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
-
 
 (defn raise-rank
   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
@@ -73,7 +72,7 @@
   "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
   [input-matrix]
   (let [reflector-to-zero-out-first-column
-        (first-column-reflector (get-column input-matrix 0))
+        (first-column-reflector input-matrix)
         input-matrix-with-first-column-zeroed-out
         (mmul reflector-to-zero-out-first-column input-matrix)]
     (if

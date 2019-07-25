@@ -1,4 +1,4 @@
-#+TITLE: Linear Systems - Part 2:  Clojure
+#+TITLE: Linear Systems in  Clojure
 #+DESCRIPTION: Some linear algebra in Clojure
 
 #+EXPORT_FILE_NAME: index.html
@@ -12,7 +12,7 @@
 #+OPTIONS: num:nil
 
 * Preface
-This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/linearsystems-part1/index.html][Part 1]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
+This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 
 To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default ~core.matrix~ library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
 
@@ -23,23 +23,23 @@ Explaining Clojure is outside the scope of this project, but in short you will n
 * Project managment
 Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
 #+BEGIN_SRC clojure :results output silent :session :tangle project.clj
-(defproject linearsystems-part2 "0.1.0-SNAPSHOT"
+(defproject morelinear "0.1.0-SNAPSHOT"
   :description "linea-systems in Clojure"
-  :url "http://geokon-gh.github.io/linearsystems-part2/index.html"
+  :url "http://geokon-gh.github.io/morelinear/index.html"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [
                  [org.clojure/clojure "1.10.0"]
                  [net.mikera/core.matrix "0.62.0"]]
-  :main ^:skip-aot linearsystems-part2.core
+  :main ^:skip-aot morelinear.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
 
 #+END_SRC
 The rest of the code will live in ~src/core.clj~ as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
 We start by declaring the project namespace and including all of ~core.matrix~. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
-  (ns linearsystems-part2.core
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+  (ns morelinear.core
     (:require [clojure.core.matrix :refer :all])  ;[denisovan.core :as den]
     (:gen-class))
 
@@ -70,14 +70,14 @@ Now that we have a way to define a plane we need to work through the mechanics o
 Notice that now that we factored out the *x* we now that the matrix *(I-2uu^{t}/u^{t}u)* on the left side. This is the reflector matrix and it's defined uniquely by the *u* vector. Now given any new value of *x* we can multiply it by *(I-2uu^{t}/u^{t}u)* and get its reflection across the hyperplane orthogonal to *u*. 
 
 *Note:* We will see in the next section that we can't safely assume *u* is unit length - otherwise we could drop the normalizing inner product term and everything would look much cleaner.
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn elementary-reflector
     "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
     [reflection-axis]
     (let [dimension (dimension-count reflection-axis 0)]
       (sub (identity-matrix dimension)
-           (mul (outer-product reflection-axis reflection-axis)
-                (/ 2 (length-squared reflection-axis))))))
+	   (mul (outer-product reflection-axis reflection-axis)
+		(/ 2 (length-squared reflection-axis))))))
 #+END_SRC
 For example:
 #+BEGIN_SRC clojure
@@ -110,7 +110,7 @@ u = x - ||x||e_{1}
 
 Once you have the orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix!
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn elementary-coordinate-reflector
    "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
    [input-vector coordinate-axis] 
@@ -149,7 +149,7 @@ We got some seemingly random matrix out. If we then multiply it times out random
 
 Now putting all the pieces together, given some matrix *A* we can get back a reflector to zero out its first column
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn first-column-reflector
     "Build a matrix that will reflect the INPUT-MATRIX on to the first elementary vector [ 1 0 0 .. 0 ]"
     [input-matrix]
@@ -224,6 +224,16 @@ Notice how when we multiply this matrix times *Q_1A* the first column is left un
 In the resulting matrix the only "new" entry we need to worry about is *S(Q_{1}A)_{n-1,m-1}* - everything else is unchanged. In this submatrix we need to clear the first column because it's the second column of our overall matrix - and we are free to choose any appropriate *S* matrix to do it. At this point the problem of choosing *S* mirrors the process we used to clear the first column - the only difference being that the dimension is one smaller
 
 When tackling the third column we just repeat the process but starting with the *S(Q_{1}A)_{n-1,m-1}* matrix - so the method is starting to show some recursion
+
+
+
+
+
+
+
+
+
+
 But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
 
 #+BEGIN_QUOTE
@@ -305,7 +315,7 @@ R\\
 \end{equation}
 
 So we just need a simple function to take a *Q_{s}* and pad it with these zeroes to build our *Q_{rest}*
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn raise-rank
     "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
     Optionally pass in a RANK variable to pad with that many rows (default: 1)"
@@ -349,7 +359,7 @@ R\\
 \end{equation}
 
 So we similarly need a little helper function here to "augment" *R_{s}* to *R* but with the first row inserted manually from *Q_{1}A* (done in-code late)
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
 
   (defn raise-rank-and-insert-row-column
     "Takes a submatrix and put it's in the lower right corner of a larger matrix.
@@ -374,7 +384,7 @@ So we similarly need a little helper function here to "augment" *R_{s}* to *R* b
 But ofcourse we don't have the *Q_{s}R_{s}* yet, so we need to think of this method recursively. *Q_{s}R_{s}* is just the *Q^{-1}R* of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of *Q_{1}A* and  we have both *Q_{1}* and *A* . Once we have the submatrix, we call this procedure again and again we we will make a new *Q_{1}* - but now for this smaller matrix. Then again we get a *Q_{1}A* for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the *Q_{1}* will be the full *Q^{-1}* of *A* and *Q_{1}A = Q^{-1}A = R*. So going up a step you will finally have a  *Q_{s}* and so we know how to build a *Q^{-1}R*. This gives us the *Q_{s}* for the step before that, and we just continue going back and building up our *Q^{-1}R* one submatrix at a time till we are left with the full *Q^{-1}R*
 
 *R* is built up similarly in parallel
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn householder-QR
     "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
     [input-matrix]
@@ -456,7 +466,7 @@ A_{1,1} & A_{1,*} Q_{1,sub}\\
 \end{equation}
 
 As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-column-reflector~  to get the appropriate *Q_{1,sub}*. Finally reusing ~raise rank~ we can build *Q_{1}*
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn hessenberg-form-first-partial-reflector
     "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
     [input-matrix]
@@ -470,7 +480,7 @@ As before we are looking to reflect the first column onto a coordinate axis so t
       (raise-rank orthogonal-reducer))))
 #+END_SRC
  Once we've chose our *Q_{1}* we calculate the submatrix *Q_{1} A_{1,*} Q_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn hessenberg-form-reduction
     "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
   [input-matrix]
@@ -499,7 +509,7 @@ As before we are looking to reflect the first column onto a coordinate axis so t
 * TODOs
 - add some TODOs
 * SRC_Block template
-#+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn matrix-template
 "template"
 [matrix]
