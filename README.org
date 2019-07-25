@@ -51,16 +51,26 @@ We start by declaring the project namespace and including all of ~core.matrix~. 
 #+END_SRC
 The ~-main~ is just a placeholder for the moment
 * Householder QR
-An alternate method to build a *QR* matrix is to take a more direct approach like in the *LU* and to zero out columns to build an upper triangular *R*. The difference from the *LU* is that now instead of using row operations to get zeroes we will restrict ourselves to using *elementary reflectors*. Their key property is that they are orthonormal, so when we carry out a series of reflections *Q_{1}Q_{2}..Q_{k}A* we can combine them into one matrix which will be guaranteed to be orthonormal too. In the *LU*'s Gaussian elimination the elementary matrices we used were not  orthonormal so we didn't have this same guarantee (for a simple example consider row-addition: it's not orthogonal and its norm isn't equal to 1)
+An alternate method to the Gram-Schmidt is to take a more direct approach to building a *QR* matrix - similar to how we worked on building the *LU*. We will just directly zero out columns to build an upper triangular *R*. The difference from the *LU* is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using *elementary reflectors*. Their key property is that they are orthonormal, so when we carry out a series of reflections *Q_{1}Q_{2}..Q_{k}A* we can combine them into one matrix which will be guaranteed to be orthonormal as well. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this makes some intuitive sense. In the *LU*'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of several elementary matrices gives another elementary matrix.
 
 
 ** elementary reflector
-An elementary reflector is a special matrix/linear-system which when given a vector produces its reflection across a hyperplane. The hyperplane is orthogonal to some reference vector *u*. The textbook has a nice illustration for the *R^3* case , but to understand it in higher dimensions you need to break up the problem. The hyperplane you reflect over is the /not-in-span-of/ *u* space. So in effect to get the reflection you are taking the component of your vector that's in the direction of *u* and subtracting it twice to create its reflection. If the input vector is *x* then:
- - *u^{t}x* is the amount of *x* in the direction of *u* (a scalar)
- -  *uu^{t}x* is the vector component in the direction of *u* (a vector)
- -  *uu^{t}x/u^{t}u* is the same vector normalized (a vector)
- -  *x - 2uu^{t}x/u^{t}u* is you subtracting that vector component twice to get the reflection
-In matrix form we'd factor out the *x* and get *(I-2uu^{t}/u^{t}u)x*
+
+An /elementary reflector/ does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a /N-1/ dimensional hyperplane. In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
+
+The first task is finding a nice concise mechanism to define a hyperplane. If our space is *R^N* then the hyperplane will be *N-1* dimensions and at first blush we seem to need *N-1* vectors to define it. For instance in *3D* space any two vectors not on the same line will define a *2D*. Where *plane = a*v_1 + b*v_2* /for all a and b/. But this method doesn't really scale b/c as *N* increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we just choose one, call it *u*, and let it represent that remaining *N^{th}* dimension. Now you can simply say that the hyperplane is all vectors orthogonal to *u*. Or more formally, all vectors /not-in-the-span/ of *u* are the hyperplane
+
+Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector *x* across the hyperplane. The key insight here is that *x* can be treated as two separate vectors. One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is basically flipped to point to the other side of the plane. To do this procedure mathematically we take the component of *x* in the direction of the *u* that defines our plane and then we subtract it twice from *x*. This will give us a new vector that points at its own reflection on the other side of the plane. Breaking it down further, the steps go as followed:
+ -  *u^{t}x*/||u||* is the amount of *x* in the direction of *u* (a scalar)
+ -  *uu^{t}x/||u||^{2}* is the component *x* in the direction of *u* (a vector)
+ -  Here we notice that we can subsitute the inner product *u^{t}u* for *||u||^2*
+ -  *uu^{t}x/u^{t}u*
+ -  *x - 2uu^{t}x/u^{t}u* is you subtracting that vector component twice to get its reflection
+ -  *(I-2uu^{t}/u^{t}u)x* is how we'd factor the *x* back out
+ -  *(I-2uu^{t}/u^{t}u)* represents the reflector matrix. It's defined uniquely by the *u* vector!
+Note that now that we factored out this matrix that given any new value of *x* we can multiply it by *(I-2uu^{t}/u^{t}u)* and get its reflection across the hyperplane orthogonal to *u*. 
+
+*Note:* We will see in the next section that we can't safely assume *u* is unit length - otherwise we could drop the normalizing inner product term and everything would look much cleaner.
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn elementary-reflector
     "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
@@ -72,13 +82,20 @@ In matrix form we'd factor out the *x* and get *(I-2uu^{t}/u^{t}u)x*
 #+END_SRC
 
 ** elementary coordinate reflector
-To build an upper triangular matrix we need to zero out values below the diagonal. The way we're going to do is by reflecting those columns onto coordinate axis. Ocne a vector is on a coordinate axis then its other components are naturally zero!
+Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the *Q* in the *QR*). 
 
-So now we would like to take this idea of the reflector matrix a bit further and find a way to construct one that will reflect the input vector straight on to a particular coordinate axis. So it needs to have an orthogonal hyperplane that's right between the vector and coordinate axis. This part is a bit hard to picture, but the equation for the vector orthogonal to the reflection plane is
+The first thing we want to do is have a method to zero out the first column of a matrix, ie *A_{ - ,1}*, If we could build a special elementary reflector *Q_{1}* that reflected that first column on to the elementary vector *e_{1}* (that's *[ 1 0 0 0.. 0 ]* ), then *Q_{1}A* would leave everything under the the first column zeroed out
+
+Generalizing a bit further, we will write a function that take a given vector and a target coordinate axis and produce a reflection matrix that takes one to the other. This is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. The answer isn't all that complicated, but it's a bit hard to picture. We want to find the plane that lies between where we start and where we want to reflect to. If you have two vectors and you want to make a plane that goes right between them, then all you need to do is make the two vectors the same length and add them together. This will give you a vector that goes right between the two. If you picture it in 2D space then the two vectors add up into a diamond shape with the point lieing on the bisecting line. 
+
+The last catch is that to define out plane we actually want the orthogonal vector. However, if instead you subtract these two equal-length vectors, then you will find that you get a vector orthogonal to that bisection vector/plane.
+
 \begin{equation}
-u = x + sign(x_{1})||x||e_{1}
+u = x - ||x||e_{1}
 \end{equation}
-Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to reflect. *sign(x)||x||e_{1}* is a vector on the coordinate axis that's stretched out so that it forms a sort of isosceles triangle with *x* (in higher dimension...). Since we want the result to lie on *e_{1}* we want to reflect *x* on the line/hyperplane bisecting this triangle. The bisecting line of a isosceles triangle is perpendicular to its base - so it's perfect for our *u*! And it so happens that the the equation for the base is the equation we have
+
+Once you have the orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix!
+
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn elementary-coordinate-reflector
    "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
@@ -94,8 +111,11 @@ Here *x* is our vector and *e_{1}* is the coordinate axis onto which we want to 
        (elementary-reflector vector-orthogonal-to-reflection-plane))))
 
 #+END_SRC
+** Zeroing the first column
 
-So now we can build matrices that reflect vectors onto an axis. We need to leverage this to build the upper triangluar matrix *R* of the *QR*. If we directly start to zero out things column after column with reflectors like we did in the *LU* case we would get an equation of the form  *Q^{-1}_{k}..Q^{-1}_{2}Q^{-1}_{1}A=R*. For the first column we can already write a *Q^{-1}_{1}* that will clear the terms under the first term
+Now putting all the pieces together, given some matrix *A* we can get back a reflector to zero out its first column
+
+
 #+BEGIN_SRC clojure :results output silent :session :tangle src/linearsystems_part2/core.clj
   (defn first-elementary-coordinate-reflector
     "Build a matrix that will reflect the INPUT-VECTOR on to the first elementary vector [ 1 0 0 .. 0 ]"
@@ -103,7 +123,47 @@ So now we can build matrices that reflect vectors onto an axis. We need to lever
     (elementary-coordinate-reflector input-vector
                                             (get-row (identity-matrix (dimension-count input-vector 0)) 0)))
 #+END_SRC
+Now we hit a bit of a snag. You can use the same method to make some matrix *Q_2* that will zero out the second column, but when you combine the two and try *Q_2Q_1A* you will see that *Q_2* is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after *Q_1A*, but when you reflect it again it moves away from the coordinate vector.
 
+In the *LU* Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (it would just shuffling zeroes around). Now this guarantee is gone so we need to think of a new trick.
+
+** Zeroing out the second column
+
+As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our *Q_1A* and clearing everything under the =(2,2)= position. To approach this we construct a new block matrix for *Q_2* that will have the form
+
+ \begin{equation}
+ Q_{2}
+ =
+ \begin{bmatrix}
+ 1 & 0\\
+ 0 & S_{ n-1, m-1 }\\
+ \end{bmatrix}
+ \end{equation}
+
+Notice how when we multiply this matrix times *Q_1A* the first column is left untouched and this =(n-1,m-1)= submatrix *S* will multiple times a submatrix of *Q_1A* which has the =(2,2)= position now in the =(1,1)= position.
+
+
+ \begin{equation}
+ Q_2(Q_1A)
+ =
+ \begin{bmatrix}
+ 1 & 0\\
+ 0 & S\\
+ \end{bmatrix}
+ \begin{bmatrix}
+ (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+ 0 & (Q_{1}A)_{n-1,m-1}\\
+ \end{bmatrix}
+ =
+ \begin{bmatrix}
+ (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+ 0 & S(Q_{1}A)_{n-1,m-1}\\
+ \end{bmatrix}
+ \end{equation}
+
+In the resulting matrix the only "new" entry we need to worry about is *S(Q_{1}A)_{n-1,m-1}* - everything else is unchanged. In this submatrix we need to clear the first column because it's the second column of our overall matrix - and we are free to choose any appropriate *S* matrix to do it. At this point the problem of choosing *S* mirrors the process we used to clear the first column - the only difference being that the dimension is one smaller
+
+When tackling the third column we just repeat the process but starting with the *S(Q_{1}A)_{n-1,m-1}* matrix - so the method is starting to show some recursion
 But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*
 
 #+BEGIN_QUOTE
