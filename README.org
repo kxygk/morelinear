@@ -16,13 +16,18 @@
 * Preface
 This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 
-To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default ~core.matrix~ library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and the ~core.matrix~ library. (Note the *core* is meaningless and it's not part of the Clojure standard library) This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
 
-As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracker in the repository, (but is no necessary is you use Emacs)
+Note that ~core.matrix~ is more of a "front end" API and it provides many different backends, some on the JVM others in JS. It's also not extremely performance focused and you can very easily end up doing operations that are very slow.
 
-Explaining Clojure is outside the scope of this project, but in short you will need to install Java and [[http://leiningen.org/][Leiningen]]. After you have both, you just clone this repository, go into it, and run ~lein run~ to run the project or ~lein repl~ to start an interactive REPL session.
+If you are concerned about getting as much as you can out of your system then I suggest looking at the ~neanderthal~ library which provides a thin wrapper around BLAS. It makes it very easy to work with BLAS and if you're on an x64 system this is the best CPU based performance you can hope for really. This project has a ~neanderthal~ branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like. It's an interesting work flow and really forces you to think a lot harder about your algorithms
+
+However my goal here is mostly educational and I'm interested in running on as many platforms as possible. As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output is tracker in the repository so you can clone the project and launch a REPL without touching Emacs.
+
+Explaining Clojure is outside the scope of this project!
 
 * Project managment
+*TODO* Migrate to tools.deps
 Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
 #+BEGIN_SRC clojure :results output silent :session :tangle project.clj
 (defproject morelinear "0.1.0-SNAPSHOT"
@@ -189,7 +194,7 @@ Now we hit a bit of a snag. You can use the same method to make some matrix *Q_2
 
 In the *LU* Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (it would just shuffling zeroes around). Now this guarantee is gone so we need to think of a new trick.
 
-** Zeroing out the second column
+** Zeroing out the second column and so on..
 
 As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our *Q_1A* and clearing everything under the =(2,2)= position. To approach this we construct a new block matrix for *Q_2* that will have the form
 
@@ -209,7 +214,7 @@ Notice how when we multiply this matrix times *Q_1A* the first column is left un
  Q_2(Q_1A)
  =
  \begin{bmatrix}
- 1 & 0\\
+  1 & 0\\
  0 & S\\
  \end{bmatrix}
  \begin{bmatrix}
@@ -228,12 +233,45 @@ In the resulting matrix the only "new" entry we need to worry about is *S(Q_{1}A
 When tackling the third column we just repeat the process but starting with the *S(Q_{1}A)_{n-1,m-1}* matrix - so the method is starting to show some recursion
 
 
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+  (defn reduce-to-r
+    "Reduce a matrix to a lower triangular orthonormal matrix"
+    [input-matrix]
+    (if (= 1 (row-count input-matrix)) ;; base case - 1x1 matrix
+      input-matrix
+      (do (assign! input-matrix
+		   (mmul (first-column-reflector input-matrix)
+			 input-matrix))
+	  (recur (submatrix input-matrix
+			    1
+			    (dec (row-count input-matrix))
+			    1
+			    (dec (column-count input-matrix)))))))
+#+END_SRC
 
+Now to test it I'm reusing the same random matrix from before:
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]]
+		  [21.0 98.0 55.0 48.0]
+		  [72.0 13.0 98.0 12.0]
+		  [28.0 38.0 73.0 20.0]))
 
+  (pm A)
+  ;; [[43.000 36.000 38.000 90.000]
+  ;;  [21.000 98.000 55.000 48.000]
+  ;;  [72.000 13.000 98.000 12.000]
+  ;;  [28.000 38.000 73.000 20.000]]
+  ;; nil
+  (reduce-to-r A)
 
-
-
-
+  (pm A)
+  ;; [[90.874 61.690 130.830  69.349]
+  ;;  [ 0.000 93.313  29.311  49.102]
+  ;;  [-0.000  0.000  37.767 -48.089]
+  ;;  [ 0.000 -0.000   0.000 -37.619]]
+  ;; nil
+#+END_SRC
+If you looking at the result I got when running ~(first-column-reflector ..)~ before then you'll see that the first column and row have been preserved as we expect. And so we've managed to reduce our matrix using reflectors!
 
 
 But the problem is that the subsequent *Q^{-1}_{i}*'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words *Q^{-1}_{1}* will reflect the first column onto *e_{1}*, but then the second reflector *Q^{-1}_{2}* will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write *Q^{-1}_{2}* so that it preserves the column of *Q^{-1}_{1}*

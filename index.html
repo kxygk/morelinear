@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-25 Thu 10:45 -->
+<!-- 2019-07-26 Fri 19:03 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -45,50 +45,59 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orge540a1a">Preface</a></li>
-<li><a href="#orgf098de2">Project managment</a></li>
-<li><a href="#orgba70f08">Householder QR</a>
+<li><a href="#orgf4f4f2f">Preface</a></li>
+<li><a href="#orge46d305">Project managment</a></li>
+<li><a href="#org3e8f970">Householder QR</a>
 <ul>
-<li><a href="#org70b27dd">elementary reflector</a></li>
-<li><a href="#orga5b2b34">elementary coordinate reflector</a></li>
-<li><a href="#org5df2ecf">Zeroing the first column</a></li>
-<li><a href="#orga5f7458">Zeroing out the second column</a></li>
+<li><a href="#orgf41ef0e">elementary reflector</a></li>
+<li><a href="#org484e1a8">elementary coordinate reflector</a></li>
+<li><a href="#org9bec6b0">Zeroing the first column</a></li>
+<li><a href="#org5e59d65">Zeroing out the second column and so on..</a></li>
 </ul>
 </li>
-<li><a href="#orgd9a0b59">Least Squares again</a></li>
-<li><a href="#orgf17dba9">Reduction to Hessenberg Form</a></li>
-<li><a href="#org36c9d8e"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org09e1bc9">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org88a76ff">End</a></li>
+<li><a href="#org73289ff">Least Squares again</a></li>
+<li><a href="#org1b1445e">Reduction to Hessenberg Form</a></li>
+<li><a href="#org073d33e"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org8921c68">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org54626ba">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orge540a1a" class="outline-2">
-<h2 id="orge540a1a">Preface</h2>
-<div class="outline-text-2" id="text-orge540a1a">
+<div id="outline-container-orgf4f4f2f" class="outline-2">
+<h2 id="orgf4f4f2f">Preface</h2>
+<div class="outline-text-2" id="text-orgf4f4f2f">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
 
 <p>
-To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and it's default <code>core.matrix</code> library. This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and the <code>core.matrix</code> library. (Note the <b>core</b> is meaningless and it's not part of the Clojure standard library) This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
 </p>
 
 <p>
-As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output will also be tracker in the repository, (but is no necessary is you use Emacs)
+Note that <code>core.matrix</code> is more of a "front end" API and it provides many different backends, some on the JVM others in JS. It's also not extremely performance focused and you can very easily end up doing operations that are very slow.
 </p>
 
 <p>
-Explaining Clojure is outside the scope of this project, but in short you will need to install Java and <a href="http://leiningen.org/">Leiningen</a>. After you have both, you just clone this repository, go into it, and run <code>lein run</code> to run the project or <code>lein repl</code> to start an interactive REPL session.
+If you are concerned about getting as much as you can out of your system then I suggest looking at the <code>neanderthal</code> library which provides a thin wrapper around BLAS. It makes it very easy to work with BLAS and if you're on an x64 system this is the best CPU based performance you can hope for really. This project has a <code>neanderthal</code> branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like. It's an interesting work flow and really forces you to think a lot harder about your algorithms
+</p>
+
+<p>
+However my goal here is mostly educational and I'm interested in running on as many platforms as possible. As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output is tracker in the repository so you can clone the project and launch a REPL without touching Emacs.
+</p>
+
+<p>
+Explaining Clojure is outside the scope of this project!
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgf098de2" class="outline-2">
-<h2 id="orgf098de2">Project managment</h2>
-<div class="outline-text-2" id="text-orgf098de2">
+<div id="outline-container-orge46d305" class="outline-2">
+<h2 id="orge46d305">Project managment</h2>
+<div class="outline-text-2" id="text-orge46d305">
 <p>
+<b>TODO</b> Migrate to tools.deps
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
 </p>
 <div class="org-src-container">
@@ -127,18 +136,18 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-orgba70f08" class="outline-2">
-<h2 id="orgba70f08">Householder QR</h2>
-<div class="outline-text-2" id="text-orgba70f08">
+<div id="outline-container-org3e8f970" class="outline-2">
+<h2 id="org3e8f970">Householder QR</h2>
+<div class="outline-text-2" id="text-org3e8f970">
 <p>
 An alternate method to the Gram-Schmidt is to take a more direct approach to building a <b>QR</b> matrix - similar to how we worked on building the <b>LU</b>. We will just directly zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal as well. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this makes some intuitive sense. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of several elementary matrices gives another elementary matrix.
 </p>
 </div>
 
 
-<div id="outline-container-org70b27dd" class="outline-3">
-<h3 id="org70b27dd">elementary reflector</h3>
-<div class="outline-text-3" id="text-org70b27dd">
+<div id="outline-container-orgf41ef0e" class="outline-3">
+<h3 id="orgf41ef0e">elementary reflector</h3>
+<div class="outline-text-3" id="text-orgf41ef0e">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -196,9 +205,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-orga5b2b34" class="outline-3">
-<h3 id="orga5b2b34">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orga5b2b34">
+<div id="outline-container-org484e1a8" class="outline-3">
+<h3 id="org484e1a8">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-org484e1a8">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>Q</b> in the <b>QR</b>). 
 </p>
@@ -267,9 +276,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org5df2ecf" class="outline-3">
-<h3 id="org5df2ecf">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org5df2ecf">
+<div id="outline-container-org9bec6b0" class="outline-3">
+<h3 id="org9bec6b0">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-org9bec6b0">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -322,9 +331,9 @@ In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c cle
 </div>
 </div>
 
-<div id="outline-container-orga5f7458" class="outline-3">
-<h3 id="orga5f7458">Zeroing out the second column</h3>
-<div class="outline-text-3" id="text-orga5f7458">
+<div id="outline-container-org5e59d65" class="outline-3">
+<h3 id="org5e59d65">Zeroing out the second column and so on..</h3>
+<div class="outline-text-3" id="text-org5e59d65">
 <p>
 As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our <b>Q<sub>1A</sub></b> and clearing everything under the <code>(2,2)</code> position. To approach this we construct a new block matrix for <b>Q<sub>2</sub></b> that will have the form
 </p>
@@ -347,7 +356,7 @@ Notice how when we multiply this matrix times <b>Q<sub>1A</sub></b> the first co
 Q_2(Q_1A)
 =
 \begin{bmatrix}
-1 & 0\\
+ 1 & 0\\
 0 & S\\
 \end{bmatrix}
 \begin{bmatrix}
@@ -370,6 +379,51 @@ When tackling the third column we just repeat the process but starting with the 
 </p>
 
 
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">reduce-to-r</span>
+  <span style="color: #036A07;">"Reduce a matrix to a lower triangular orthonormal matrix"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">if</span> (= 1 (row-count input-matrix)) <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case - 1x1 matrix</span>
+    input-matrix
+    (<span style="color: #0000FF;">do</span> (assign! input-matrix
+                 (mmul (first-column-reflector input-matrix<span style="color: #999999;">)</span>
+                       input-matrix<span style="color: #999999;">))</span>
+        (<span style="color: #0000FF;">recur</span> (submatrix input-matrix
+                          1
+                          (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                          1
+                          (dec (column-count input-matrix<span style="color: #999999;">)))))))</span>
+</pre>
+</div>
+
+<p>
+Now to test it I'm reusing the same random matrix from before:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]]</span>
+                [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                [28.0 38.0 73.0 20.0<span style="color: #999999;">]))</span>
+
+(pm A<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000 20.000]]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
+(reduce-to-r A<span style="color: #999999;">)</span>
+
+(pm A<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874 61.690 130.830  69.349]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 93.313  29.311  49.102]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  37.767 -48.089]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 -0.000   0.000 -37.619]]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
+</pre>
+</div>
+<p>
+If you looking at the result I got when running <code>(first-column-reflector ..)</code> before then you'll see that the first column and row have been preserved as we expect. And so we've managed to reduce our matrix using reflectors!
+</p>
 
 
 <p>
@@ -582,9 +636,9 @@ But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need
 </div>
 </div>
 
-<div id="outline-container-orgd9a0b59" class="outline-2">
-<h2 id="orgd9a0b59">Least Squares again</h2>
-<div class="outline-text-2" id="text-orgd9a0b59">
+<div id="outline-container-org73289ff" class="outline-2">
+<h2 id="org73289ff">Least Squares again</h2>
+<div class="outline-text-2" id="text-org73289ff">
 <p>
 While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
 </p>
@@ -599,9 +653,9 @@ Notice that we did that all in theoretical equation form and how we've avoided h
 </div>
 </div>
 
-<div id="outline-container-orgf17dba9" class="outline-2">
-<h2 id="orgf17dba9">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-orgf17dba9">
+<div id="outline-container-org1b1445e" class="outline-2">
+<h2 id="org1b1445e">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-org1b1445e">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -710,17 +764,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-org36c9d8e" class="outline-2">
-<h2 id="org36c9d8e"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org36c9d8e">
+<div id="outline-container-org073d33e" class="outline-2">
+<h2 id="org073d33e"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org073d33e">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org09e1bc9" class="outline-2">
-<h2 id="org09e1bc9">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org09e1bc9">
+<div id="outline-container-org8921c68" class="outline-2">
+<h2 id="org8921c68">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org8921c68">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
 <span style="color: #036A07;">"template"</span>
@@ -731,9 +785,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-org88a76ff" class="outline-2">
-<h2 id="org88a76ff">End</h2>
-<div class="outline-text-2" id="text-org88a76ff">
+<div id="outline-container-org54626ba" class="outline-2">
+<h2 id="org54626ba">End</h2>
+<div class="outline-text-2" id="text-org54626ba">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 

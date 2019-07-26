@@ -35,6 +35,20 @@
 					       0)
 				   (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
 
+(defn reduce-to-r
+  "Reduce a matrix to a lower triangular orthonormal matrix"
+  [input-matrix]
+  (if (= 1 (row-count input-matrix)) ;; base case - 1x1 matrix .. nothing to reduce
+    input-matrix
+    (do (assign! input-matrix
+		 (mmul (first-column-reflector input-matrix)
+		       input-matrix))
+	(recur (submatrix input-matrix
+			  1
+			  (dec (row-count input-matrix))
+			  1
+			  (dec (column-count input-matrix)))))))
+
 (defn raise-rank
   "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
   Optionally pass in a RANK variable to pad with that many rows (default: 1)"
