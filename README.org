@@ -200,7 +200,7 @@ As is usually the trick with these things, the solution is thinking in terms of 
 
  \begin{equation}
  Q_{2}
- =
+ \\=
  \begin{bmatrix}
  1 & 0\\
  0 & S_{ n-1, m-1 }\\
@@ -212,7 +212,7 @@ Notice how when we multiply this matrix times *Q_1A* the first column is left un
 
  \begin{equation}
  Q_2(Q_1A)
- =
+ \\=
  \begin{bmatrix}
   1 & 0\\
  0 & S\\
@@ -221,7 +221,7 @@ Notice how when we multiply this matrix times *Q_1A* the first column is left un
  (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
  0 & (Q_{1}A)_{n-1,m-1}\\
  \end{bmatrix}
- =
+ \\=
  \begin{bmatrix}
  (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
  0 & S(Q_{1}A)_{n-1,m-1}\\
