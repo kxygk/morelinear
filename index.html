@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-26 Fri 19:05 -->
+<!-- 2019-07-28 Sun 00:19 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -45,28 +45,29 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgec3deae">Preface</a></li>
-<li><a href="#orge999d99">Project managment</a></li>
-<li><a href="#org7bfb677">Householder QR</a>
+<li><a href="#org72b0479">Preface</a></li>
+<li><a href="#orgf6411dd">Project managment</a></li>
+<li><a href="#org5310e4b">Householder QR</a>
 <ul>
-<li><a href="#org57cb469">elementary reflector</a></li>
-<li><a href="#orgbfeae2a">elementary coordinate reflector</a></li>
-<li><a href="#orga366125">Zeroing the first column</a></li>
-<li><a href="#orgfb89c1b">Zeroing out the second column and so on..</a></li>
+<li><a href="#orgd04ac1c">elementary reflector</a></li>
+<li><a href="#org5d393e0">elementary coordinate reflector</a></li>
+<li><a href="#org9e546b8">Zeroing the first column</a></li>
+<li><a href="#orgb393575">Zeroing out the second column and so on..</a></li>
+<li><a href="#org8446496">Getting the reflectors</a></li>
 </ul>
 </li>
-<li><a href="#orgacbfa2f">Least Squares again</a></li>
-<li><a href="#org17bee5b">Reduction to Hessenberg Form</a></li>
-<li><a href="#orgad31278"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org0ea9a03">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org9c58406">End</a></li>
+<li><a href="#orge8c7e53">Least Squares again</a></li>
+<li><a href="#org4ca7930">Reduction to Hessenberg Form</a></li>
+<li><a href="#orge266631"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org1c5d6ae">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org7d2e861">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgec3deae" class="outline-2">
-<h2 id="orgec3deae">Preface</h2>
-<div class="outline-text-2" id="text-orgec3deae">
+<div id="outline-container-org72b0479" class="outline-2">
+<h2 id="org72b0479">Preface</h2>
+<div class="outline-text-2" id="text-org72b0479">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -93,9 +94,9 @@ Explaining Clojure is outside the scope of this project!
 </div>
 </div>
 
-<div id="outline-container-orge999d99" class="outline-2">
-<h2 id="orge999d99">Project managment</h2>
-<div class="outline-text-2" id="text-orge999d99">
+<div id="outline-container-orgf6411dd" class="outline-2">
+<h2 id="orgf6411dd">Project managment</h2>
+<div class="outline-text-2" id="text-orgf6411dd">
 <p>
 <b>TODO</b> Migrate to tools.deps
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
@@ -136,28 +137,27 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-org7bfb677" class="outline-2">
-<h2 id="org7bfb677">Householder QR</h2>
-<div class="outline-text-2" id="text-org7bfb677">
+<div id="outline-container-org5310e4b" class="outline-2">
+<h2 id="org5310e4b">Householder QR</h2>
+<div class="outline-text-2" id="text-org5310e4b">
 <p>
-An alternate method to the Gram-Schmidt is to take a more direct approach to building a <b>QR</b> matrix - similar to how we worked on building the <b>LU</b>. We will just directly zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they are orthonormal, so when we carry out a series of reflections <b>Q<sub>1</sub>Q<sub>2</sub>..Q<sub>k</sub>A</b> we can combine them into one matrix which will be guaranteed to be orthonormal as well. Conceptually this is saying that if you do a bunch of reflections one after another, it all adds up in the end to be one reflection - and this makes some intuitive sense. In the <b>LU</b>'s Gaussian elimination the elementary matrices we used were neither orthogonal nor normal and we didn't have this same guarantee that the product of several elementary matrices gives another elementary matrix.
+An alternate method to the Gram-Schmidt is to take a more direct approach to building a <b>QR</b> matrix - similar to how we worked on building the <b>LU</b>. We will just directly zero out columns to build an upper triangular <b>R</b>. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>. Their key property is that they're their own inverse. Reflecting something twice gives you the same things back.So <b>Q<sup>-1</sup><sub>j</sub>=*Q<sub>j</sub></b> and <b>Q<sub>j</sub>Q<sub>j</sub>=I</b>. They are also orthonormal, so when we carry out a series of reflections <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>A</b> we can combine them into one matrix <b>Q<sup>-1</sup></b> which will be guaranteed to be orthonormal as well (<b>Note</b>: The notation is a bit confusing.. but this <b>Q<sup>-1</sup></b> is not necessarily a reflection). 
 </p>
 </div>
 
-
-<div id="outline-container-org57cb469" class="outline-3">
-<h3 id="org57cb469">elementary reflector</h3>
-<div class="outline-text-3" id="text-org57cb469">
+<div id="outline-container-orgd04ac1c" class="outline-3">
+<h3 id="orgd04ac1c">elementary reflector</h3>
+<div class="outline-text-3" id="text-orgd04ac1c">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
 
 <p>
-The first task is finding a nice concise mechanism to define a hyperplane. If our space is <b>R<sup>N</sup></b> then the hyperplane will be <b>N-1</b> dimensions and at first blush we seem to need <b>N-1</b> vectors to define it. For instance in <b>3D</b> space any two vectors not on the same line will define a 2D plane. Where <b>plane = a*v<sub>1</sub> + b*v<sub>2</sub></b> (for all <i>a</i> and <i>b</i>). But this method doesn't really scale b/c as <b>N</b> increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we just choose one, call it <b>u</b>, and let it represent that remaining <b>N<sup>th</sup></b> dimension. Now you can simply say that the hyperplane is all vectors orthogonal to <b>u</b>. Or more formally, all vectors <i>not-in-the-span</i> of <b>u</b> are the hyperplane
+The first task is finding a nice concise mechanism to define a hyperplane. If our space is <b>R<sup>N</sup></b> then the hyperplane will be <b>N-1</b> dimensions and at first blush we seem to need <b>N-1</b> vectors to define it. For instance in <b>3D</b> space any two vectors not on the same line will define a 2D plane (ie. <b>a*v<sub>1</sub> + b*v<sub>2</sub></b> for all <i>a</i> and <i>b</i>). But this method doesn't really scale b/c as <b>N</b> increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we can just choose one, call it <b>u</b>, and let it represent that remaining <b>N<sup>th</sup></b> dimension. Now you can simply say that the hyperplane is all the vectors orthogonal to <b>u</b>. Or more formally, all vectors <i>not-in-the-span</i> of <b>u</b> are the hyperplane
 </p>
 
 <p>
-Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector <b>x</b> across the hyperplane. The key insight here is that <b>x</b> can be broken up into two separate vectors: One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is in the direction of <b>u</b> and is just flipped to point to the other side of the plane. To do this procedure mathematically we take the component of <b>x</b> in the direction of the <b>u</b> that defines our plane and then we subtract it twice from <b>x</b>. The first subtraction makes the vector line in the plane and the second makes it point to the other side of the plane. Breaking it down further, the steps go as followed:
+Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector <b>x</b> across the hyperplane. <b>x</b> can be broken up into two separate vectors: One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is in the direction of <b>u</b> and is flipped by just getting its negative. To do this procedure mathematically we start with a vector <b>x</b> and subtract twice its component in the direction of the <b>u</b>:
 </p>
 <ul class="org-ul">
 <li><b>u<sup>t</sup>x*/||u||</b> is the amount of <b>x</b> in the direction of <b>u</b> (a scalar)</li>
@@ -168,11 +168,11 @@ Now that we have a way to define a plane we need to work through the mechanics o
 <li><b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)x</b> is how we'd factor the <b>x</b> back out</li>
 </ul>
 <p>
-Notice that now that we factored out the <b>x</b> we now that the matrix <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> on the left side. This is the reflector matrix and it's defined uniquely by the <b>u</b> vector. Now given any new value of <b>x</b> we can multiply it by <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> and get its reflection across the hyperplane orthogonal to <b>u</b>. 
+Notice how in the last step we managed to factor out the <b>x</b> , so we can subsitute it with any other vector to get a reflection. The matrix <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> to its left is the reflector matrix. It's defined uniquely by <b>u</b> and is independent of <b>x</b>.
 </p>
 
 <p>
-<b>Note:</b> We will see in the next section that we can't safely assume <b>u</b> is unit length - otherwise we could drop the normalizing inner product term and everything would look much cleaner.
+<b>Note:</b> We will see in the next section that thought it would make life easier, we can't safely assume <b>u</b> is unit length
 </p>
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-reflector</span>
@@ -205,23 +205,23 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-orgbfeae2a" class="outline-3">
-<h3 id="orgbfeae2a">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orgbfeae2a">
+<div id="outline-container-org5d393e0" class="outline-3">
+<h3 id="org5d393e0">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-org5d393e0">
 <p>
-Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>Q</b> in the <b>QR</b>). 
+Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
 
 <p>
-The first thing we want to do is have a method to zero out the first column of a matrix, ie <b>A<sub> - ,1</sub></b>, If we could build a special elementary reflector <b>Q<sub>1</sub></b> that reflected that first column on to the elementary vector <b>e<sub>1</sub></b> (that's <b>[ 1 0 0 0.. 0 ]</b> ), then <b>Q<sub>1</sub>A</b> would leave everything under the the first column zeroed out
+The first thing we want to do is have a way to zero out the first column of a matrix, ie <b>A<sub> - ,1</sub></b>. We'd like to build a special elementary reflector <b>Q<sub>1</sub></b> that reflected that first column on to the elementary vector <b>e<sub>1</sub></b> (that's <b>[ 1 0 0 0.. 0 ]</b> ). If we had this matrix then <b>Q<sub>1</sub>A</b> would leave everything under the the first column zeroed out.
 </p>
 
 <p>
-Generalizing a bit further, we will write a function that take a given vector and a target coordinate axis and produce a reflection matrix that takes one to the other. This is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. The answer isn't all that complicated, but it's a bit hard to picture. We want to find the plane that lies between where we start and where we want to reflect to. If you have two vectors and you want to make a plane that goes right between them, then all you need to do is make the two vectors the same length and add them together. This will give you a vector that goes right between the two. If you picture it in 2D space then the two vectors add up into a diamond shape with the point lieing on the bisecting line. 
+Generalizing the problem a bi, this is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. This plane lies between where we start and where we want to reflect to. If you picture it in 2D space then you could take the two vectors add up their norms and you will get a vector that bisects them (forming a equilateral diamond shape with the point lieing on the bisecting line). In higher dimensions it will get a bit more complicated as you need more and more vectors. 
 </p>
 
 <p>
-The last catch is that to define out plane we actually want the orthogonal vector. However, if instead you subtract these two equal-length vectors, then you will find that you get a vector orthogonal to that bisection vector/plane.
+Fortunately we know we can define the plane with the orthogonal vector. To get that we just subtract the two vector norms and you will find that you get a vector orthogonal to that bisection vector/plane.
 </p>
 
 \begin{equation}
@@ -229,7 +229,15 @@ u = x - ||x||e_{1}
 \end{equation}
 
 <p>
-Once you have the orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix!
+Strain your brain and try to picture it in 2D and in 3D and it should make sense.
+</p>
+
+<p>
+<b>TODO</b>: Maybe add a picture..
+</p>
+
+<p>
+Once you an orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix
 </p>
 
 <div class="org-src-container">
@@ -276,9 +284,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-orga366125" class="outline-3">
-<h3 id="orga366125">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-orga366125">
+<div id="outline-container-org9e546b8" class="outline-3">
+<h3 id="org9e546b8">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-org9e546b8">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -293,7 +301,7 @@ Now putting all the pieces together, given some matrix <b>A</b> we can get back 
 </pre>
 </div>
 <p>
-Now we can test it by writing out a random matrix and zeroing out its first column
+This is really just a wrapper for the previous function. Now we can test it by writing out a random matrix and zeroing out its first column
 </p>
 <div class="org-src-container">
 <pre class="src src-clojure">(pm (first-column-reflector [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
@@ -320,22 +328,22 @@ Now we can test it by writing out a random matrix and zeroing out its first colu
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
 </pre>
 </div>
-
-<p>
-Now we hit a bit of a snag. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try <b>Q<sub>2Q</sub><sub>1A</sub></b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1A</sub></b>, but when you reflect it again it moves away from the coordinate vector.
-</p>
-
-<p>
-In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (it would just shuffling zeroes around). Now this guarantee is gone so we need to think of a new trick.
-</p>
 </div>
 </div>
 
-<div id="outline-container-orgfb89c1b" class="outline-3">
-<h3 id="orgfb89c1b">Zeroing out the second column and so on..</h3>
-<div class="outline-text-3" id="text-orgfb89c1b">
+<div id="outline-container-orgb393575" class="outline-3">
+<h3 id="orgb393575">Zeroing out the second column and so on..</h3>
+<div class="outline-text-3" id="text-orgb393575">
 <p>
-As is usually the trick with these things, the solution is thinking in terms of block matrices. When we say we need to clear the second column we actually mean taking the result of our <b>Q<sub>1A</sub></b> and clearing everything under the <code>(2,2)</code> position. To approach this we construct a new block matrix for <b>Q<sub>2</sub></b> that will have the form
+Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
+</p>
+
+<p>
+In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (b/c shuffling rows would just be moving around zeroes from the pervious columns). Now this guarantee is gone so we need to find a way to reflect some matrix columns and not others
+</p>
+
+<p>
+The solution is thinking in terms of block matrices. When we say we need to clear the second column we can spell that out as : we want to take the result of our first reflector <b>Q<sub>1</sub>A</b> and now clearing everything under the <code>(2,2)</code> position. To avoid touching the first column we construct <b>Q<sub>2</sub></b> with the following form:
 </p>
 
 \begin{equation}
@@ -348,7 +356,7 @@ Q_{2}
 \end{equation}
 
 <p>
-Notice how when we multiply this matrix times <b>Q<sub>1A</sub></b> the first column is left untouched and this <code>(n-1,m-1)</code> submatrix <b>S</b> will multiple times a submatrix of <b>Q<sub>1A</sub></b> which has the <code>(2,2)</code> position now in the <code>(1,1)</code> position.
+Notice how when we multiply this matrix times <b>Q<sub>1</sub>A</b> the first column is left untouched
 </p>
 
 
@@ -356,7 +364,7 @@ Notice how when we multiply this matrix times <b>Q<sub>1A</sub></b> the first co
 Q_2(Q_1A)
 \\=
 \begin{bmatrix}
- 1 & 0\\
+1 & 0\\
 0 & S\\
 \end{bmatrix}
 \begin{bmatrix}
@@ -371,20 +379,24 @@ Q_2(Q_1A)
 \end{equation}
 
 <p>
-In the resulting matrix the only "new" entry we need to worry about is <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> - everything else is unchanged. In this submatrix we need to clear the first column because it's the second column of our overall matrix - and we are free to choose any appropriate <b>S</b> matrix to do it. At this point the problem of choosing <b>S</b> mirrors the process we used to clear the first column - the only difference being that the dimension is one smaller
+Now also notice that the <code>n-1 by m-1</code> submatrix <b>S</b> will multiple times a submatrix of <b>Q<sub>1</sub>A</b> which has that <code>(2,2)</code> position now in the <code>(1,1)</code> position.
 </p>
 
 <p>
-When tackling the third column we just repeat the process but starting with the <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> matrix - so the method is starting to show some recursion
+We've also got a bit of bonus b/c in the resulting matrix the only "new" entry we need to worry about is <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> - the first column and row have remained the same. In this submatrix product we need to again clear the first column because it's the second column of our overall matrix. Choosing an appropriate <b>S</b> matrix to do it mirrors the process we used to clear the first column of <b>A</b> - the only difference being that the dimension is one smaller.
 </p>
 
+<p>
+When tackling the third column we do this again, getting the next submatrix of <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b>. At each step we are reducing the first column, grabbing the result's submatrix and calling the procedure again - until we are out of things to reduce
+</p>
 
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">reduce-to-r</span>
   <span style="color: #036A07;">"Reduce a matrix to a lower triangular orthonormal matrix"</span>
   [input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">if</span> (= 1 (row-count input-matrix)) <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case - 1x1 matrix</span>
-    input-matrix
+  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 1 (row-count input-matrix<span style="color: #999999;">))</span>
+          (= 1 (column-count input-matrix))) 
+    input-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
     (<span style="color: #0000FF;">do</span> (assign! input-matrix
                  (mmul (first-column-reflector input-matrix<span style="color: #999999;">)</span>
                        input-matrix<span style="color: #999999;">))</span>
@@ -396,14 +408,24 @@ When tackling the third column we just repeat the process but starting with the 
 </pre>
 </div>
 
+<blockquote>
 <p>
-Now to test it I'm reusing the same random matrix from before:
+<b>Note</b>: 
+</p>
+<ul class="org-ul">
+<li>This <code>submatrix</code> function is interesting b/c it will not make a copy of the matrix. Instead it will return a matrix object that shares its underlying data/memory with the parent matrix. So as we reduce the submatrices, the orginal matrix is being reduced as well</li>
+<li>The <code>mmul</code> matrix multiplication will unfortunately produce a temporary intermediary matrix which will then get copied into the matrix/submatrix. Other more advanced matrix libraries may have ways to do this in-place.</li>
+</ul>
+</blockquote>
+
+<p>
+Now to test it I'm reusing the same random matrix from the previous example:
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]]</span>
-                [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                [28.0 38.0 73.0 20.0<span style="color: #999999;">]))</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
 
 (pm A<span style="color: #999999;">)</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000]</span>
@@ -422,229 +444,115 @@ Now to test it I'm reusing the same random matrix from before:
 </pre>
 </div>
 <p>
-If you looking at the result I got when running <code>(first-column-reflector ..)</code> before then you'll see that the first column and row have been preserved as we expect. And so we've managed to reduce our matrix using reflectors!
+If you looking at the result I got when running <code>(first-column-reflector ..)</code>  then you'll see that the first column and row have been preserved as we expect.
 </p>
-
-
-<p>
-But the problem is that the subsequent <b>Q<sup>-1</sup><sub>i</sub></b>'s are not as clean as row operations and the column of zeroes will not get preserved between reflections. In other words <b>Q<sup>-1</sup><sub>1</sub></b> will reflect the first column onto <b>e<sub>1</sub></b>, but then the second reflector <b>Q<sup>-1</sup><sub>2</sub></b> will reflect it away somewhere else and you will lose those zeroes. So we need to be a little more clever here and find a way to write <b>Q<sup>-1</sup><sub>2</sub></b> so that it preserves the column of <b>Q<sup>-1</sup><sub>1</sub></b>
-</p>
-
-<blockquote>
-<p>
-<b>Note</b>: That <b>Q<sup>-1</sup><sub>i</sub></b> = <b>Q<sup>T</sup><sub>i</sub></b> = <b>Q<sub>i</sub></b>  b/c <b>Q<sub>i</sub></b> is a reflector and therefore it's own inverse (reflecting something twice gets your the original back). So <b>Q<sup>-1</sup><sub>i</sub></b> and <b>Q<sub>i</sub></b> can be used interchangeably.
-</p>
-
-<p>
-Furthermore <b>Q<sup>-1</sup></b> = <b>(Q<sub>1</sub> Q<sub>2</sub> Q<sub>3</sub> &#x2026; Q<sub>n</sub>)<sup>-1</sup></b> = <b>Q<sup>-1</sup><sub>n</sub> &#x2026; Q<sup>-1</sup><sub>3</sub> Q<sup>-1</sup><sub>2</sub> Q<sup>-1</sup><sub>1</sub></b> <br>
-But this <i>does not</i> equal <b>Q</b> - so you <i>can not</i> use them interchageably
-</p>
-
-<p>
-The notation that follows is admittedly a bit less consistent than I'd like - but the algorithm thought be clear nonetheless (<b>TODO</b> clean up..)
-</p>
-</blockquote>
-<p>
-<i>p. 341</i> we can write <b>Q<sup>-1</sup><sub>2</sub></b> ( or just <b>Q<sub>2</sub></b>) using block matrices (Note that the book chooses to confusingly use the letter <b>R<sub>i</sub></b> where I'm using <b>Q<sub>i</sub></b>)
-</p>
-
-\begin{equation}
-Q_{2}
-=
-\begin{bmatrix}
-1 & 0\\
-0 & S_{ n-1, m-1 }\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-When you look at  <b>Q<sub>2</sub>(Q<sub>1</sub>A)</b> in block matrix form you see that the first column and row of <b>(Q<sub>1</sub>A)</b> is untouched and this new block <b>S</b> is multiplied with a <i>submatrix</i> of <b>Q<sub>1</sub>A</b> (which is the <b>(Q<sub>1</sub>A)</b> matrix with the first row/column removed). We choose this <b>S</b> to be another reflection matrix which will zero out the first column of that submatrix - which will be in the <i>second</i> column of <b>Q<sub>1</sub>A</b>.
-</p>
-
-<p>
-So a pattern start to emerge. You take a matrix <b>A</b> then you zero out the first column, then you take a submatrix, zero out its first column and then get the next smaller submatrix, zero out its first column.. etc. What's left to figure out is how to combine everything back together to get the full <b>Q<sup>-1</sup>R</b> matrices we want.
-</p>
-
-<p>
-On the next page (342) the book generalizes this trick to any dimension and shows you how to build any given <b>Q<sub>i</sub></b> matrix but <b>do not use this!!</b>. You could build each <b>Q<sub>i</sub></b> but there is actually a much better way to build <b>Q<sup>-1</sup></b>
-</p>
-
-<p>
-Imagine we were give the full <b>QR</b> for the sub-matrix  - lets call it <b>Q{s}R<sub>s</sub></b>. In other words the smaller matrix <b>Q<sub>s</sub></b>  could triangularize the sub-matrix of <b>Q<sub>1</sub>A</b>  entirely in one go.  Well with the help of the previous formula we could put it in the place of <b>S</b> and build a matrix that represented <b>Q<sub>rest</sub>=Q<sub>k</sub>..Q<sub>2</sub></b>. Then we just multiply with <b>Q<sub>1</sub></b> to get the full <b>Q<sup>-1</sup></b> for <b>A</b>
-</p>
-
-
-\begin{equation}
-Q^{-1} = Q_{k} ... Q_{2} Q_{1}
-\end{equation}
-\begin{equation}
-Q^{-1} = Q_{rest} Q_{1}
-\end{equation}
-
-\begin{equation}
-\begin{bmatrix}
-Q_{rest}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\end{equation}
-
-\begin{equation}
-\begin{bmatrix}
-Q^{-1}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\begin{bmatrix}
-Q_{1}\\
-\end{bmatrix}
-\end{equation}
-
-
-\begin{equation}
-\begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\begin{bmatrix}
-Q_{1}\\
-\end{bmatrix}
-\begin{bmatrix}
-A\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-R\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-So we just need a simple function to take a <b>Q<sub>s</sub></b> and pad it with these zeroes to build our <b>Q<sub>rest</sub></b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">raise-rank</span>
-  <span style="color: #036A07;">"Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)</span>
-<span style="color: #036A07;">  Optionally pass in a RANK variable to pad with that many rows (default: 1)"</span>
-  ([input-matrix<span style="color: #999999;">]</span>
-   (raise-rank input-matrix 1<span style="color: #999999;">))</span>
-  ([input-matrix rank<span style="color: #999999;">]</span>
-   (<span style="color: #0000FF;">if</span> (zero? rank<span style="color: #999999;">)</span>
-     input-matrix
-     (raise-rank
-      (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0<span style="color: #999999;">))</span>
-                  (join-along 0 (row-matrix (zero-vector (column-count input-matrix<span style="color: #999999;">)))</span>
-                              input-matrix<span style="color: #999999;">))</span>
-      (dec rank<span style="color: #999999;">)))))</span>
-</pre>
+</div>
 </div>
 
+<div id="outline-container-org8446496" class="outline-3">
+<h3 id="org8446496">Getting the reflectors</h3>
+<div class="outline-text-3" id="text-org8446496">
 <p>
-<b>R<sub>s</sub></b>, the product of reducing the submatrix <b>Q<sub>1</sub>A</b> can be similarly used to build <b>R</b>, however if you break up the <b>Q<sub>1</sub>A</b> into block matrices you will see that the first row of <b>Q<sub>1</sub>A</b> is in effect preserved and needs to be copied over
+The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
+</p>
+
+<p>
+This step it unfortunately not quite as elegant as the reduction (or I haven't found the right solution!). 
+</p>
+
+<p>
+The easiest solution is to work backwards from the last iteration step where there reflector matrix is just <b>1</b>. Then going back up one iteration we would take <b>1</b> and combine it with the <code>first-column-reflector</code> we got at that step.. and so on up the iterations till we got to back to the <b>Q<sub>1</sub></b>. Unfortunately with this method we build up <b>Q</b> as we work back up the stack and after we have finished the reduction. So as we reduce we need to keep around all these intermediary reflector till we get the last one (the <b>1</b>). Only then can we combine them.
+</p>
+
+<p>
+The better but uglier solution is to combine the reflectors as we go, starting with <b>Q<sub>1</sub></b>. At each iteration of the reduction we got a new <code>(first-column-reflector .. )</code> , and just like with <b>S</b> in the 2<sup>nd</sup> column case, we pad the matrix and make it <code>n by n</code>
 </p>
 
 \begin{equation}
+Q_{k}
+\\=
 \begin{bmatrix}
-1 & 0\\
-0 & Q_{s}\\
-\end{bmatrix}
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-(Q_{1}A)_{*,1} & (Q_{1}A)_{s,s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & Q_{s}(Q_{1}A)_{s,s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & R_{s}\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-R\\
+I_{k-1,k-1} & 0\\
+0 & S_{n-k+1,n-k+1}\\
 \end{bmatrix}
 \end{equation}
 
 <p>
-So we similarly need a little helper function here to "augment" <b>R<sub>s</sub></b> to <b>R</b> but with the first row inserted manually from <b>Q<sub>1</sub>A</b> (done in-code late)
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">raise-rank-and-insert-row-column</span>
-  <span style="color: #036A07;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
-<span style="color: #036A07;">  The submatrix is 1 row and column smaller.</span>
-<span style="color: #036A07;">  First insert a column (size of input-matrix  and then a row (size + 1)"</span>
-  [input-matrix insert-column insert-row<span style="color: #999999;">]</span>
-  (join-along 0 (row-matrix insert-row<span style="color: #999999;">)</span>
-              (join-along 1 (column-matrix insert-column<span style="color: #999999;">)</span>
-                          input-matrix<span style="color: #999999;">)))</span>
-
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">raise-rank-and-insert-row</span>
-  <span style="color: #036A07;">"Takes a submatrix and put it's in the lower right corner of a larger matrix.</span>
-<span style="color: #036A07;">  The submatrix is 1 row and column smaller</span>
-<span style="color: #036A07;">  First insert a column of zeroes and then the passed in row (size + 1)"</span>
-      [input-matrix insert-row<span style="color: #999999;">]</span>
-      (raise-rank-and-insert-row-column
-       input-matrix
-       (zero-vector (column-count input-matrix<span style="color: #999999;">))</span>
-       insert-row<span style="color: #999999;">))</span>
-</pre>
-</div>
-
-<p>
-But ofcourse we don't have the <b>Q<sub>s</sub>R<sub>s</sub></b> yet, so we need to think of this method recursively. <b>Q<sub>s</sub>R<sub>s</sub></b> is just the <b>Q<sup>-1</sup>R</b> of a smaller matrix which we can immediately calculate b/c it's simply the submatrix of <b>Q<sub>1</sub>A</b> and  we have both <b>Q<sub>1</sub></b> and <b>A</b> . Once we have the submatrix, we call this procedure again and again we we will make a new <b>Q<sub>1</sub></b> - but now for this smaller matrix. Then again we get a <b>Q<sub>1</sub>A</b> for this smaller matrix and keep going over and over - at each step the matrix gets one row and column smaller and at some point you will be left with a single column/row in which case the <b>Q<sub>1</sub></b> will be the full <b>Q<sup>-1</sup></b> of <b>A</b> and <b>Q<sub>1</sub>A = Q<sup>-1</sup>A = R</b>. So going up a step you will finally have a  <b>Q<sub>s</sub></b> and so we know how to build a <b>Q<sup>-1</sup>R</b>. This gives us the <b>Q<sub>s</sub></b> for the step before that, and we just continue going back and building up our <b>Q<sup>-1</sup>R</b> one submatrix at a time till we are left with the full <b>Q<sup>-1</sup>R</b>
+In <code>core.matrix</code> there is a convenient <code>(block-diagonal-matrix .. )</code> function to handle making these
 </p>
 
 <p>
-<b>R</b> is built up similarly in parallel
+So far we've been looking at <b>Q<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>n</sub>A=R</b>, but ultimately we want to get to <b>A=QR</b>. The reflectors are their own inverse, so written out like that the equation remains easily invertable. While by contrast <b>Q<sup>-1</sup>A=R</b> is not so easy to invert&#x2026; b/c <b>Q<sup>-1</sup></b> may not be a reflector at all. So we flip the equation ahead of time <b>A=Q<sub>n</sub></b> .. <b>Q<sub>2</sub>Q<sub>1</sub>R</b> and we make sure to build <b>Q</b> in the right order <b>Q=Q<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>1</sub></b>
 </p>
+
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-QR</span>
-  <span style="color: #036A07;">"Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-reduce-to-QR</span>
+  <span style="color: #036A07;">"Increase the dimension of a reflector by padding it with an identity matrix"</span>
+  [reduction-matrix input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 1 (row-count input-matrix<span style="color: #999999;">))</span>
+          (= 1 (column-count input-matrix<span style="color: #999999;">)))</span>
+    reduction-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
+    (<span style="color: #0000FF;">let</span> [reflector (first-column-reflector input-matrix<span style="color: #999999;">)]</span>
+      (<span style="color: #0000FF;">do</span> (assign! input-matrix
+                   (mmul reflector
+                         input-matrix<span style="color: #999999;">))</span>
+          (<span style="color: #0000FF;">recur</span> (mmul reduction-matrix
+                       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix<span style="color: #999999;">)</span>
+                                                                   (row-count input-matrix<span style="color: #999999;">)))</span>
+                                               reflector<span style="color: #999999;">]))</span>
+                 (submatrix input-matrix
+                            1
+                            (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                            1
+                            (dec (column-count input-matrix<span style="color: #999999;">))))))))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-QR</span>
+  <span style="color: #036A07;">"A wrapper for the real function"</span>
   [input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">let</span> [reflector-to-zero-out-first-column
-        (first-column-reflector input-matrix<span style="color: #999999;">)</span>
-        input-matrix-with-first-column-zeroed-out
-        (mmul reflector-to-zero-out-first-column input-matrix<span style="color: #999999;">)]</span>
-    (<span style="color: #0000FF;">if</span>
-        <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">Base Case: We're out of columns/rows to reduce</span>
-        <span style="color: #8D8D84;">;;            </span><span style="color: #8D8D84; font-style: italic;">Return the reflector and the reduced column</span>
-        (<span style="color: #0000FF;">or</span> (= (column-count input-matrix) 1) (= (row-count input-matrix) 1<span style="color: #999999;">))</span>
-        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out<span style="color: #999999;">]</span>
-        <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">Recursive step: Get the Q^{-1}R of the submatrix</span>
-        <span style="color: #8D8D84;">;;                 </span><span style="color: #8D8D84; font-style: italic;">Then and combine it with your reflector and reduced matrix</span>
-        (<span style="color: #0000FF;">let</span> [submatrix (submatrix
-                         input-matrix-with-first-column-zeroed-out
-                         1 (dec (row-count input-matrix<span style="color: #999999;">))</span>
-                         1 (dec (column-count input-matrix<span style="color: #999999;">)))</span>
-              [submatrix-Q submatrix-R] (householder-QR submatrix<span style="color: #999999;">)]</span>
-          [(mmul (raise-rank submatrix-Q<span style="color: #999999;">)</span>
-                 reflector-to-zero-out-first-column<span style="color: #999999;">)</span>
-           (raise-rank-and-insert-row submatrix-R
-                                      (get-row input-matrix-with-first-column-zeroed-out 0<span style="color: #999999;">))]))))</span>
+  (householder-reduce-to-QR (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
+                            input-matrix<span style="color: #999999;">))</span>
+</pre>
+</div>
+<p>
+The function reduces the input matrix to <b>R</b> and returns <b>Q</b>.
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
+
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
+(pm Q<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.473  0.073 -0.690 -0.543]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.231  0.897 -0.041  0.374]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.792 -0.384  0.149  0.450]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.308  0.204  0.708 -0.602]]</span>
+(pm A<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874 61.690 130.830  69.349]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 93.313  29.311  49.102]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  37.767 -48.089]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 -0.000   0.000 -37.619]]</span>
+(pm (mmul Q A<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000 20.000]]</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgacbfa2f" class="outline-2">
-<h2 id="orgacbfa2f">Least Squares again</h2>
-<div class="outline-text-2" id="text-orgacbfa2f">
+<div id="outline-container-orge8c7e53" class="outline-2">
+<h2 id="orge8c7e53">Least Squares again</h2>
+<div class="outline-text-2" id="text-orge8c7e53">
 <p>
 While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
 </p>
 
 <p>
-This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between <b>Ax</b> and <b>b</b> by taking the derivative of <b>(Ax-b)<sup>2</sup></b>, setting it equal to zero and solving the new system. We found that in matrix notation this gave us <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. We also say (and it should be intuitively apparent) that this gives the exact solution for <b>Ax=b</b> when it exist. Now sticking <b>QR</b> in for <b>A</b> we get <b>(QR)<sup>T</sup>QRx=(QR)<sup>T</sup>b</b> -&gt; <b>R<sup>T</sup>Q<sup>T</sup>QRx=R<sup>T</sup>Q<sup>T</sup>b</b> and this is where the orthonormality starts to finally pay off! <b>Q<sup>T</sup>=Q<sup>-1</sup></b> so <b>Q{T}Q = I</b> and so our equations just becomes <b>R<sup>T</sup>Rx=R<sup>T</sup>Q<sup>T</sup>b</b> where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c <b>R</b> and <b>R<sup>T</sup></b> are triangular)
+This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between <b>Ax</b> and <b>b</b> by taking the derivative of <b>(Ax-b)<sup>2</sup></b>, setting it equal to zero and solving the new system. We found that in matrix notation this gave us <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. We also say (and it should be intuitively apparent) that this gives the exact solution for <b>Ax=b</b> when it exist. Now sticking <b>QR</b> in for <b>A</b> we get <b>(QR)<sup>T</sup>QRx=(QR)<sup>T</sup>b</b> -&gt; <b>R<sup>T</sup>Q<sup>T</sup>QRx=R<sup>T</sup>Q<sup>T</sup>b</b> and this is where the orthonormality starts to finally pay off! Since <b>Q<sup>T</sup>=Q<sup>-1</sup></b> and <b>Q<sup>T</sup>Q = I</b> our equations just becomes <b>R<sup>T</sup>Rx=R<sup>T</sup>Q<sup>T</sup>b</b> where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c <b>R</b> and <b>R<sup>T</sup></b> are triangular)
 </p>
 
 <p>
@@ -653,9 +561,9 @@ Notice that we did that all in theoretical equation form and how we've avoided h
 </div>
 </div>
 
-<div id="outline-container-org17bee5b" class="outline-2">
-<h2 id="org17bee5b">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org17bee5b">
+<div id="outline-container-org4ca7930" class="outline-2">
+<h2 id="org4ca7930">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-org4ca7930">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -764,17 +672,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-orgad31278" class="outline-2">
-<h2 id="orgad31278"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-orgad31278">
+<div id="outline-container-orge266631" class="outline-2">
+<h2 id="orge266631"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-orge266631">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org0ea9a03" class="outline-2">
-<h2 id="org0ea9a03">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org0ea9a03">
+<div id="outline-container-org1c5d6ae" class="outline-2">
+<h2 id="org1c5d6ae">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org1c5d6ae">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
 <span style="color: #036A07;">"template"</span>
@@ -785,9 +693,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-org9c58406" class="outline-2">
-<h2 id="org9c58406">End</h2>
-<div class="outline-text-2" id="text-org9c58406">
+<div id="outline-container-org7d2e861" class="outline-2">
+<h2 id="org7d2e861">End</h2>
+<div class="outline-text-2" id="text-org7d2e861">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 

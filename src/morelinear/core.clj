@@ -38,8 +38,9 @@
 (defn reduce-to-r
   "Reduce a matrix to a lower triangular orthonormal matrix"
   [input-matrix]
-  (if (= 1 (row-count input-matrix)) ;; base case - 1x1 matrix .. nothing to reduce
-    input-matrix
+  (if (or (= 1 (row-count input-matrix))
+	  (= 1 (column-count input-matrix))) 
+    input-matrix ;; base case
     (do (assign! input-matrix
 		 (mmul (first-column-reflector input-matrix)
 		       input-matrix))
@@ -49,62 +50,31 @@
 			  1
 			  (dec (column-count input-matrix)))))))
 
-(defn raise-rank
-  "Add a row and column of zeroes to the top left of a matrix. With a 1 in the top left position (0,0)
-  Optionally pass in a RANK variable to pad with that many rows (default: 1)"
-  ([input-matrix]
-   (raise-rank input-matrix 1))
-  ([input-matrix rank]
-   (if (zero? rank)
-     input-matrix
-     (raise-rank
-      (join-along 1 (column-matrix (get-column (identity-matrix (inc (row-count input-matrix))) 0))
-                  (join-along 0 (row-matrix (zero-vector (column-count input-matrix)))
-                              input-matrix))
-      (dec rank)))))
-
-(defn raise-rank-and-insert-row-column
-  "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-  The submatrix is 1 row and column smaller.
-  First insert a column (size of input-matrix  and then a row (size + 1)"
-  [input-matrix insert-column insert-row]
-  (join-along 0 (row-matrix insert-row)
-              (join-along 1 (column-matrix insert-column)
-                          input-matrix)))
-
-(defn raise-rank-and-insert-row
-  "Takes a submatrix and put it's in the lower right corner of a larger matrix.
-  The submatrix is 1 row and column smaller
-  First insert a column of zeroes and then the passed in row (size + 1)"
-      [input-matrix insert-row]
-      (raise-rank-and-insert-row-column
-       input-matrix
-       (zero-vector (column-count input-matrix))
-       insert-row))
+(defn householder-reduce-to-QR
+  "Increase the dimension of a reflector by padding it with an identity matrix"
+  [reduction-matrix input-matrix]
+  (if (or (= 1 (row-count input-matrix))
+	  (= 1 (column-count input-matrix)))
+    reduction-matrix ;; base case
+    (let [reflector (first-column-reflector input-matrix)]
+      (do (assign! input-matrix
+		   (mmul reflector
+			 input-matrix))
+	  (recur (mmul reduction-matrix
+		       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix)
+								   (row-count input-matrix)))
+					       reflector]))
+		 (submatrix input-matrix
+			    1
+			    (dec (row-count input-matrix))
+			    1
+			    (dec (column-count input-matrix))))))))
 
 (defn householder-QR
-  "Use reflection matrices to build the QR matrix. Returns a [Q^T R] pair"
+  "A wrapper for the real function"
   [input-matrix]
-  (let [reflector-to-zero-out-first-column
-        (first-column-reflector input-matrix)
-        input-matrix-with-first-column-zeroed-out
-        (mmul reflector-to-zero-out-first-column input-matrix)]
-    (if
-        ;; Base Case: We're out of columns/rows to reduce
-        ;;            Return the reflector and the reduced column
-        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
-        ;; Recursive step: Get the Q^{-1}R of the submatrix
-        ;;                 Then and combine it with your reflector and reduced matrix
-        (let [submatrix (submatrix
-                         input-matrix-with-first-column-zeroed-out
-                         1 (dec (row-count input-matrix))
-                         1 (dec (column-count input-matrix)))
-              [submatrix-Q submatrix-R] (householder-QR submatrix)]
-          [(mmul (raise-rank submatrix-Q)
-                 reflector-to-zero-out-first-column)
-           (raise-rank-and-insert-row submatrix-R
-                                      (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+  (householder-reduce-to-QR (identity-matrix (row-count input-matrix))
+			    input-matrix))
 
 (defn hessenberg-form-first-partial-reflector
   "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
