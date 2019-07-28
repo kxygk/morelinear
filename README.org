@@ -412,13 +412,6 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 #+END_SRC
 In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 
-* Least Squares again
-While the new *QR* matrices seem to have some very desirable qualities as compared to the *LU*, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the *Ax=b* system of linear equations. Given an output *b* we can use back/forward substitution to pop out an *x* input that satisfies the system of equations. However with the *QR* the *Q* doesn't really make this same method possible b/c it's not triangular.
-
-This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between *Ax* and *b* by taking the derivative of *(Ax-b)^2*, setting it equal to zero and solving the new system. We found that in matrix notation this gave us *A^{T}Ax=A^{T}b*. We also say (and it should be intuitively apparent) that this gives the exact solution for *Ax=b* when it exist. Now sticking *QR* in for *A* we get *(QR)^{T}QRx=(QR)^{T}b* -> *R^{T}Q^{T}QRx=R^{T}Q^{T}b* and this is where the orthonormality starts to finally pay off! Since *Q^{T}=Q^{-1}* and *Q^{T}Q = I* our equations just becomes *R^{T}Rx=R^{T}Q^{T}b* where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c *R* and *R^{T}* are triangular)
-
-Notice that we did that all in theoretical equation form and how we've avoided having to actually compute *A^{T}A* completely which is a big advantage considering getting the *QR* is more computationally challenging than doing Gaussian Elimination. Pages 346-350 also enumerate the advantages when it comes to numerical stability and computational complexity. However, the augmented matrix trick from *Exercise 4.6.9* is not mentioned.
-
 * Reduction to Hessenberg Form
 The *QR* decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The *Q* is the convenient (unique) orthonormal basis and *R* are the coordinates of *A* in this *Q* basis. However if we rewrite *Ax=b* in terms of the *QR* as *QRx=b* we see that *Rx* is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-28 Sun 16:29 -->
+<!-- 2019-07-28 Sun 16:32 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -45,29 +45,28 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org01dcd37">Preface</a></li>
-<li><a href="#orgcf76c68">Project managment</a></li>
-<li><a href="#org626be61">Householder QR</a>
+<li><a href="#org82e6625">Preface</a></li>
+<li><a href="#org4c27248">Project managment</a></li>
+<li><a href="#org4293fbe">Householder QR</a>
 <ul>
-<li><a href="#orga4fa5f0">elementary reflector</a></li>
-<li><a href="#orge649032">elementary coordinate reflector</a></li>
-<li><a href="#org11cacdd">Zeroing the first column</a></li>
-<li><a href="#org0d44d00">Zeroing out the second column and so on..</a></li>
-<li><a href="#org2ec2d21">Getting the reflectors</a></li>
+<li><a href="#orgf3a2f9e">elementary reflector</a></li>
+<li><a href="#org170bc7a">elementary coordinate reflector</a></li>
+<li><a href="#org8e8be70">Zeroing the first column</a></li>
+<li><a href="#org338bdd7">Zeroing out the second column and so on..</a></li>
+<li><a href="#org0e480e4">Getting the reflectors</a></li>
 </ul>
 </li>
-<li><a href="#org2d42c80">Least Squares again</a></li>
-<li><a href="#orgffe1720">Reduction to Hessenberg Form</a></li>
-<li><a href="#org0aad817"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org2c1a2bd">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org29fc75d">End</a></li>
+<li><a href="#org1579b4f">Reduction to Hessenberg Form</a></li>
+<li><a href="#orgb14d497"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#orgb2a7ba4">SRC<sub>Block</sub> template</a></li>
+<li><a href="#orge91960f">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org01dcd37" class="outline-2">
-<h2 id="org01dcd37">Preface</h2>
-<div class="outline-text-2" id="text-org01dcd37">
+<div id="outline-container-org82e6625" class="outline-2">
+<h2 id="org82e6625">Preface</h2>
+<div class="outline-text-2" id="text-org82e6625">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -94,9 +93,9 @@ Explaining Clojure is outside the scope of this project!
 </div>
 </div>
 
-<div id="outline-container-orgcf76c68" class="outline-2">
-<h2 id="orgcf76c68">Project managment</h2>
-<div class="outline-text-2" id="text-orgcf76c68">
+<div id="outline-container-org4c27248" class="outline-2">
+<h2 id="org4c27248">Project managment</h2>
+<div class="outline-text-2" id="text-org4c27248">
 <p>
 <b>TODO</b> Migrate to tools.deps
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
@@ -137,17 +136,17 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-org626be61" class="outline-2">
-<h2 id="org626be61">Householder QR</h2>
-<div class="outline-text-2" id="text-org626be61">
+<div id="outline-container-org4293fbe" class="outline-2">
+<h2 id="org4293fbe">Householder QR</h2>
+<div class="outline-text-2" id="text-org4293fbe">
 <p>
 The Householder decomposition is An alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
 </div>
 
-<div id="outline-container-orga4fa5f0" class="outline-3">
-<h3 id="orga4fa5f0">elementary reflector</h3>
-<div class="outline-text-3" id="text-orga4fa5f0">
+<div id="outline-container-orgf3a2f9e" class="outline-3">
+<h3 id="orgf3a2f9e">elementary reflector</h3>
+<div class="outline-text-3" id="text-orgf3a2f9e">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -219,9 +218,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-orge649032" class="outline-3">
-<h3 id="orge649032">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orge649032">
+<div id="outline-container-org170bc7a" class="outline-3">
+<h3 id="org170bc7a">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-org170bc7a">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -298,9 +297,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org11cacdd" class="outline-3">
-<h3 id="org11cacdd">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org11cacdd">
+<div id="outline-container-org8e8be70" class="outline-3">
+<h3 id="org8e8be70">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-org8e8be70">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -345,9 +344,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-org0d44d00" class="outline-3">
-<h3 id="org0d44d00">Zeroing out the second column and so on..</h3>
-<div class="outline-text-3" id="text-org0d44d00">
+<div id="outline-container-org338bdd7" class="outline-3">
+<h3 id="org338bdd7">Zeroing out the second column and so on..</h3>
+<div class="outline-text-3" id="text-org338bdd7">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -463,9 +462,9 @@ If you looking at the result I got when running <code>(first-column-reflector ..
 </div>
 </div>
 
-<div id="outline-container-org2ec2d21" class="outline-3">
-<h3 id="org2ec2d21">Getting the reflectors</h3>
-<div class="outline-text-3" id="text-org2ec2d21">
+<div id="outline-container-org0e480e4" class="outline-3">
+<h3 id="org0e480e4">Getting the reflectors</h3>
+<div class="outline-text-3" id="text-org0e480e4">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
@@ -608,26 +607,9 @@ In a more sophisticated linear algebra system you may want to keep the resulting
 </div>
 </div>
 
-<div id="outline-container-org2d42c80" class="outline-2">
-<h2 id="org2d42c80">Least Squares again</h2>
-<div class="outline-text-2" id="text-org2d42c80">
-<p>
-While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
-</p>
-
-<p>
-This is where we need to remember the Least Squared method we'd used previously. In short when a precise solution doesn't exist we try to minimize the difference between <b>Ax</b> and <b>b</b> by taking the derivative of <b>(Ax-b)<sup>2</sup></b>, setting it equal to zero and solving the new system. We found that in matrix notation this gave us <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. We also say (and it should be intuitively apparent) that this gives the exact solution for <b>Ax=b</b> when it exist. Now sticking <b>QR</b> in for <b>A</b> we get <b>(QR)<sup>T</sup>QRx=(QR)<sup>T</sup>b</b> -&gt; <b>R<sup>T</sup>Q<sup>T</sup>QRx=R<sup>T</sup>Q<sup>T</sup>b</b> and this is where the orthonormality starts to finally pay off! Since <b>Q<sup>T</sup>=Q<sup>-1</sup></b> and <b>Q<sup>T</sup>Q = I</b> our equations just becomes <b>R<sup>T</sup>Rx=R<sup>T</sup>Q<sup>T</sup>b</b> where the right side will evaluate to some some unit column and the left side will be solvable my back/forward substitution again (b/c <b>R</b> and <b>R<sup>T</sup></b> are triangular)
-</p>
-
-<p>
-Notice that we did that all in theoretical equation form and how we've avoided having to actually compute <b>A<sup>T</sup>A</b> completely which is a big advantage considering getting the <b>QR</b> is more computationally challenging than doing Gaussian Elimination. Pages 346-350 also enumerate the advantages when it comes to numerical stability and computational complexity. However, the augmented matrix trick from <b>Exercise 4.6.9</b> is not mentioned.
-</p>
-</div>
-</div>
-
-<div id="outline-container-orgffe1720" class="outline-2">
-<h2 id="orgffe1720">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-orgffe1720">
+<div id="outline-container-org1579b4f" class="outline-2">
+<h2 id="org1579b4f">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-org1579b4f">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -736,17 +718,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-org0aad817" class="outline-2">
-<h2 id="org0aad817"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org0aad817">
+<div id="outline-container-orgb14d497" class="outline-2">
+<h2 id="orgb14d497"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-orgb14d497">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org2c1a2bd" class="outline-2">
-<h2 id="org2c1a2bd">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org2c1a2bd">
+<div id="outline-container-orgb2a7ba4" class="outline-2">
+<h2 id="orgb2a7ba4">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-orgb2a7ba4">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
 <span style="color: #036A07;">"template"</span>
@@ -757,9 +739,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-org29fc75d" class="outline-2">
-<h2 id="org29fc75d">End</h2>
-<div class="outline-text-2" id="text-org29fc75d">
+<div id="outline-container-orge91960f" class="outline-2">
+<h2 id="orge91960f">End</h2>
+<div class="outline-text-2" id="text-orge91960f">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
