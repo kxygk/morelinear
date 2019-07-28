@@ -366,6 +366,51 @@ The function reduces the input matrix to *R* and returns *Q*.
   ;;  [72.000 13.000 98.000 12.000]
   ;;  [28.000 38.000 73.000 20.000]]
 #+END_SRC
+Note that this all works perfectly well for fat (underdefined) and skinny (overdefined) matrices
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0]
+		   [21.0 98.0 55.0]
+		   [72.0 13.0 98.0]
+		   [28.0 38.0 73.0]
+		   [65.0 23.0 85.0]]))
+  (def Q (householder-QR A))
+  (pm Q)
+  ;; [[0.385  0.122 -0.678 -0.578 -0.207]
+  ;;  [0.188  0.907 -0.042  0.374 -0.024]
+  ;;  [0.644 -0.295  0.170  0.373 -0.574]
+  ;;  [0.251  0.233  0.713 -0.612 -0.025]
+  ;;  [0.582 -0.147 -0.033  0.111  0.791]]
+  (pm A)
+  ;; [[111.727 63.557 155.862]
+  ;;  [ -0.000 94.882  30.090]
+  ;;  [ -0.000  0.000  37.799]
+  ;;  [  0.000 -0.000   0.000]
+  ;;  [ -0.000  0.000   0.000]]
+  (pm (mmul Q A))
+  ;; [[43.000 36.000 38.000]
+  ;;  [21.000 98.000 55.000]
+  ;;  [72.000 13.000 98.000]
+  ;;  [28.000 38.000 73.000]
+  ;;  [65.000 23.000 85.000]]
+
+  (def A (mutable [[43.0 36.0 38.0 90.0 54.0]
+		   [21.0 98.0 55.0 48.0 92.0]
+		   [72.0 13.0 98.0 12.0 47.0]]))
+  (def Q (householder-QR A))
+  (pm Q)
+  ;;  [[0.497  0.108 -0.861]
+  ;; [0.243  0.935  0.258]
+  ;; [0.833 -0.337  0.439]]
+  (pm A)
+  ;; [[86.452 52.538 113.878  66.418 88.349]
+  ;;  [ 0.000 91.153  22.480  50.581 76.019]
+  ;;  [-0.000  0.000  24.484 -59.818 -2.122]]
+  (pm (mmul Q A))
+  ;; [[43.000 36.000 38.000 90.000 54.000]
+  ;;  [21.000 98.000 55.000 48.000 92.000]
+  ;;  [72.000 13.000 98.000 12.000 47.000]]
+#+END_SRC
+In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 
 * Least Squares again
 While the new *QR* matrices seem to have some very desirable qualities as compared to the *LU*, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the *Ax=b* system of linear equations. Given an output *b* we can use back/forward substitution to pop out an *x* input that satisfies the system of equations. However with the *QR* the *Q* doesn't really make this same method possible b/c it's not triangular.

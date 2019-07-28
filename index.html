@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-07-28 Sun 16:22 -->
+<!-- 2019-07-28 Sun 16:29 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -45,29 +45,29 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3aa9efd">Preface</a></li>
-<li><a href="#org75c0eb5">Project managment</a></li>
-<li><a href="#org34cb24d">Householder QR</a>
+<li><a href="#org01dcd37">Preface</a></li>
+<li><a href="#orgcf76c68">Project managment</a></li>
+<li><a href="#org626be61">Householder QR</a>
 <ul>
-<li><a href="#org431454c">elementary reflector</a></li>
-<li><a href="#orgf32de19">elementary coordinate reflector</a></li>
-<li><a href="#org3f760bb">Zeroing the first column</a></li>
-<li><a href="#org711b3be">Zeroing out the second column and so on..</a></li>
-<li><a href="#org80435a7">Getting the reflectors</a></li>
+<li><a href="#orga4fa5f0">elementary reflector</a></li>
+<li><a href="#orge649032">elementary coordinate reflector</a></li>
+<li><a href="#org11cacdd">Zeroing the first column</a></li>
+<li><a href="#org0d44d00">Zeroing out the second column and so on..</a></li>
+<li><a href="#org2ec2d21">Getting the reflectors</a></li>
 </ul>
 </li>
-<li><a href="#orgeb4252b">Least Squares again</a></li>
-<li><a href="#org7e14341">Reduction to Hessenberg Form</a></li>
-<li><a href="#orgc310c82"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org3981ff2">SRC<sub>Block</sub> template</a></li>
-<li><a href="#orgacbcd19">End</a></li>
+<li><a href="#org2d42c80">Least Squares again</a></li>
+<li><a href="#orgffe1720">Reduction to Hessenberg Form</a></li>
+<li><a href="#org0aad817"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org2c1a2bd">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org29fc75d">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org3aa9efd" class="outline-2">
-<h2 id="org3aa9efd">Preface</h2>
-<div class="outline-text-2" id="text-org3aa9efd">
+<div id="outline-container-org01dcd37" class="outline-2">
+<h2 id="org01dcd37">Preface</h2>
+<div class="outline-text-2" id="text-org01dcd37">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -94,9 +94,9 @@ Explaining Clojure is outside the scope of this project!
 </div>
 </div>
 
-<div id="outline-container-org75c0eb5" class="outline-2">
-<h2 id="org75c0eb5">Project managment</h2>
-<div class="outline-text-2" id="text-org75c0eb5">
+<div id="outline-container-orgcf76c68" class="outline-2">
+<h2 id="orgcf76c68">Project managment</h2>
+<div class="outline-text-2" id="text-orgcf76c68">
 <p>
 <b>TODO</b> Migrate to tools.deps
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
@@ -137,17 +137,17 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-org34cb24d" class="outline-2">
-<h2 id="org34cb24d">Householder QR</h2>
-<div class="outline-text-2" id="text-org34cb24d">
+<div id="outline-container-org626be61" class="outline-2">
+<h2 id="org626be61">Householder QR</h2>
+<div class="outline-text-2" id="text-org626be61">
 <p>
 The Householder decomposition is An alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
 </div>
 
-<div id="outline-container-org431454c" class="outline-3">
-<h3 id="org431454c">elementary reflector</h3>
-<div class="outline-text-3" id="text-org431454c">
+<div id="outline-container-orga4fa5f0" class="outline-3">
+<h3 id="orga4fa5f0">elementary reflector</h3>
+<div class="outline-text-3" id="text-orga4fa5f0">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -219,9 +219,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-orgf32de19" class="outline-3">
-<h3 id="orgf32de19">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orgf32de19">
+<div id="outline-container-orge649032" class="outline-3">
+<h3 id="orge649032">elementary coordinate reflector</h3>
+<div class="outline-text-3" id="text-orge649032">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -298,9 +298,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org3f760bb" class="outline-3">
-<h3 id="org3f760bb">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org3f760bb">
+<div id="outline-container-org11cacdd" class="outline-3">
+<h3 id="org11cacdd">Zeroing the first column</h3>
+<div class="outline-text-3" id="text-org11cacdd">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -345,9 +345,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-org711b3be" class="outline-3">
-<h3 id="org711b3be">Zeroing out the second column and so on..</h3>
-<div class="outline-text-3" id="text-org711b3be">
+<div id="outline-container-org0d44d00" class="outline-3">
+<h3 id="org0d44d00">Zeroing out the second column and so on..</h3>
+<div class="outline-text-3" id="text-org0d44d00">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -463,9 +463,9 @@ If you looking at the result I got when running <code>(first-column-reflector ..
 </div>
 </div>
 
-<div id="outline-container-org80435a7" class="outline-3">
-<h3 id="org80435a7">Getting the reflectors</h3>
-<div class="outline-text-3" id="text-org80435a7">
+<div id="outline-container-org2ec2d21" class="outline-3">
+<h3 id="org2ec2d21">Getting the reflectors</h3>
+<div class="outline-text-3" id="text-org2ec2d21">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
@@ -554,13 +554,63 @@ The function reduces the input matrix to <b>R</b> and returns <b>Q</b>.
 <span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000 20.000]]</span>
 </pre>
 </div>
+<p>
+Note that this all works perfectly well for fat (underdefined) and skinny (overdefined) matrices
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0<span style="color: #999999;">]</span>
+                 [28.0 38.0 73.0<span style="color: #999999;">]</span>
+                 [65.0 23.0 85.0<span style="color: #999999;">]]))</span>
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
+(pm Q<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.385  0.122 -0.678 -0.578 -0.207]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.188  0.907 -0.042  0.374 -0.024]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.644 -0.295  0.170  0.373 -0.574]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.251  0.233  0.713 -0.612 -0.025]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.582 -0.147 -0.033  0.111  0.791]]</span>
+(pm A<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[111.727 63.557 155.862]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000 94.882  30.090]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000  0.000  37.799]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000 -0.000   0.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000  0.000   0.000]]</span>
+(pm (mmul Q A<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[65.000 23.000 85.000]]</span>
+
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0 54.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0 48.0 92.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0 12.0 47.0<span style="color: #999999;">]]))</span>
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
+(pm Q<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[[0.497  0.108 -0.861]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.243  0.935  0.258]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.833 -0.337  0.439]]</span>
+(pm A<span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[86.452 52.538 113.878  66.418 88.349]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 91.153  22.480  50.581 76.019]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  24.484 -59.818 -2.122]]</span>
+(pm (mmul Q A<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000 54.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000 92.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000 47.000]]</span>
+</pre>
+</div>
+<p>
+In a more sophisticated linear algebra system you may want to keep the resulting <b>R</b> matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
+</p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgeb4252b" class="outline-2">
-<h2 id="orgeb4252b">Least Squares again</h2>
-<div class="outline-text-2" id="text-orgeb4252b">
+<div id="outline-container-org2d42c80" class="outline-2">
+<h2 id="org2d42c80">Least Squares again</h2>
+<div class="outline-text-2" id="text-org2d42c80">
 <p>
 While the new <b>QR</b> matrices seem to have some very desirable qualities as compared to the <b>LU</b>, one major issue is still outstanding. When we perform Gaussian Elimination the upper and lower triangular matrices directly inform us about how to solve the <b>Ax=b</b> system of linear equations. Given an output <b>b</b> we can use back/forward substitution to pop out an <b>x</b> input that satisfies the system of equations. However with the <b>QR</b> the <b>Q</b> doesn't really make this same method possible b/c it's not triangular.
 </p>
@@ -575,9 +625,9 @@ Notice that we did that all in theoretical equation form and how we've avoided h
 </div>
 </div>
 
-<div id="outline-container-org7e14341" class="outline-2">
-<h2 id="org7e14341">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org7e14341">
+<div id="outline-container-orgffe1720" class="outline-2">
+<h2 id="orgffe1720">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-orgffe1720">
 <p>
 The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is the convenient (unique) orthonormal basis and <b>R</b> are the coordinates of <b>A</b> in this <b>Q</b> basis. However if we rewrite <b>Ax=b</b> in terms of the <b>QR</b> as <b>QRx=b</b> we see that <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
@@ -686,17 +736,17 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 </div>
-<div id="outline-container-orgc310c82" class="outline-2">
-<h2 id="orgc310c82"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-orgc310c82">
+<div id="outline-container-org0aad817" class="outline-2">
+<h2 id="org0aad817"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org0aad817">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org3981ff2" class="outline-2">
-<h2 id="org3981ff2">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org3981ff2">
+<div id="outline-container-org2c1a2bd" class="outline-2">
+<h2 id="org2c1a2bd">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-org2c1a2bd">
 <div class="org-src-container">
 <pre class="src src-clojure">  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">matrix-template</span>
 <span style="color: #036A07;">"template"</span>
@@ -707,9 +757,9 @@ Once we've chose our <b>Q<sub>1</sub></b> we calculate the submatrix <b>Q<sub>1<
 </div>
 </div>
 
-<div id="outline-container-orgacbcd19" class="outline-2">
-<h2 id="orgacbcd19">End</h2>
-<div class="outline-text-2" id="text-orgacbcd19">
+<div id="outline-container-org29fc75d" class="outline-2">
+<h2 id="org29fc75d">End</h2>
+<div class="outline-text-2" id="text-org29fc75d">
 <div class="Q^{-1}UOTE">
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
