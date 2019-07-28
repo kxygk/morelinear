@@ -547,7 +547,29 @@ Again demonstrating the result:
 #+END_SRC
 As you can see the algorithm is almost the same as the ~(householder ..)~ one. Here the fact that *A* is reduced in place is a bit of an inconvenience. It's not difficult to modify things to work on a copy of *A* if desired..
 
+On page ~352~ it claims that a Hessenberg reduction on a symmetric matrix will give us a =tridiagonal= matrix. We can double check this:
 
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]
+		   [36.0 98.0 55.0 48.0]
+		   [38.0 55.0 98.0 12.0]
+		   [90.0 48.0 12.0 20.0]]))
+
+  (def Q (hessenberg A))
+
+  (pm (mmul (transpose Q) 
+	    [[43.0 36.0 38.0 90.0]
+	     [36.0 98.0 55.0 48.0]
+	     [38.0 55.0 98.0 12.0]
+	     [90.0 48.0 12.0 20.0]]
+	    Q))
+  ;; [[ 43.000 104.115  0.000  0.000]
+  ;;  [104.115  89.863 82.131  0.000]
+  ;;  [  0.000  82.131 73.358 20.256]
+  ;;  [  0.000   0.000 20.256 52.779]]
+
+#+END_SRC
+Indeed it does :)
 * TODOs
 - add some TODOs
 * SRC_Block template
