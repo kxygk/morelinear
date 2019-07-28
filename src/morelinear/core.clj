@@ -53,8 +53,8 @@
 (defn householder-reduce-to-QR
   "Increase the dimension of a reflector by padding it with an identity matrix"
   [reduction-matrix input-matrix]
-  (if (or (= 1 (row-count input-matrix))
-	  (= 1 (column-count input-matrix)))
+  (if (or (= 0 (row-count input-matrix))
+	  (= 0 (column-count input-matrix)))
     reduction-matrix ;; base case
     (let [reflector (first-column-reflector input-matrix)]
       (do (assign! input-matrix
