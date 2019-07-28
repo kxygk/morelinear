@@ -169,7 +169,8 @@ Now putting all the pieces together, given some matrix *A* we can get back a ref
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (defn first-column-reflector
-    "Build a matrix that will reflect the INPUT-MATRIX on to the first elementary vector [ 1 0 0 .. 0 ]"
+    "Build a matrix that will reflect the first column of INPUT-MATRIX 
+    on to the first elementary vector [ 1 0 0 .. 0 ]"
     [input-matrix]
     (elementary-coordinate-reflector (get-column input-matrix
 						 0)
@@ -413,20 +414,20 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 
 * Reduction to Hessenberg Form
-The *QR* decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The *Q* is the convenient (unique) orthonormal basis and *R* are the coordinates of *A* in this *Q* basis. However if we rewrite *Ax=b* in terms of the *QR* as *QRx=b* we see that *Rx* is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
+The *QR* decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The *Q* is our new basis and *R* are the coordinates of *A* in this basis. However if we got back to thinking about a linear system and we rewrite *Ax=b* in terms of the *QR* we get something nonsensical. In the equation *QRx=b* the *Rx* is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 
-Looking back at pages ~254~ - ~255~, it seems we should be able to take our input vector *x*, change it to a convenient basis, put it through our linear system, and then go back to the standard basis we started with. The trick will be to just build this basis so that *A* is in an easier/more-convenient form. 
+The *QR*  has its uses but looking back at pages ~254~ - ~255~, it seemed that one thing we were shooting for was a /similarity transform/ ie. a nice new basis in which we could easily perform the linear function *A*. We should be able to take our input vector *x*, change it this convenient basis, put it through our linear system, and then go back to the standard basis we started with. The *QR* doesn't give us that.
 
-The text start on page ~350~ suggests getting the linear system into the =Upper-Hessenberg Form=, which is /almost upper triangular/  with just one nonzero subdiagonal. The text states that this is much easier than finding an basis that is fully upper-triangfular - and we will see how the Hessenberg for allows us to have a very convenient recursive block matrix solution. The procedure is very similar to how we did the Householder QR decomposition, but with a small surface level change. Whereas before we reduced the first column with a reflector - ie. *Q_{1}A* - now we just need to also "unreflect" the result to get back to the original standard basis. Fortunately this turns out to be very easy b/c the reflectors are their own inverse so we just need to instead write out *Q_{1}AQ_{1}* as *Q_{1}AQ_{1}*.
+Again, working with reflectors, the text starting on page ~350~ presents a solution called the =Upper-Hessenberg Form=. This mirrors the *Householder decomposition* in a lot of ways and turns out matrix into an /almost upper triangular/ matrix (It just has one nonzero subdiagonal). The text states that this form is much easier than finding a basis that is /fully/ upper-triangular (details here are vague..).  Basically we are doing the same thing as before, but each time we perform a reflection we are also reflecting back the output so that in effect anything we put it comes out in the same basis it started. So instead of  *Q_{k}..Q_{2}..Q_{1}A* we are doing  *Q_{k}..Q_{2}..Q_{1}AQ_{1}Q_{2}* .. *Q_{n}* (reflections are their own inverse, so you can view the left side of *A* as undoing the right side. Again we can put all the Q's into one *Q* matrix and rewrite  this is *Q^{T}AQ*. Since *Q* is orthonormal (but non-symmetric) it's inverse is it's transpose. If you distribute out the transpose to the reflectors you will see it works out
 
-The complication here is that if we write a Householder reflection here for *Q_{1}* then the diagonal terms in *A*, ie. *A_{i,i}* will all get multiplied and this is for some reason undesirable (*TODO* Understand why this is a drawback..). If we limit to eliminating the sub-sub-diagonal terms then we can write it in block form and avoid this whole issue
+Again, we start by looking at how to zero the first column with this new reflector setup. But now that we are shooting for the one-off-diagonal this is going to kinda look like the second column case from before:
 
 So if
 \begin{equation}
 Q_{1} =
 \begin{bmatrix}
 1 & 0\\
-0 & Q_{1,sub}\\
+0 & S\\
 \end{bmatrix}
 \end{equation}
 
@@ -435,7 +436,7 @@ Then we can write out *Q_{1}AQ_{1}* as:
 \begin{equation}
 \begin{bmatrix}
 1 & 0\\
-0 & Q_{1,sub}\\
+0 & S\\
 \end{bmatrix}
 \begin{bmatrix}
 A_{1,1} & A_{1,*}\\
@@ -443,64 +444,110 @@ A_{*,1} & A_{sub}\\
 \end{bmatrix}
 \begin{bmatrix}
 1 & 0\\
-0 & Q_{1,sub}\\
+0 & S\\
 \end{bmatrix}
-=
+\\=
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q_{1,sub}\\
-Q_{1,sub}A_{1,*} & Q_{1,sub} A_{1,*} Q_{1,sub}
+A_{1,1} & A_{1,*} S\\
+SA_{*,1} & S A_{sub} S
 \end{bmatrix}
-=> =>
+\end{equation}
+And we want to zero that off diagonal first column:
+
+\begin{equation}
 \begin{bmatrix}
-A_{1,1} & A_{1,*} Q_{1,sub}\\
+A_{1,1} & A_{1,*} S\\
 \begin{bmatrix}
 1 \\ 0 \\ .. \\ 0
 \end{bmatrix}
- & Q_{1,sub} A_{1,*} Q_{1,sub}
+ & S A_{sub} S
 \end{bmatrix}
 \end{equation}
 
-As before we are looking to reflect the first column onto a coordinate axis so that we get zeroes. Just here we're leaving the diagonal untouched and reflecting the terms under it. So we want the *Q_{1,sub}A_{1,-}* column block matrix product to turn into *[ 1 0 0 0 .. 0 ]* and we can reuse ~first-column-reflector~  to get the appropriate *Q_{1,sub}*. Finally reusing ~raise rank~ we can build *Q_{1}*
+So this should look familiar. We want to pick *S* such that *SA_{-,1}* = *[ 1 0 0 0 .. 0 ]* 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
-  (defn hessenberg-form-first-partial-reflector
-    "Builds a matrix that will reduce the first column of INPUT-MATRIX to  Hessenberg Form"
+  (defn first-subcolumn-reflector
+    "Build a matrix that will reflect the first column of INPUT-MATRIX 
+    on to the first elementary vector [ 1 0 0 .. 0 ]"
     [input-matrix]
-    (if
-        ;; Degenerate Case: 1 x 1 matrix
-        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-      [[ 1 ]]
-    (let [first-column (get-column input-matrix 0)
-          subdiagonal-column (subvector first-column 1 (dec (row-count first-column)))
-          orthogonal-reducer (first-column-reflector subdiagonal-column)]
-      (raise-rank orthogonal-reducer))))
+    (let [dimension (dec (dimension-count input-matrix
+					  0))]
+      (block-diagonal-matrix [[[1.0]]
+			      (elementary-coordinate-reflector (subvector (get-column input-matrix 0)
+									  1
+									  dimension)
+							       (get-row (identity-matrix dimension) 0))])))
 #+END_SRC
- Once we've chose our *Q_{1}* we calculate the submatrix *Q_{1} A_{1,*} Q_{1}* and then call the recursively just like last time. Working back up the call stack the matrices are combined pretty much as before. We simply raise the rank of the *Q* matrices and pad the resulting matrices like we did for the resulting *R* matrices before.
+
+Just to demonstrate the result:
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]
+		   [21.0 98.0 55.0 48.0]
+		   [72.0 13.0 98.0 12.0]
+		   [28.0 38.0 73.0 20.0]]))
+
+  (def Q (first-subcolumn-reflector A))
+
+  (pm (mmul Q A Q))
+  ;; [[43.000  75.097 -9.666  71.463]
+  ;;  [80.056 139.128 20.275 -11.552]
+  ;;  [-0.000  38.239 48.433  48.865]
+  ;;  [ 0.000  60.253 38.559  28.439]]
+
+#+END_SRC
+and then we want to we will want to call this whole business recursively on *SA_{sub}S*
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
-  (defn hessenberg-form-reduction
-    "Reduce the INPUT-MATRIX to  Hessenberg Form  - H , using reflectors - P. Result will be in the form [P^T H]"
-  [input-matrix]
-  (let [reflector-to-zero-out-first-column
-        (hessenberg-form-first-partial-reflector input-matrix)
-        input-matrix-with-first-column-zeroed-out
-        (mmul reflector-to-zero-out-first-column input-matrix (transpose reflector-to-zero-out-first-column))]
-    (if
-        ;; Base Case: We're out of columns/rows to reduce
-        ;;            Return the reflector and the reduced column
-        (or (= (column-count input-matrix) 1) (= (row-count input-matrix) 1))
-        [reflector-to-zero-out-first-column input-matrix-with-first-column-zeroed-out]
-        ;; Recursive step: Get the Q^{-1}R of the submatrix
-        ;;                 Then and combine it with your reflector and reduced matrix
-        (let [submatrix (submatrix
-                         input-matrix-with-first-column-zeroed-out
-                         1 (dec (row-count input-matrix))
-                         1 (dec (column-count input-matrix)))
-              [submatrix-P submatrix-H] ( hessenberg-form-reduction submatrix)]
-          [(mmul (raise-rank submatrix-P)
-                 reflector-to-zero-out-first-column)
-           (raise-rank-and-insert-row-column submatrix-H
-                                     (subvector (get-column input-matrix-with-first-column-zeroed-out 0) 1 (dec (row-count input-matrix-with-first-column-zeroed-out)))
-                                     (get-row input-matrix-with-first-column-zeroed-out 0))]))))
+  (defn hessenberg-reduction
+    "Increase the dimension of a reflector by padding it with an identity matrix"
+    [reduction-matrix input-matrix]
+    (if (= 2 (row-count input-matrix))
+      reduction-matrix
+      (let [reflector (first-subcolumn-reflector input-matrix)]
+	(do (assign! input-matrix
+		     (mmul reflector
+			   input-matrix
+			   reflector))
+	    (recur (mmul reduction-matrix
+			 (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix)
+								     (row-count input-matrix)))
+						 reflector]))
+		   (submatrix input-matrix
+			      1
+			      (dec (row-count input-matrix))
+			      1
+			      (dec (column-count input-matrix))))))))
+
+  (defn hessenberg
+    "A wrapper for the real function"
+    [input-matrix]
+    (hessenberg-reduction (identity-matrix (row-count input-matrix))
+			 input-matrix))
 #+END_SRC
+
+Again demonstrating the result:
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]
+		   [21.0 98.0 55.0 48.0]
+		   [72.0 13.0 98.0 12.0]
+		   [28.0 38.0 73.0 20.0]]))
+
+  (def Q (hessenberg A))
+
+  (pm (mmul (transpose Q) 
+	    [[43.0 36.0 38.0 90.0]
+	     [21.0 98.0 55.0 48.0]
+	     [72.0 13.0 98.0 12.0]
+	     [28.0 38.0 73.0 20.0]]
+	    Q))
+  ;; [[43.000  75.097 55.158 -46.454]
+  ;;  [80.056 139.128  1.110  23.309]
+  ;;  [-0.000  71.363 73.732  22.504]
+  ;;  [-0.000   0.000 32.809   3.140]]
+
+#+END_SRC
+As you can see the algorithm is almost the same as the ~(householder ..)~ one. Here the fact that *A* is reduced in place is a bit of an inconvenience. It's not difficult to modify things to work on a copy of *A* if desired..
+
+
 * TODOs
 - add some TODOs
 * SRC_Block template
