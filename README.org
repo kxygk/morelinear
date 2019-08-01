@@ -58,7 +58,12 @@ We start by declaring the project namespace and including all of ~core.matrix~. 
 #+END_SRC
 The ~-main~ is just a placeholder for the moment
 * Householder QR
-The Householder decomposition is An alternate method to the Gram-Schmidt decomposition for build a *QR* matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian *LU* procedure by just zeroing out columns to get the desired shape. The difference from the *LU* is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using *elementary reflectors*.
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (ns morelinear.householder
+    (:require [clojure.core.matrix :refer :all]))
+#+END_SRC
+
+The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a *QR* matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian *LU* procedure by just zeroing out columns to get the desired shape. The difference from the *LU* is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using *elementary reflectors*.
 
 ** elementary reflector
 
@@ -84,7 +89,7 @@ Now that we have a way to define a plane we need to work through the mechanics o
 Notice how in the last step we managed to factor out the *x* , so we can subsitute it with any other vector to get a reflection. The matrix *(I-2uu^{t}/u^{t}u)* to its left is the reflector matrix. It's defined uniquely by *u* and is independent of *x*.
 
 *Note:* We will see in the next section that thought it would make life easier, we can't safely assume *u* is unit length
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (defn elementary-reflector
     "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
     [reflection-axis]
@@ -128,7 +133,7 @@ Strain your brain and try to picture it in 2D and in 3D and it should make sense
 
 Once you an orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (defn elementary-coordinate-reflector
    "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
    [input-vector coordinate-axis] 
@@ -167,7 +172,7 @@ We got some seemingly random matrix out. If we then multiply it times out random
 
 Now putting all the pieces together, given some matrix *A* we can get back a reflector to zero out its first column
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (defn first-column-reflector
     "Build a matrix that will reflect the first column of INPUT-MATRIX 
     on to the first elementary vector [ 1 0 0 .. 0 ]"
@@ -246,7 +251,7 @@ We've also got a bit of bonus b/c in the resulting matrix the only "new" entry w
 
 When tackling the third column we do this again, getting the next submatrix of *S(Q_{1}A)_{n-1,m-1}*. At each step we are reducing the first column, grabbing the result's submatrix and calling the procedure again - until we are out of things to reduce
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (defn reduce-to-r
     "Reduce a matrix to a lower triangular orthonormal matrix"
     [input-matrix]
@@ -316,7 +321,7 @@ In ~core.matrix~ there is a convenient ~(block-diagonal-matrix .. )~ function to
 
 So far we've been looking at *Q_{1}Q_{2}* .. *Q_{n}A=R*, but ultimately we want to get to *A=QR*. The reflectors are their own inverse, so written out like that the equation remains easily invertable. While by contrast *Q^{-1}A=R* is not so easy to invert... b/c *Q^{-1}* may not be a reflector at all. So we flip the equation ahead of time *A=Q_{n}* .. *Q_{2}Q_{1}R* and we make sure to build *Q* in the right order *Q=Q_{1}Q_{2}* .. *Q_{1}*
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (defn householder-reduce-to-QR
     "Increase the dimension of a reflector by padding it with an identity matrix"
     [reduction-matrix input-matrix]
@@ -414,6 +419,11 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 
 * Reduction to Hessenberg Form
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/hessenberg.clj
+  (ns morelinear.hessenberg
+    (:require [clojure.core.matrix :refer :all
+	       morelinear.householder :refer :all]))
+#+END_SRC
 The *QR* decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The *Q* is our new basis and *R* are the coordinates of *A* in this basis. However if we got back to thinking about a linear system and we rewrite *Ax=b* in terms of the *QR* we get something nonsensical. In the equation *QRx=b* the *Rx* is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 
 The *QR*  has its uses but looking back at pages ~254~ - ~255~, it seemed that one thing we were shooting for was a /similarity transform/ ie. a nice new basis in which we could easily perform the linear function *A*. We should be able to take our input vector *x*, change it this convenient basis, put it through our linear system, and then go back to the standard basis we started with. The *QR* doesn't give us that.
@@ -465,7 +475,7 @@ A_{1,1} & A_{1,*} S\\
 \end{equation}
 
 So this should look familiar. We want to pick *S* such that *SA_{-,1}* = *[ 1 0 0 0 .. 0 ]* 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/hessenberg.clj
   (defn first-subcolumn-reflector
     "Build a matrix that will reflect the first column of INPUT-MATRIX 
     on to the first elementary vector [ 1 0 0 .. 0 ]"
@@ -496,7 +506,7 @@ Just to demonstrate the result:
 
 #+END_SRC
 and then we want to we will want to call this whole business recursively on *SA_{sub}S*
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/hessenberg.clj
   (defn hessenberg-reduction
     "Increase the dimension of a reflector by padding it with an identity matrix"
     [reduction-matrix input-matrix]
@@ -573,15 +583,15 @@ Indeed it does :)
 * TODOs
 - add some TODOs
 * SRC_Block template
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
-  (defn matrix-template
-"template"
-[matrix]
-)
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/hessenberg.clj
+  (defn- matrix-template
+    "template"
+    [matrix]
+    )
 #+END_SRC
 
 * End
-#+BEGIN_Q^{-1}UOTE
+#+BEGIN_QUOTE
 This webpage is generated from an org-document (at ~./index.org~) that also generates all the files described. 
 
 Once opened in Emacs:\\
@@ -589,4 +599,4 @@ Once opened in Emacs:\\
 - ~C-c C-v C-t~ exports the code blocks into the appropriate files\\
 - ~C-c C-c~     org-babel-execute-src-block
 - ~C-c C-v C-b~ org-babel-execute-buffer
-#+END_Q^{-1}UOTE
+#+END_QUOTE
