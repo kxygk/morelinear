@@ -1,0 +1,376 @@
+#+TITLE: MoreLinear: Householder decomposition
+#+DESCRIPTION: The Householder QR decomposition
+
+
+#+HTML_DOCTYPE: html5
+#+HTML_LINK_UP: index.html
+#+HTML_LINK_HOME: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
+#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
+#+OPTIONS: html-style:nil
+#+OPTIONS: num:nil
+#+OPTIONS: html-postamble:nil
+#+OPTIONS: html-scripts:nil
+
+
+* Householder QR
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (ns morelinear.householder
+    (:require [clojure.core.matrix :refer :all]))
+#+END_SRC
+
+The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a *QR* matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian *LU* procedure by just zeroing out columns to get the desired shape. The difference from the *LU* is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using *elementary reflectors*.
+
+** elementary reflector
+
+An /elementary reflector/ does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a /N-1/ dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
+
+Their key property is that they're both /orthonormal/ and /symmetric/.
+- *Orthonormal* :: their rows (and columns) form an orthogonal basis and each row (and column) is of unit length. As a consequence, given an orthonormal matrix *Q* its inverse will be its transpose. In *QQ^{T}* the off-diagonal terms will be inner products of different basis vectors. Since they're orthogonal these inner product will be zero. The diagonal elements will be inner products of vectors with themselves so it will equal to their length. Since the rows are all unit length the diagonal will be all ones. 
+- *Symmetric* :: means that it's equal to its own transpose. As a consequence a /symmetric/ + /orthonormal/ matrix will be it's own inverse. ie. *QQ=I*. This makes some sense b/c reflecting something twice gives you the same things back.
+- *A product of orthonormal matrices will be orthonormal* :: b/c given two orthonormal matrices *U* and *V* we can test for orthonormality: *(UV)(UV)^{T}=UVV^{T}U^{T}=I*
+
+So if we carry out a series of reflections *Q_{k}..Q_{2}..Q_{1}A* we can combine them into one matrix *Q* which will be guaranteed to be orthonormal as well. It however /will not necessarily/ be a reflection matrix!
+
+
+To build a reflector matrix we need to find a nice concise mechanism to define the hyperplane over which it reflects. If our space is *R^N* then the hyperplane will be *N-1* dimensions and at first blush we seem to need *N-1* vectors to define it. For instance in *3D* space any two vectors not on the same line will define a 2D plane (ie. *a*v_1 + b*v_2* for all /a/ and /b/). But this method doesn't really scale b/c as *N* increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we can just choose one, call it *u*, and let it represent that remaining *N^{th}* dimension. Now you can simply say that the hyperplane is all the vectors orthogonal to *u*. Or more formally, all vectors /not-in-the-span/ of *u* are the hyperplane
+
+Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector *x* across the hyperplane. *x* can be broken up into two separate vectors: One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is in the direction of *u* and is flipped by just getting its negative. To do this procedure mathematically we start with a vector *x* and subtract twice its component in the direction of the *u*:
+ -  *u^{t}x*/||u||* is the amount of *x* in the direction of *u* (a scalar)
+ -  *uu^{t}x/||u||^{2}* is the component *x* in the direction of *u* (a vector)
+ -  Here we notice that we can subsitute the inner product *u^{t}u* for *||u||^2*
+ -  *uu^{t}x/u^{t}u*
+ -  *x - 2uu^{t}x/u^{t}u* is you subtracting that vector component twice to get its reflection
+ -  *(I-2uu^{t}/u^{t}u)x* is how we'd factor the *x* back out
+Notice how in the last step we managed to factor out the *x* , so we can subsitute it with any other vector to get a reflection. The matrix *(I-2uu^{t}/u^{t}u)* to its left is the reflector matrix. It's defined uniquely by *u* and is independent of *x*.
+
+*Note:* We will see in the next section that thought it would make life easier, we can't safely assume *u* is unit length
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn elementary-reflector
+    "Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"
+    [reflection-axis]
+    (let [dimension (dimension-count reflection-axis 0)]
+      (sub (identity-matrix dimension)
+	   (mul (outer-product reflection-axis reflection-axis)
+		(/ 2 (length-squared reflection-axis))))))
+#+END_SRC
+For example:
+#+BEGIN_SRC clojure
+  (pm (elementary-reflector [43.0 36.0 38.0 90.0]))
+  ;; [[ 0.709 -0.244 -0.258 -0.610]
+  ;;  [-0.244  0.796 -0.216 -0.511]
+  ;;  [-0.258 -0.216  0.772 -0.539]
+  ;;  [-0.610 -0.511 -0.539 -0.277]]
+  ;; nil
+
+
+  (pm (mmul (elementary-reflector [43.0 36.0 38.0 90.0])
+	    [43.0 36.0 38.0 90.0]))
+  ;; [-43.000 -36.000 -38.000 -90.000]
+  ;; nil
+#+END_SRC
+
+** elementary coordinate reflector
+Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the *R* in the *QR*)
+
+The first thing we want to do is have a way to zero out the first column of a matrix, ie *A_{ - ,1}*. We'd like to build a special elementary reflector *Q_{1}* that reflected that first column on to the elementary vector *e_{1}* (that's *[ 1 0 0 0.. 0 ]* ). If we had this matrix then *Q_{1}A* would leave everything under the the first column zeroed out.
+
+Generalizing the problem a bi, this is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. This plane lies between where we start and where we want to reflect to. If you picture it in 2D space then you could take the two vectors add up their norms and you will get a vector that bisects them (forming a equilateral diamond shape with the point lieing on the bisecting line). In higher dimensions it will get a bit more complicated as you need more and more vectors. 
+
+Fortunately we know we can define the plane with the orthogonal vector. To get that we just subtract the two vector norms and you will find that you get a vector orthogonal to that bisection vector/plane.
+
+\begin{equation}
+u = x - ||x||e_{1}
+\end{equation}
+
+Strain your brain and try to picture it in 2D and in 3D and it should make sense.
+
+*TODO*: Maybe add a picture..
+
+Once you an orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn elementary-coordinate-reflector
+   "Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"
+   [input-vector coordinate-axis] 
+   (let [vector-orthogonal-to-reflection-plane
+         (sub input-vector
+              (mul coordinate-axis
+                   (length input-vector)))]
+     (if (zero-matrix? vector-orthogonal-to-reflection-plane)
+       ;; degenerate case where the input is on the coordinate axis
+       (identity-matrix (dimension-count input-vector 0))
+       ;; normal case
+       (elementary-reflector vector-orthogonal-to-reflection-plane))))
+
+#+END_SRC
+For instance we can take some random vector and say we want to reflect it onto the *e_1*
+#+BEGIN_SRC clojure
+  (pm (elementary-coordinate-reflector [24 77 89 12]
+				       [1 0 0 0]))
+  ;; [[0.199  0.638  0.737  0.099]
+  ;;  [0.638  0.492 -0.587 -0.079]
+  ;;  [0.737 -0.587  0.321 -0.091]
+  ;;  [0.099 -0.079 -0.091  0.988]]
+  ;; nil
+#+END_SRC
+We got some seemingly random matrix out. If we then multiply it times out random vector, it reflects perfectly to *e_1*
+#+BEGIN_SRC clojure
+  (pm (mmul (elementary-coordinate-reflector [24 77 89 12]
+					     [1 0 0 0])
+	    [24 77 89 12])))
+  ;; [120.706 -0.000 -0.000 -0.000]
+  ;; nil
+#+END_SRC
+
+
+** Zeroing the first column
+
+Now putting all the pieces together, given some matrix *A* we can get back a reflector to zero out its first column
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn first-column-reflector
+    "Build a matrix that will reflect the first column of INPUT-MATRIX 
+    on to the first elementary vector [ 1 0 0 .. 0 ]"
+    [input-matrix]
+    (elementary-coordinate-reflector (get-column input-matrix
+						 0)
+				     (get-row (identity-matrix (dimension-count input-matrix 0)) 0)))
+#+END_SRC
+This is really just a wrapper for the previous function. Now we can test it by writing out a random matrix and zeroing out its first column
+#+BEGIN_SRC clojure
+  (pm (first-column-reflector [[43.0 36.0 38.0 90.0]
+			       [21.0 98.0 55.0 48.0]
+			       [72.0 13.0 98.0 12.0]
+			       [28.0 38.0 73.0 20.0]]))
+  ;; [[0.473  0.231  0.792  0.308]
+  ;;  [0.231  0.899 -0.348 -0.135]
+  ;;  [0.792 -0.348 -0.192 -0.463]
+  ;;  [0.308 -0.135 -0.463  0.820]]
+  ;; nil
+
+
+  (let [A [[43.0 36.0 38.0 90.0]
+	   [21.0 98.0 55.0 48.0]
+	   [72.0 13.0 98.0 12.0]
+	   [28.0 38.0 73.0 20.0]]]
+    (pm (mmul (first-column-reflector A)
+	      A)))
+  ;; [[90.874  61.690 130.830 69.349]
+  ;;  [ 0.000  86.731  14.280 57.059]
+  ;;  [-0.000 -25.637 -41.613 43.058]
+  ;;  [ 0.000  22.975  18.706 32.078]]
+  ;; nil
+#+END_SRC
+
+** Zeroing out the second column and so on..
+
+Now we hit a bit of a problem. You can use the same method to make some matrix *Q_2* that will zero out the second column, but when you combine the two and try doing *Q_{2}Q_{1}A* you will see that *Q_{2}* is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after *Q_{1}A*, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
+
+In the *LU* Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (b/c shuffling rows would just be moving around zeroes from the pervious columns). Now this guarantee is gone so we need to find a way to reflect some matrix columns and not others
+
+The solution is thinking in terms of block matrices. When we say we need to clear the second column we can spell that out as : we want to take the result of our first reflector *Q_{1}A* and now clearing everything under the =(2,2)= position. To avoid touching the first column we construct *Q_{2}* with the following form:
+
+ \begin{equation}
+ Q_{2}
+ \\=
+ \begin{bmatrix}
+ 1 & 0\\
+ 0 & S_{ n-1, m-1 }\\
+ \end{bmatrix}
+ \end{equation}
+
+Notice how when we multiply this matrix times *Q_{1}A* the first column is left untouched
+
+
+ \begin{equation}
+ Q_2(Q_1A)
+ \\=
+ \begin{bmatrix}
+ 1 & 0\\
+ 0 & S\\
+ \end{bmatrix}
+ \begin{bmatrix}
+ (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+ 0 & (Q_{1}A)_{n-1,m-1}\\
+ \end{bmatrix}
+ \\=
+ \begin{bmatrix}
+ (Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
+ 0 & S(Q_{1}A)_{n-1,m-1}\\
+ \end{bmatrix}
+ \end{equation}
+
+Now also notice that the =n-1 by m-1= submatrix *S* will multiple times a submatrix of *Q_{1}A* which has that =(2,2)= position now in the =(1,1)= position.
+
+We've also got a bit of bonus b/c in the resulting matrix the only "new" entry we need to worry about is *S(Q_{1}A)_{n-1,m-1}* - the first column and row have remained the same. In this submatrix product we need to again clear the first column because it's the second column of our overall matrix. Choosing an appropriate *S* matrix to do it mirrors the process we used to clear the first column of *A* - the only difference being that the dimension is one smaller.
+
+When tackling the third column we do this again, getting the next submatrix of *S(Q_{1}A)_{n-1,m-1}*. At each step we are reducing the first column, grabbing the result's submatrix and calling the procedure again - until we are out of things to reduce
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn reduce-to-r
+    "Reduce a matrix to a lower triangular orthonormal matrix"
+    [input-matrix]
+    (if (or (= 1 (row-count input-matrix))
+	    (= 1 (column-count input-matrix))) 
+      input-matrix ;; base case
+      (do (assign! input-matrix
+		   (mmul (first-column-reflector input-matrix)
+			 input-matrix))
+	  (recur (submatrix input-matrix
+			    1
+			    (dec (row-count input-matrix))
+			    1
+			    (dec (column-count input-matrix)))))))
+#+END_SRC
+
+#+BEGIN_QUOTE
+*Note*: 
+- This ~submatrix~ function is interesting b/c it will not make a copy of the matrix. Instead it will return a matrix object that shares its underlying data/memory with the parent matrix. So as we reduce the submatrices, the orginal matrix is being reduced as well
+- The ~mmul~ matrix multiplication will unfortunately produce a temporary intermediary matrix which will then get copied into the matrix/submatrix. Other more advanced matrix libraries may have ways to do this in-place.
+#+END_QUOTE
+
+Now to test it I'm reusing the same random matrix from the previous example:
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]
+		   [21.0 98.0 55.0 48.0]
+		   [72.0 13.0 98.0 12.0]
+		   [28.0 38.0 73.0 20.0]]))
+
+  (pm A)
+  ;; [[43.000 36.000 38.000 90.000]
+  ;;  [21.000 98.000 55.000 48.000]
+  ;;  [72.000 13.000 98.000 12.000]
+  ;;  [28.000 38.000 73.000 20.000]]
+  ;; nil
+  (reduce-to-r A)
+
+  (pm A)
+  ;; [[90.874 61.690 130.830  69.349]
+  ;;  [ 0.000 93.313  29.311  49.102]
+  ;;  [-0.000  0.000  37.767 -48.089]
+  ;;  [ 0.000 -0.000   0.000 -37.619]]
+  ;; nil
+#+END_SRC
+If you looking at the result I got when running ~(first-column-reflector ..)~  then you'll see that the first column and row have been preserved as we expect.
+
+** Getting the reflectors
+
+The last section managed to get the *R* in the *QR*. The next step is combining all these intermediary relfectors (those *S* matrices) into a matrix *Q*
+
+This step it unfortunately not quite as elegant as the reduction (or I haven't found the right solution!). 
+
+The easiest solution is to work backwards from the last iteration step where there reflector matrix is just *1*. Then going back up one iteration we would take *1* and combine it with the =first-column-reflector= we got at that step.. and so on up the iterations till we got to back to the *Q_{1}*. Unfortunately with this method we build up *Q* as we work back up the stack and after we have finished the reduction. So as we reduce we need to keep around all these intermediary reflector till we get the last one (the *1*). Only then can we combine them.
+
+The better but uglier solution is to combine the reflectors as we go, starting with *Q_{1}*. At each iteration of the reduction we got a new ~(first-column-reflector .. )~ , and just like with *S* in the 2^{nd} column case, we pad the matrix and make it =n by n=
+
+ \begin{equation}
+ Q_{k}
+ \\=
+ \begin{bmatrix}
+ I_{k-1,k-1} & 0\\
+ 0 & S_{n-k+1,n-k+1}\\
+ \end{bmatrix}
+ \end{equation}
+
+In ~core.matrix~ there is a convenient ~(block-diagonal-matrix .. )~ function to handle making these
+
+So far we've been looking at *Q_{1}Q_{2}* .. *Q_{n}A=R*, but ultimately we want to get to *A=QR*. The reflectors are their own inverse, so written out like that the equation remains easily invertable. While by contrast *Q^{-1}A=R* is not so easy to invert... b/c *Q^{-1}* may not be a reflector at all. So we flip the equation ahead of time *A=Q_{n}* .. *Q_{2}Q_{1}R* and we make sure to build *Q* in the right order *Q=Q_{1}Q_{2}* .. *Q_{1}*
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn householder-reduce-to-QR
+    "Increase the dimension of a reflector by padding it with an identity matrix"
+    [reduction-matrix input-matrix]
+    (if (or (= 0 (row-count input-matrix))
+	    (= 0 (column-count input-matrix)))
+      reduction-matrix ;; base case
+      (let [reflector (first-column-reflector input-matrix)]
+	(do (assign! input-matrix
+		     (mmul reflector
+			   input-matrix))
+	    (recur (mmul reduction-matrix
+			 (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix)
+								     (row-count input-matrix)))
+						 reflector]))
+		   (submatrix input-matrix
+			      1
+			      (dec (row-count input-matrix))
+			      1
+			      (dec (column-count input-matrix))))))))
+
+  (defn householder-QR
+    "A wrapper for the real function"
+    [input-matrix]
+    (householder-reduce-to-QR (identity-matrix (row-count input-matrix))
+			      input-matrix))
+#+END_SRC
+The function reduces the input matrix to *R* and returns *Q*.
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0 90.0]
+		   [21.0 98.0 55.0 48.0]
+		   [72.0 13.0 98.0 12.0]
+		   [28.0 38.0 73.0 20.0]]))
+
+  (def Q (householder-QR A))
+  (pm Q)
+  ;; [[0.473  0.073 -0.690 -0.543]
+  ;;  [0.231  0.897 -0.041  0.374]
+  ;;  [0.792 -0.384  0.149  0.450]
+  ;;  [0.308  0.204  0.708 -0.602]]
+  (pm A)
+  ;; [[90.874 61.690 130.830  69.349]
+  ;;  [ 0.000 93.313  29.311  49.102]
+  ;;  [-0.000  0.000  37.767 -48.089]
+  ;;  [ 0.000 -0.000   0.000 -37.619]]
+  (pm (mmul Q A))
+  ;; [[43.000 36.000 38.000 90.000]
+  ;;  [21.000 98.000 55.000 48.000]
+  ;;  [72.000 13.000 98.000 12.000]
+  ;;  [28.000 38.000 73.000 20.000]]
+#+END_SRC
+Note that this all works perfectly well for fat (underdefined) and skinny (overdefined) matrices
+#+BEGIN_SRC clojure
+  (def A (mutable [[43.0 36.0 38.0]
+		   [21.0 98.0 55.0]
+		   [72.0 13.0 98.0]
+		   [28.0 38.0 73.0]
+		   [65.0 23.0 85.0]]))
+  (def Q (householder-QR A))
+  (pm Q)
+  ;; [[0.385  0.122 -0.678 -0.578 -0.207]
+  ;;  [0.188  0.907 -0.042  0.374 -0.024]
+  ;;  [0.644 -0.295  0.170  0.373 -0.574]
+  ;;  [0.251  0.233  0.713 -0.612 -0.025]
+  ;;  [0.582 -0.147 -0.033  0.111  0.791]]
+  (pm A)
+  ;; [[111.727 63.557 155.862]
+  ;;  [ -0.000 94.882  30.090]
+  ;;  [ -0.000  0.000  37.799]
+  ;;  [  0.000 -0.000   0.000]
+  ;;  [ -0.000  0.000   0.000]]
+  (pm (mmul Q A))
+  ;; [[43.000 36.000 38.000]
+  ;;  [21.000 98.000 55.000]
+  ;;  [72.000 13.000 98.000]
+  ;;  [28.000 38.000 73.000]
+  ;;  [65.000 23.000 85.000]]
+
+  (def A (mutable [[43.0 36.0 38.0 90.0 54.0]
+		   [21.0 98.0 55.0 48.0 92.0]
+		   [72.0 13.0 98.0 12.0 47.0]]))
+  (def Q (householder-QR A))
+  (pm Q)
+  ;;  [[0.497  0.108 -0.861]
+  ;; [0.243  0.935  0.258]
+  ;; [0.833 -0.337  0.439]]
+  (pm A)
+  ;; [[86.452 52.538 113.878  66.418 88.349]
+  ;;  [ 0.000 91.153  22.480  50.581 76.019]
+  ;;  [-0.000  0.000  24.484 -59.818 -2.122]]
+  (pm (mmul Q A))
+  ;; [[43.000 36.000 38.000 90.000 54.000]
+  ;;  [21.000 98.000 55.000 48.000 92.000]
+  ;;  [72.000 13.000 98.000 12.000 47.000]]
+#+END_SRC
+In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them

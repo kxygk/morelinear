@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-08-03 Sat 21:45 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoreLinear: Hessenberg form</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="George Kontsevich">
+<meta name="description" content="The Hessenberg"
+>
+<link rel="stylesheet" type="text/css" href="../web/worg.css" />
+<link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../MathJax/MathJax.js?config=TeX-AMS_CHTML"></script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href="index.html"> UP </a>
+ |
+ <a accesskey="H" href=".."> HOME </a>
+</div><div id="content">
+<h1 class="title">MoreLinear: Hessenberg form</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org8da6447">Reduction to Hessenberg Form</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org8da6447" class="outline-2">
+<h2 id="org8da6447">Reduction to Hessenberg Form</h2>
+<div class="outline-text-2" id="text-org8da6447">
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.hessenberg</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span>
+             morelinear.householder <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
+</pre>
+</div>
+<p>
+The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is our new basis and <b>R</b> are the coordinates of <b>A</b> in this basis. However if we got back to thinking about a linear system and we rewrite <b>Ax=b</b> in terms of the <b>QR</b> we get something nonsensical. In the equation <b>QRx=b</b> the <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
+</p>
+
+<p>
+The <b>QR</b>  has its uses but looking back at pages <code>254</code> - <code>255</code>, it seemed that one thing we were shooting for was a <i>similarity transform</i> ie. a nice new basis in which we could easily perform the linear function <b>A</b>. We should be able to take our input vector <b>x</b>, change it this convenient basis, put it through our linear system, and then go back to the standard basis we started with. The <b>QR</b> doesn't give us that.
+</p>
+
+<p>
+Again, working with reflectors, the text starting on page <code>350</code> presents a solution called the <code>Upper-Hessenberg Form</code>. This mirrors the <b>Householder decomposition</b> in a lot of ways and turns out matrix into an <i>almost upper triangular</i> matrix (It just has one nonzero subdiagonal). The text states that this form is much easier than finding a basis that is <i>fully</i> upper-triangular (this is developed on the next page <code>353</code> under the <i>Jacobi reduction</i> and then in Chapter 7).  Basically we are doing the same thing as before, but each time we perform a reflection we are also reflecting back the output so that in effect anything we put it comes out in the same basis it started. So instead of  <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>A</b> we are doing  <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>AQ<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>n</sub></b> (reflections are their own inverse, so you can view the left side of <b>A</b> as undoing the right side. Again we can put all the Q's into one <b>Q</b> matrix and rewrite  this is <b>Q<sup>T</sup>AQ</b>. Since <b>Q</b> is orthonormal (but non-symmetric) it's inverse is it's transpose. If you distribute out the transpose to the reflectors you will see it works out
+</p>
+
+<p>
+Again, we start by looking at how to zero the first column with this new reflector setup. But now that we are shooting for the one-off-diagonal this is going to kinda look like the second column case from before:
+</p>
+
+<p>
+So if
+</p>
+\begin{equation}
+Q_{1} =
+\begin{bmatrix}
+1 & 0\\
+0 & S\\
+\end{bmatrix}
+\end{equation}
+
+<p>
+Then we can write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as:
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+1 & 0\\
+0 & S\\
+\end{bmatrix}
+\begin{bmatrix}
+A_{1,1} & A_{1,*}\\
+A_{*,1} & A_{sub}\\
+\end{bmatrix}
+\begin{bmatrix}
+1 & 0\\
+0 & S\\
+\end{bmatrix}
+\\=
+\begin{bmatrix}
+A_{1,1} & A_{1,*} S\\
+SA_{*,1} & S A_{sub} S
+\end{bmatrix}
+\end{equation}
+<p>
+And we want to zero that off diagonal first column:
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+A_{1,1} & A_{1,*} S\\
+\begin{bmatrix}
+1 \\ 0 \\ .. \\ 0
+\end{bmatrix}
+ & S A_{sub} S
+\end{bmatrix}
+\end{equation}
+
+<p>
+So this should look familiar. We want to pick <b>S</b> such that <b>SA<sub>-,1</sub></b> = <b>[ 1 0 0 0 .. 0 ]</b> 
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">first-subcolumn-reflector</span>
+  <span style="color: #036A07;">"Build a matrix that will reflect the first column of INPUT-MATRIX </span>
+<span style="color: #036A07;">  on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [dimension (dec (dimension-count input-matrix
+                                        0<span style="color: #999999;">))]</span>
+    (block-diagonal-matrix [[[1.0<span style="color: #999999;">]]</span>
+                            (elementary-coordinate-reflector (subvector (get-column input-matrix 0<span style="color: #999999;">)</span>
+                                                                        1
+                                                                        dimension<span style="color: #999999;">)</span>
+                                                             (get-row (identity-matrix dimension) 0<span style="color: #999999;">))])))</span>
+</pre>
+</div>
+
+<p>
+Just to demonstrate the result:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
+
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (first-subcolumn-reflector A<span style="color: #999999;">))</span>
+
+(pm (mmul Q A Q<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000  75.097 -9.666  71.463]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[80.056 139.128 20.275 -11.552]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  38.239 48.433  48.865]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000  60.253 38.559  28.439]]</span>
+
+</pre>
+</div>
+<p>
+and then we want to we will want to call this whole business recursively on <b>SA<sub>sub</sub>S</b>
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">hessenberg-reduction</span>
+  <span style="color: #036A07;">"Increase the dimension of a reflector by padding it with an identity matrix"</span>
+  [reduction-matrix input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">if</span> (= 2 (row-count input-matrix<span style="color: #999999;">))</span>
+    reduction-matrix
+    (<span style="color: #0000FF;">let</span> [reflector (first-subcolumn-reflector input-matrix<span style="color: #999999;">)]</span>
+      (<span style="color: #0000FF;">do</span> (assign! input-matrix
+                   (mmul reflector
+                         input-matrix
+                         reflector<span style="color: #999999;">))</span>
+          (<span style="color: #0000FF;">recur</span> (mmul reduction-matrix
+                       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix<span style="color: #999999;">)</span>
+                                                                   (row-count input-matrix<span style="color: #999999;">)))</span>
+                                               reflector<span style="color: #999999;">]))</span>
+                 (submatrix input-matrix
+                            1
+                            (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                            1
+                            (dec (column-count input-matrix<span style="color: #999999;">))))))))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">hessenberg</span>
+  <span style="color: #036A07;">"A wrapper for the real function"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (hessenberg-reduction (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
+                       input-matrix<span style="color: #999999;">))</span>
+</pre>
+</div>
+
+<p>
+Again demonstrating the result:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
+
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (hessenberg A<span style="color: #999999;">))</span>
+
+(pm (mmul (transpose Q) 
+          [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+           [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+           [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
+           [28.0 38.0 73.0 20.0<span style="color: #999999;">]]</span>
+          Q<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000  75.097 55.158 -46.454]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[80.056 139.128  1.110  23.309]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  71.363 73.732  22.504]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000   0.000 32.809   3.140]]</span>
+
+</pre>
+</div>
+<p>
+As you can see the algorithm is almost the same as the <code>(householder ..)</code> one. Here the fact that <b>A</b> is reduced in place is a bit of an inconvenience. It's not difficult to modify things to work on a copy of <b>A</b> if desired..
+</p>
+
+<p>
+On page <code>352</code> it claims that a Hessenberg reduction on a symmetric matrix will give us a <code>tridiagonal</code> matrix. We can double check this:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+                 [36.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+                 [38.0 55.0 98.0 12.0<span style="color: #999999;">]</span>
+                 [90.0 48.0 12.0 20.0<span style="color: #999999;">]]))</span>
+
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (hessenberg A<span style="color: #999999;">))</span>
+
+(pm (mmul (transpose Q) 
+          [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
+           [36.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
+           [38.0 55.0 98.0 12.0<span style="color: #999999;">]</span>
+           [90.0 48.0 12.0 20.0<span style="color: #999999;">]]</span>
+          Q<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[ 43.000 104.115  0.000  0.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[104.115  89.863 82.131  0.000]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000  82.131 73.358 20.256]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000   0.000 20.256 52.779]]</span>
+
+</pre>
+</div>
+<p>
+Indeed it does :)
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-01 Thu 22:35 -->
+<!-- 2019-08-03 Sat 21:45 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: some linear algebra in Clojure</title>
@@ -11,28 +11,6 @@
 >
 <link rel="stylesheet" type="text/css" href="../web/worg.css" />
 <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
-<script type="text/x-mathjax-config">
-    MathJax.Hub.Config({
-        displayAlign: "center",
-        displayIndent: "0em",
-
-        "HTML-CSS": { scale: 100,
-                        linebreaks: { automatic: "false" },
-                        webFont: "TeX"
-                       },
-        SVG: {scale: 100,
-              linebreaks: { automatic: "false" },
-              font: "TeX"},
-        NativeMML: {scale: 100},
-        TeX: { equationNumbers: {autoNumber: "AMS"},
-               MultLineWidth: "85%",
-               TagSide: "right",
-               TagIndent: ".8em"
-             }
-});
-</script>
-<script type="text/javascript"
-        src="../MathJax/MathJax.js?config=TeX-AMS_CHTML"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
@@ -45,28 +23,18 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org8aba06e">Preface</a></li>
-<li><a href="#org3c9fe89">Project managment</a></li>
-<li><a href="#org3bbc029">Householder QR</a>
-<ul>
-<li><a href="#org814323c">elementary reflector</a></li>
-<li><a href="#org77c1c3c">elementary coordinate reflector</a></li>
-<li><a href="#org9f5347a">Zeroing the first column</a></li>
-<li><a href="#org6da8c0e">Zeroing out the second column and so on..</a></li>
-<li><a href="#org36b4cfd">Getting the reflectors</a></li>
-</ul>
-</li>
-<li><a href="#org6539715">Reduction to Hessenberg Form</a></li>
-<li><a href="#org3acc2d3"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org4a32991">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org4789ca6">End</a></li>
+<li><a href="#orga43a2fc">Preface</a></li>
+<li><a href="#orgbd29bd7">Project managment</a></li>
+<li><a href="#org0aba06c"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#orgc34154e">SRC<sub>Block</sub> template</a></li>
+<li><a href="#org9c76cc9">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org8aba06e" class="outline-2">
-<h2 id="org8aba06e">Preface</h2>
-<div class="outline-text-2" id="text-org8aba06e">
+<div id="outline-container-orga43a2fc" class="outline-2">
+<h2 id="orga43a2fc">Preface</h2>
+<div class="outline-text-2" id="text-orga43a2fc">
 <p>
 This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
 </p>
@@ -93,9 +61,9 @@ Explaining Clojure is outside the scope of this project!
 </div>
 </div>
 
-<div id="outline-container-org3c9fe89" class="outline-2">
-<h2 id="org3c9fe89">Project managment</h2>
-<div class="outline-text-2" id="text-org3c9fe89">
+<div id="outline-container-orgbd29bd7" class="outline-2">
+<h2 id="orgbd29bd7">Project managment</h2>
+<div class="outline-text-2" id="text-orgbd29bd7">
 <p>
 <b>TODO</b> Migrate to tools.deps
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
@@ -121,7 +89,7 @@ We start by declaring the project namespace and including all of <code>core.matr
 </p>
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.core</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span>])  <span style="color: #8D8D84; font-style: italic;">;[denisovan.core :as den]</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">])</span>
   (<span style="color: #D0372D;">:gen-class</span><span style="color: #999999;">))</span>
 
 (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">-main</span>
@@ -136,695 +104,19 @@ The <code>-main</code> is just a placeholder for the moment
 </p>
 </div>
 </div>
-<div id="outline-container-org3bbc029" class="outline-2">
-<h2 id="org3bbc029">Householder QR</h2>
-<div class="outline-text-2" id="text-org3bbc029">
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.householder</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
-</pre>
-</div>
 
-<p>
-The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
-</p>
-</div>
 
-<div id="outline-container-org814323c" class="outline-3">
-<h3 id="org814323c">elementary reflector</h3>
-<div class="outline-text-3" id="text-org814323c">
-<p>
-An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
-</p>
-
-<p>
-Their key property is that they're both <i>orthonormal</i> and <i>symmetric</i>.
-</p>
-<dl class="org-dl">
-<dt><b>Orthonormal</b></dt><dd>their rows (and columns) form an orthogonal basis and each row (and column) is of unit length. As a consequence, given an orthonormal matrix <b>Q</b> its inverse will be its transpose. In <b>QQ<sup>T</sup></b> the off-diagonal terms will be inner products of different basis vectors. Since they're orthogonal these inner product will be zero. The diagonal elements will be inner products of vectors with themselves so it will equal to their length. Since the rows are all unit length the diagonal will be all ones.</dd>
-<dt><b>Symmetric</b></dt><dd>means that it's equal to its own transpose. As a consequence a <i>symmetric</i> + <i>orthonormal</i> matrix will be it's own inverse. ie. <b>QQ=I</b>. This makes some sense b/c reflecting something twice gives you the same things back.</dd>
-<dt><b>A product of orthonormal matrices will be orthonormal</b></dt><dd>b/c given two orthonormal matrices <b>U</b> and <b>V</b> we can test for orthonormality: <b>(UV)(UV)<sup>T</sup>=UVV<sup>T</sup>U<sup>T</sup>=I</b></dd>
-</dl>
-
-<p>
-So if we carry out a series of reflections <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>A</b> we can combine them into one matrix <b>Q</b> which will be guaranteed to be orthonormal as well. It however <i>will not necessarily</i> be a reflection matrix!
-</p>
-
-
-<p>
-To build a reflector matrix we need to find a nice concise mechanism to define the hyperplane over which it reflects. If our space is <b>R<sup>N</sup></b> then the hyperplane will be <b>N-1</b> dimensions and at first blush we seem to need <b>N-1</b> vectors to define it. For instance in <b>3D</b> space any two vectors not on the same line will define a 2D plane (ie. <b>a*v<sub>1</sub> + b*v<sub>2</sub></b> for all <i>a</i> and <i>b</i>). But this method doesn't really scale b/c as <b>N</b> increases so does the number of vectors you need. The shortcut is that actually all planes have vectors orthogonal to the hyper plane. These vectors all lie on the same line and we can just choose one, call it <b>u</b>, and let it represent that remaining <b>N<sup>th</sup></b> dimension. Now you can simply say that the hyperplane is all the vectors orthogonal to <b>u</b>. Or more formally, all vectors <i>not-in-the-span</i> of <b>u</b> are the hyperplane
-</p>
-
-<p>
-Now that we have a way to define a plane we need to work through the mechanics of relfecting an arbitrary vector <b>x</b> across the hyperplane. <b>x</b> can be broken up into two separate vectors: One that lies in the plane and one that is orthogonal to the plane. The component that lies in the plane is unaffected by the reflection while the component that is orthogonal is in the direction of <b>u</b> and is flipped by just getting its negative. To do this procedure mathematically we start with a vector <b>x</b> and subtract twice its component in the direction of the <b>u</b>:
-</p>
-<ul class="org-ul">
-<li><b>u<sup>t</sup>x*/||u||</b> is the amount of <b>x</b> in the direction of <b>u</b> (a scalar)</li>
-<li><b>uu<sup>t</sup>x/||u||<sup>2</sup></b> is the component <b>x</b> in the direction of <b>u</b> (a vector)</li>
-<li>Here we notice that we can subsitute the inner product <b>u<sup>t</sup>u</b> for <b>||u||<sup>2</sup></b></li>
-<li><b>uu<sup>t</sup>x/u<sup>t</sup>u</b></li>
-<li><b>x - 2uu<sup>t</sup>x/u<sup>t</sup>u</b> is you subtracting that vector component twice to get its reflection</li>
-<li><b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)x</b> is how we'd factor the <b>x</b> back out</li>
-</ul>
-<p>
-Notice how in the last step we managed to factor out the <b>x</b> , so we can subsitute it with any other vector to get a reflection. The matrix <b>(I-2uu<sup>t</sup>/u<sup>t</sup>u)</b> to its left is the reflector matrix. It's defined uniquely by <b>u</b> and is independent of <b>x</b>.
-</p>
-
-<p>
-<b>Note:</b> We will see in the next section that thought it would make life easier, we can't safely assume <b>u</b> is unit length
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-reflector</span>
-  <span style="color: #036A07;">"Build a matrix that will reflect vector across the hyperplane orthogonal to REFLECTION-AXIS"</span>
-  [reflection-axis<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">let</span> [dimension (dimension-count reflection-axis 0<span style="color: #999999;">)]</span>
-    (sub (identity-matrix dimension<span style="color: #999999;">)</span>
-         (mul (outer-product reflection-axis reflection-axis<span style="color: #999999;">)</span>
-              (/ 2 (length-squared reflection-axis<span style="color: #999999;">))))))</span>
-</pre>
-</div>
-<p>
-For example:
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(pm (elementary-reflector [43.0 36.0 38.0 90.0<span style="color: #999999;">]))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[ 0.709 -0.244 -0.258 -0.610]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.244  0.796 -0.216 -0.511]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.258 -0.216  0.772 -0.539]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.610 -0.511 -0.539 -0.277]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-
-
-(pm (mmul (elementary-reflector [43.0 36.0 38.0 90.0<span style="color: #999999;">])</span>
-          [43.0 36.0 38.0 90.0<span style="color: #999999;">]))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[-43.000 -36.000 -38.000 -90.000]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org77c1c3c" class="outline-3">
-<h3 id="org77c1c3c">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-org77c1c3c">
-<p>
-Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
-</p>
-
-<p>
-The first thing we want to do is have a way to zero out the first column of a matrix, ie <b>A<sub> - ,1</sub></b>. We'd like to build a special elementary reflector <b>Q<sub>1</sub></b> that reflected that first column on to the elementary vector <b>e<sub>1</sub></b> (that's <b>[ 1 0 0 0.. 0 ]</b> ). If we had this matrix then <b>Q<sub>1</sub>A</b> would leave everything under the the first column zeroed out.
-</p>
-
-<p>
-Generalizing the problem a bi, this is a bit of an inversion of what we did in the previous section. Instead of taking a hyperplane and reflecting over it, we now know what we want to reflect and where we want to reflect it to - we just need to find the right plane to do it. This plane lies between where we start and where we want to reflect to. If you picture it in 2D space then you could take the two vectors add up their norms and you will get a vector that bisects them (forming a equilateral diamond shape with the point lieing on the bisecting line). In higher dimensions it will get a bit more complicated as you need more and more vectors. 
-</p>
-
-<p>
-Fortunately we know we can define the plane with the orthogonal vector. To get that we just subtract the two vector norms and you will find that you get a vector orthogonal to that bisection vector/plane.
-</p>
-
-\begin{equation}
-u = x - ||x||e_{1}
-\end{equation}
-
-<p>
-Strain your brain and try to picture it in 2D and in 3D and it should make sense.
-</p>
-
-<p>
-<b>TODO</b>: Maybe add a picture..
-</p>
-
-<p>
-Once you an orthogonal vector to the bisecting plane, you just feed it into our previous function and get the reflection matrix
-</p>
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">elementary-coordinate-reflector</span>
- <span style="color: #036A07;">"Build a matrix that will reflect the INPUT-VECTOR on to the COORDINATE-AXIS"</span>
- [input-vector coordinate-axis] 
- (<span style="color: #0000FF;">let</span> [vector-orthogonal-to-reflection-plane
-       (sub input-vector
-            (mul coordinate-axis
-                 (length input-vector<span style="color: #999999;">)))]</span>
-   (<span style="color: #0000FF;">if</span> (zero-matrix? vector-orthogonal-to-reflection-plane<span style="color: #999999;">)</span>
-     <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">degenerate case where the input is on the coordinate axis</span>
-     (identity-matrix (dimension-count input-vector 0<span style="color: #999999;">))</span>
-     <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">normal case</span>
-     (elementary-reflector vector-orthogonal-to-reflection-plane<span style="color: #999999;">))))</span>
-
-</pre>
-</div>
-<p>
-For instance we can take some random vector and say we want to reflect it onto the <b>e<sub>1</sub></b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(pm (elementary-coordinate-reflector [24 77 89 12<span style="color: #999999;">]</span>
-                                     [1 0 0 0<span style="color: #999999;">]))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.199  0.638  0.737  0.099]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.638  0.492 -0.587 -0.079]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.737 -0.587  0.321 -0.091]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.099 -0.079 -0.091  0.988]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-</pre>
-</div>
-<p>
-We got some seemingly random matrix out. If we then multiply it times out random vector, it reflects perfectly to <b>e<sub>1</sub></b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(pm (mmul (elementary-coordinate-reflector [24 77 89 12<span style="color: #999999;">]</span>
-                                           [1 0 0 0<span style="color: #999999;">])</span>
-          [24 77 89 12<span style="color: #999999;">])))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[120.706 -0.000 -0.000 -0.000]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-</pre>
-</div>
-</div>
-</div>
-
-
-<div id="outline-container-org9f5347a" class="outline-3">
-<h3 id="org9f5347a">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org9f5347a">
-<p>
-Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
-</p>
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">first-column-reflector</span>
-  <span style="color: #036A07;">"Build a matrix that will reflect the first column of INPUT-MATRIX </span>
-<span style="color: #036A07;">  on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (elementary-coordinate-reflector (get-column input-matrix
-                                               0<span style="color: #999999;">)</span>
-                                   (get-row (identity-matrix (dimension-count input-matrix 0)) 0<span style="color: #999999;">)))</span>
-</pre>
-</div>
-<p>
-This is really just a wrapper for the previous function. Now we can test it by writing out a random matrix and zeroing out its first column
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(pm (first-column-reflector [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                             [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                             [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                             [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.473  0.231  0.792  0.308]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.231  0.899 -0.348 -0.135]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.792 -0.348 -0.192 -0.463]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.308 -0.135 -0.463  0.820]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-
-
-(<span style="color: #0000FF;">let</span> [A [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-         [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-         [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-         [28.0 38.0 73.0 20.0<span style="color: #999999;">]]]</span>
-  (pm (mmul (first-column-reflector A<span style="color: #999999;">)</span>
-            A<span style="color: #999999;">)))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874  61.690 130.830 69.349]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000  86.731  14.280 57.059]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000 -25.637 -41.613 43.058]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000  22.975  18.706 32.078]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org6da8c0e" class="outline-3">
-<h3 id="org6da8c0e">Zeroing out the second column and so on..</h3>
-<div class="outline-text-3" id="text-org6da8c0e">
-<p>
-Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
-</p>
-
-<p>
-In the <b>LU</b> Gaussian Elimination method we didn't have this problem b/c clearing subsequent columns was guaranteed to leave you previous columns intact (b/c shuffling rows would just be moving around zeroes from the pervious columns). Now this guarantee is gone so we need to find a way to reflect some matrix columns and not others
-</p>
-
-<p>
-The solution is thinking in terms of block matrices. When we say we need to clear the second column we can spell that out as : we want to take the result of our first reflector <b>Q<sub>1</sub>A</b> and now clearing everything under the <code>(2,2)</code> position. To avoid touching the first column we construct <b>Q<sub>2</sub></b> with the following form:
-</p>
-
-\begin{equation}
-Q_{2}
-\\=
-\begin{bmatrix}
-1 & 0\\
-0 & S_{ n-1, m-1 }\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-Notice how when we multiply this matrix times <b>Q<sub>1</sub>A</b> the first column is left untouched
-</p>
-
-
-\begin{equation}
-Q_2(Q_1A)
-\\=
-\begin{bmatrix}
-1 & 0\\
-0 & S\\
-\end{bmatrix}
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & (Q_{1}A)_{n-1,m-1}\\
-\end{bmatrix}
-\\=
-\begin{bmatrix}
-(Q_{1}A)_{1,1} & (Q_{1}A)_{1,*}\\
-0 & S(Q_{1}A)_{n-1,m-1}\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-Now also notice that the <code>n-1 by m-1</code> submatrix <b>S</b> will multiple times a submatrix of <b>Q<sub>1</sub>A</b> which has that <code>(2,2)</code> position now in the <code>(1,1)</code> position.
-</p>
-
-<p>
-We've also got a bit of bonus b/c in the resulting matrix the only "new" entry we need to worry about is <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b> - the first column and row have remained the same. In this submatrix product we need to again clear the first column because it's the second column of our overall matrix. Choosing an appropriate <b>S</b> matrix to do it mirrors the process we used to clear the first column of <b>A</b> - the only difference being that the dimension is one smaller.
-</p>
-
-<p>
-When tackling the third column we do this again, getting the next submatrix of <b>S(Q<sub>1</sub>A)<sub>n-1,m-1</sub></b>. At each step we are reducing the first column, grabbing the result's submatrix and calling the procedure again - until we are out of things to reduce
-</p>
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">reduce-to-r</span>
-  <span style="color: #036A07;">"Reduce a matrix to a lower triangular orthonormal matrix"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 1 (row-count input-matrix<span style="color: #999999;">))</span>
-          (= 1 (column-count input-matrix))) 
-    input-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
-    (<span style="color: #0000FF;">do</span> (assign! input-matrix
-                 (mmul (first-column-reflector input-matrix<span style="color: #999999;">)</span>
-                       input-matrix<span style="color: #999999;">))</span>
-        (<span style="color: #0000FF;">recur</span> (submatrix input-matrix
-                          1
-                          (dec (row-count input-matrix<span style="color: #999999;">))</span>
-                          1
-                          (dec (column-count input-matrix<span style="color: #999999;">)))))))</span>
-</pre>
-</div>
-
-<blockquote>
-<p>
-<b>Note</b>: 
-</p>
-<ul class="org-ul">
-<li>This <code>submatrix</code> function is interesting b/c it will not make a copy of the matrix. Instead it will return a matrix object that shares its underlying data/memory with the parent matrix. So as we reduce the submatrices, the orginal matrix is being reduced as well</li>
-<li>The <code>mmul</code> matrix multiplication will unfortunately produce a temporary intermediary matrix which will then get copied into the matrix/submatrix. Other more advanced matrix libraries may have ways to do this in-place.</li>
-</ul>
-</blockquote>
-
-<p>
-Now to test it I'm reusing the same random matrix from the previous example:
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
-
-(pm A<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000 20.000]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-(reduce-to-r A<span style="color: #999999;">)</span>
-
-(pm A<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874 61.690 130.830  69.349]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 93.313  29.311  49.102]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  37.767 -48.089]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 -0.000   0.000 -37.619]]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
-</pre>
-</div>
-<p>
-If you looking at the result I got when running <code>(first-column-reflector ..)</code>  then you'll see that the first column and row have been preserved as we expect.
-</p>
-</div>
-</div>
-
-<div id="outline-container-org36b4cfd" class="outline-3">
-<h3 id="org36b4cfd">Getting the reflectors</h3>
-<div class="outline-text-3" id="text-org36b4cfd">
-<p>
-The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
-</p>
-
-<p>
-This step it unfortunately not quite as elegant as the reduction (or I haven't found the right solution!). 
-</p>
-
-<p>
-The easiest solution is to work backwards from the last iteration step where there reflector matrix is just <b>1</b>. Then going back up one iteration we would take <b>1</b> and combine it with the <code>first-column-reflector</code> we got at that step.. and so on up the iterations till we got to back to the <b>Q<sub>1</sub></b>. Unfortunately with this method we build up <b>Q</b> as we work back up the stack and after we have finished the reduction. So as we reduce we need to keep around all these intermediary reflector till we get the last one (the <b>1</b>). Only then can we combine them.
-</p>
-
-<p>
-The better but uglier solution is to combine the reflectors as we go, starting with <b>Q<sub>1</sub></b>. At each iteration of the reduction we got a new <code>(first-column-reflector .. )</code> , and just like with <b>S</b> in the 2<sup>nd</sup> column case, we pad the matrix and make it <code>n by n</code>
-</p>
-
-\begin{equation}
-Q_{k}
-\\=
-\begin{bmatrix}
-I_{k-1,k-1} & 0\\
-0 & S_{n-k+1,n-k+1}\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-In <code>core.matrix</code> there is a convenient <code>(block-diagonal-matrix .. )</code> function to handle making these
-</p>
-
-<p>
-So far we've been looking at <b>Q<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>n</sub>A=R</b>, but ultimately we want to get to <b>A=QR</b>. The reflectors are their own inverse, so written out like that the equation remains easily invertable. While by contrast <b>Q<sup>-1</sup>A=R</b> is not so easy to invert&#x2026; b/c <b>Q<sup>-1</sup></b> may not be a reflector at all. So we flip the equation ahead of time <b>A=Q<sub>n</sub></b> .. <b>Q<sub>2</sub>Q<sub>1</sub>R</b> and we make sure to build <b>Q</b> in the right order <b>Q=Q<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>1</sub></b>
-</p>
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-reduce-to-QR</span>
-  <span style="color: #036A07;">"Increase the dimension of a reflector by padding it with an identity matrix"</span>
-  [reduction-matrix input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 0 (row-count input-matrix<span style="color: #999999;">))</span>
-          (= 0 (column-count input-matrix<span style="color: #999999;">)))</span>
-    reduction-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
-    (<span style="color: #0000FF;">let</span> [reflector (first-column-reflector input-matrix<span style="color: #999999;">)]</span>
-      (<span style="color: #0000FF;">do</span> (assign! input-matrix
-                   (mmul reflector
-                         input-matrix<span style="color: #999999;">))</span>
-          (<span style="color: #0000FF;">recur</span> (mmul reduction-matrix
-                       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix<span style="color: #999999;">)</span>
-                                                                   (row-count input-matrix<span style="color: #999999;">)))</span>
-                                               reflector<span style="color: #999999;">]))</span>
-                 (submatrix input-matrix
-                            1
-                            (dec (row-count input-matrix<span style="color: #999999;">))</span>
-                            1
-                            (dec (column-count input-matrix<span style="color: #999999;">))))))))</span>
-
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-QR</span>
-  <span style="color: #036A07;">"A wrapper for the real function"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (householder-reduce-to-QR (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
-                            input-matrix<span style="color: #999999;">))</span>
-</pre>
-</div>
-<p>
-The function reduces the input matrix to <b>R</b> and returns <b>Q</b>.
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
-
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
-(pm Q<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.473  0.073 -0.690 -0.543]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.231  0.897 -0.041  0.374]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.792 -0.384  0.149  0.450]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.308  0.204  0.708 -0.602]]</span>
-(pm A<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874 61.690 130.830  69.349]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 93.313  29.311  49.102]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  37.767 -48.089]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 -0.000   0.000 -37.619]]</span>
-(pm (mmul Q A<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000 20.000]]</span>
-</pre>
-</div>
-<p>
-Note that this all works perfectly well for fat (underdefined) and skinny (overdefined) matrices
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0<span style="color: #999999;">]</span>
-                 [28.0 38.0 73.0<span style="color: #999999;">]</span>
-                 [65.0 23.0 85.0<span style="color: #999999;">]]))</span>
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
-(pm Q<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.385  0.122 -0.678 -0.578 -0.207]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.188  0.907 -0.042  0.374 -0.024]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.644 -0.295  0.170  0.373 -0.574]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.251  0.233  0.713 -0.612 -0.025]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.582 -0.147 -0.033  0.111  0.791]]</span>
-(pm A<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[111.727 63.557 155.862]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000 94.882  30.090]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000  0.000  37.799]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000 -0.000   0.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ -0.000  0.000   0.000]]</span>
-(pm (mmul Q A<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[28.000 38.000 73.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[65.000 23.000 85.000]]</span>
-
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0 54.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0 48.0 92.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0 12.0 47.0<span style="color: #999999;">]]))</span>
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (householder-QR A<span style="color: #999999;">))</span>
-(pm Q<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[[0.497  0.108 -0.861]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.243  0.935  0.258]</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.833 -0.337  0.439]]</span>
-(pm A<span style="color: #999999;">)</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[86.452 52.538 113.878  66.418 88.349]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 91.153  22.480  50.581 76.019]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  24.484 -59.818 -2.122]]</span>
-(pm (mmul Q A<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000 36.000 38.000 90.000 54.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[21.000 98.000 55.000 48.000 92.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[72.000 13.000 98.000 12.000 47.000]]</span>
-</pre>
-</div>
-<p>
-In a more sophisticated linear algebra system you may want to keep the resulting <b>R</b> matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
-</p>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org6539715" class="outline-2">
-<h2 id="org6539715">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org6539715">
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.hessenberg</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span>
-             morelinear.householder <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
-</pre>
-</div>
-<p>
-The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is our new basis and <b>R</b> are the coordinates of <b>A</b> in this basis. However if we got back to thinking about a linear system and we rewrite <b>Ax=b</b> in terms of the <b>QR</b> we get something nonsensical. In the equation <b>QRx=b</b> the <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
-</p>
-
-<p>
-The <b>QR</b>  has its uses but looking back at pages <code>254</code> - <code>255</code>, it seemed that one thing we were shooting for was a <i>similarity transform</i> ie. a nice new basis in which we could easily perform the linear function <b>A</b>. We should be able to take our input vector <b>x</b>, change it this convenient basis, put it through our linear system, and then go back to the standard basis we started with. The <b>QR</b> doesn't give us that.
-</p>
-
-<p>
-Again, working with reflectors, the text starting on page <code>350</code> presents a solution called the <code>Upper-Hessenberg Form</code>. This mirrors the <b>Householder decomposition</b> in a lot of ways and turns out matrix into an <i>almost upper triangular</i> matrix (It just has one nonzero subdiagonal). The text states that this form is much easier than finding a basis that is <i>fully</i> upper-triangular (this is developed on the next page <code>353</code> under the <i>Jacobi reduction</i> and then in Chapter 7).  Basically we are doing the same thing as before, but each time we perform a reflection we are also reflecting back the output so that in effect anything we put it comes out in the same basis it started. So instead of  <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>A</b> we are doing  <b>Q<sub>k</sub>..Q<sub>2</sub>..Q<sub>1</sub>AQ<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>n</sub></b> (reflections are their own inverse, so you can view the left side of <b>A</b> as undoing the right side. Again we can put all the Q's into one <b>Q</b> matrix and rewrite  this is <b>Q<sup>T</sup>AQ</b>. Since <b>Q</b> is orthonormal (but non-symmetric) it's inverse is it's transpose. If you distribute out the transpose to the reflectors you will see it works out
-</p>
-
-<p>
-Again, we start by looking at how to zero the first column with this new reflector setup. But now that we are shooting for the one-off-diagonal this is going to kinda look like the second column case from before:
-</p>
-
-<p>
-So if
-</p>
-\begin{equation}
-Q_{1} =
-\begin{bmatrix}
-1 & 0\\
-0 & S\\
-\end{bmatrix}
-\end{equation}
-
-<p>
-Then we can write out <b>Q<sub>1</sub>AQ<sub>1</sub></b> as:
-</p>
-
-\begin{equation}
-\begin{bmatrix}
-1 & 0\\
-0 & S\\
-\end{bmatrix}
-\begin{bmatrix}
-A_{1,1} & A_{1,*}\\
-A_{*,1} & A_{sub}\\
-\end{bmatrix}
-\begin{bmatrix}
-1 & 0\\
-0 & S\\
-\end{bmatrix}
-\\=
-\begin{bmatrix}
-A_{1,1} & A_{1,*} S\\
-SA_{*,1} & S A_{sub} S
-\end{bmatrix}
-\end{equation}
-<p>
-And we want to zero that off diagonal first column:
-</p>
-
-\begin{equation}
-\begin{bmatrix}
-A_{1,1} & A_{1,*} S\\
-\begin{bmatrix}
-1 \\ 0 \\ .. \\ 0
-\end{bmatrix}
- & S A_{sub} S
-\end{bmatrix}
-\end{equation}
-
-<p>
-So this should look familiar. We want to pick <b>S</b> such that <b>SA<sub>-,1</sub></b> = <b>[ 1 0 0 0 .. 0 ]</b> 
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">first-subcolumn-reflector</span>
-  <span style="color: #036A07;">"Build a matrix that will reflect the first column of INPUT-MATRIX </span>
-<span style="color: #036A07;">  on to the first elementary vector [ 1 0 0 .. 0 ]"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">let</span> [dimension (dec (dimension-count input-matrix
-                                        0<span style="color: #999999;">))]</span>
-    (block-diagonal-matrix [[[1.0<span style="color: #999999;">]]</span>
-                            (elementary-coordinate-reflector (subvector (get-column input-matrix 0<span style="color: #999999;">)</span>
-                                                                        1
-                                                                        dimension<span style="color: #999999;">)</span>
-                                                             (get-row (identity-matrix dimension) 0<span style="color: #999999;">))])))</span>
-</pre>
-</div>
-
-<p>
-Just to demonstrate the result:
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
-
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (first-subcolumn-reflector A<span style="color: #999999;">))</span>
-
-(pm (mmul Q A Q<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000  75.097 -9.666  71.463]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[80.056 139.128 20.275 -11.552]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  38.239 48.433  48.865]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000  60.253 38.559  28.439]]</span>
-
-</pre>
-</div>
-<p>
-and then we want to we will want to call this whole business recursively on <b>SA<sub>sub</sub>S</b>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">hessenberg-reduction</span>
-  <span style="color: #036A07;">"Increase the dimension of a reflector by padding it with an identity matrix"</span>
-  [reduction-matrix input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">if</span> (= 2 (row-count input-matrix<span style="color: #999999;">))</span>
-    reduction-matrix
-    (<span style="color: #0000FF;">let</span> [reflector (first-subcolumn-reflector input-matrix<span style="color: #999999;">)]</span>
-      (<span style="color: #0000FF;">do</span> (assign! input-matrix
-                   (mmul reflector
-                         input-matrix
-                         reflector<span style="color: #999999;">))</span>
-          (<span style="color: #0000FF;">recur</span> (mmul reduction-matrix
-                       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix<span style="color: #999999;">)</span>
-                                                                   (row-count input-matrix<span style="color: #999999;">)))</span>
-                                               reflector<span style="color: #999999;">]))</span>
-                 (submatrix input-matrix
-                            1
-                            (dec (row-count input-matrix<span style="color: #999999;">))</span>
-                            1
-                            (dec (column-count input-matrix<span style="color: #999999;">))))))))</span>
-
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">hessenberg</span>
-  <span style="color: #036A07;">"A wrapper for the real function"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (hessenberg-reduction (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
-                       input-matrix<span style="color: #999999;">))</span>
-</pre>
-</div>
-
-<p>
-Again demonstrating the result:
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                 [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                 [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-                 [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
-
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (hessenberg A<span style="color: #999999;">))</span>
-
-(pm (mmul (transpose Q) 
-          [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-           [21.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-           [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
-           [28.0 38.0 73.0 20.0<span style="color: #999999;">]]</span>
-          Q<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[43.000  75.097 55.158 -46.454]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[80.056 139.128  1.110  23.309]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  71.363 73.732  22.504]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000   0.000 32.809   3.140]]</span>
-
-</pre>
-</div>
-<p>
-As you can see the algorithm is almost the same as the <code>(householder ..)</code> one. Here the fact that <b>A</b> is reduced in place is a bit of an inconvenience. It's not difficult to modify things to work on a copy of <b>A</b> if desired..
-</p>
-
-<p>
-On page <code>352</code> it claims that a Hessenberg reduction on a symmetric matrix will give us a <code>tridiagonal</code> matrix. We can double check this:
-</p>
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-                 [36.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-                 [38.0 55.0 98.0 12.0<span style="color: #999999;">]</span>
-                 [90.0 48.0 12.0 20.0<span style="color: #999999;">]]))</span>
-
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (hessenberg A<span style="color: #999999;">))</span>
-
-(pm (mmul (transpose Q) 
-          [[43.0 36.0 38.0 90.0<span style="color: #999999;">]</span>
-           [36.0 98.0 55.0 48.0<span style="color: #999999;">]</span>
-           [38.0 55.0 98.0 12.0<span style="color: #999999;">]</span>
-           [90.0 48.0 12.0 20.0<span style="color: #999999;">]]</span>
-          Q<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[ 43.000 104.115  0.000  0.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[104.115  89.863 82.131  0.000]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000  82.131 73.358 20.256]</span>
-<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[  0.000   0.000 20.256 52.779]]</span>
-
-</pre>
-</div>
-<p>
-Indeed it does :)
-</p>
-</div>
-</div>
-<div id="outline-container-org3acc2d3" class="outline-2">
-<h2 id="org3acc2d3"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org3acc2d3">
+<div id="outline-container-org0aba06c" class="outline-2">
+<h2 id="org0aba06c"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org0aba06c">
 <ul class="org-ul">
 <li>add some TODOs</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org4a32991" class="outline-2">
-<h2 id="org4a32991">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-org4a32991">
+<div id="outline-container-orgc34154e" class="outline-2">
+<h2 id="orgc34154e">SRC<sub>Block</sub> template</h2>
+<div class="outline-text-2" id="text-orgc34154e">
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">matrix-template</span>
   <span style="color: #036A07;">"template"</span>
@@ -835,9 +127,9 @@ Indeed it does :)
 </div>
 </div>
 
-<div id="outline-container-org4789ca6" class="outline-2">
-<h2 id="org4789ca6">End</h2>
-<div class="outline-text-2" id="text-org4789ca6">
+<div id="outline-container-org9c76cc9" class="outline-2">
+<h2 id="org9c76cc9">End</h2>
+<div class="outline-text-2" id="text-org9c76cc9">
 <blockquote>
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 

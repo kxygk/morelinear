@@ -39,8 +39,3 @@
   [input-matrix]
   (hessenberg-reduction (identity-matrix (row-count input-matrix))
 		       input-matrix))
-
-(defn- matrix-template
-  "template"
-  [matrix]
-  )
