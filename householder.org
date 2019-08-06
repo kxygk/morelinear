@@ -1,4 +1,4 @@
-#+TITLE: MoreLinear: Householder decomposition
+#+TITLE: Householder decomposition
 #+DESCRIPTION: The Householder QR decomposition
 
 
@@ -13,8 +13,6 @@
 #+OPTIONS: html-postamble:nil
 #+OPTIONS: html-scripts:nil
 
-
-* Householder QR
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (ns morelinear.householder
     (:require [clojure.core.matrix :refer :all]))

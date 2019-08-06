@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-08-06 Tue 13:49 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoreLinear: Least Squares</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="George Kontsevich">
+<meta name="description" content="Some linear algebra in Clojure"
+>
+<link rel="stylesheet" type="text/css" href="../web/worg.css" />
+<link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../MathJax/MathJax.js?config=TeX-AMS_CHTML"></script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href=".."> UP </a>
+ |
+ <a accesskey="H" href=".."> HOME </a>
+</div><div id="content">
+<h1 class="title">MoreLinear: Least Squares</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org82a1508">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
+<li><a href="#org9ffaad4">The LU case</a>
+<ul>
+<li><a href="#org9734501">Direct method</a></li>
+<li><a href="#orgcaf1294">The numerically stable solution</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org82a1508" class="outline-2">
+<h2 id="org82a1508">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
+<div class="outline-text-2" id="text-org82a1508">
+<p>
+Now that we have many ways to solve square linear systems we need to extend <b>Ax=b</b> to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+a_11 & a_12\\
+a_21 & a_22\\
+a_31 & a_32\\
+a_41 & a_42\\
+...\\
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+y_1\\
+y_2\\
+\\
+\end{bmatrix}
+\end{equation}
+
+
+<p>
+If the measurements were ideal then the rows of <b>A</b> will not be independent and you will be able to find an explicit solution though Gaussian Elimination. But in the general case (with the addition of noise and rounding errors) no explicit solution will exist for <b>A<sub>skinny</sub>x=b</b> . You could try to find a set of independent equations and throw away the extra equation to try to make a square matrix, but this is throwing information away.
+</p>
+
+<p>
+Since there is no <b>x</b> for which <b>A<sub>skinny</sub>x=b</b> holds true we instead solve for a "close" system <b>A<sub>skinny</sub>x=b<sub>close</sub></b> which does have a solution. In other words we want to find an <b>x</b> that will give us a <b>b<sub>close</sub></b> which is as close as possible to <b>b</b>. When we say "close" what we mean mathematically is that we want to minimize the sum of the difference between <b>b<sub>close</sub></b> and <b>b</b> - ie. <b>sum<sub>of</sub><sub>all</sub><sub>values</sub>(b<sub>close</sub>-b)</b>.
+</p>
+
+<p>
+The problem is that sums don't express very easily in matrix form. Fortunately we do have a mechanism which is really close - the <b>inner product</b>. The inner product of a vector <b>x</b> with itself - <b>x<sup>T</sup>x</b> - is the sum of the squares of the values of <b>x</b>. While this is not equivalent, it actually does not change the solution b/c the minimum stays the minimum. So instead of  <b>sum<sub>of</sub><sub>all</sub><sub>values</sub>(b<sub>close</sub>-b)</b>. we can work with <b>(b<sub>close</sub>-b)<sup>T</sup>(b<sub>close</sub>-b)</b> and guarantee the same solution
+</p>
+
+<p>
+If we plug in our equation for <b>b<sub>close</sub></b> for we get <b>(A<sub>skinny</sub>x-b)<sup>T</sup>(A<sub>skinny</sub>x-b)</b>. 
+</p>
+
+\begin{equation}
+(A_{skinny}x-b)^{T}(A_{skinny}x-b) \\
+((A_{skinny}x)^{T}-b^{T})(A_{skinny}x-b) \\
+(x^{T}A_{skinny}^{T}-b^{T})(A_{skinny}x-b) \\
+x^{T}A_{skinny}^{T}A_{skinny}x
+-x^{T}A_{skinny}^{T}b
+-b^{T}A_{skinny}x
++b^2
+\end{equation}
+
+
+<p>
+As we learn in calculus, minimizing a function is done by take its derivative with respect to the parameter we are changing (here that's <code>x</code>), setting it equal to zero and then solving for that parameter (b/c the minimum point has zero slope). What <i>page 226-227</i> shows is that the derivative of our difference equation give us the equation <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>. The right hand side <b>A<sup>T</sup>b</b> is a vector, and in-fact the whole equation is in the form <b>Ax=b</b> which we know how to solve (again, solving for <code>x</code> here). Also note that <b>A<sup>T</sup>A</b> is always square and singlular - and that b/c <b>A</b> was skinny it's actually smaller than <b>A</b>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9ffaad4" class="outline-2">
+<h2 id="org9ffaad4">The LU case</h2>
+<div class="outline-text-2" id="text-org9ffaad4">
+</div>
+<div id="outline-container-org9734501" class="outline-3">
+<h3 id="org9734501">Direct method</h3>
+<div class="outline-text-3" id="text-org9734501">
+<p>
+We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcaf1294" class="outline-3">
+<h3 id="orgcaf1294">The numerically stable solution</h3>
+<div class="outline-text-3" id="text-orgcaf1294">
+<p>
+Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trik is presented in <b>Exercise 4.6.9</b> with the equations
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+I_{m*m} & A\\
+A^T & 0_{n*n}\\
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b\\
+0\\
+\end{bmatrix}
+\end{equation}
+
+<p>
+This special block has the property that it'll always be square no matter what shape <b>A</b> is. If you multiply out the block matrices you will get two equation and you will see that <b>x<sub>2</sub></b> is equal to the least squares solution. (<i>Note:</i> crucially the second equation tells you that <b>x<sub>1</sub></b> is in the <b>N(A<sup>T</sup>)</b>)
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+x_1+Ax_{2}\\
+A^{T}x_{1}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b\\
+0\\
+\end{bmatrix}
+\end{equation}
+
+<p>
+I even double checked that this is true in a <a href="../asparapiss/">little demo program</a> written in Clojure. Fitting a polynomial over some random points the <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.
+</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

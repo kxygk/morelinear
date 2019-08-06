@@ -1,0 +1,106 @@
+#+TITLE: Least Squares
+#+DESCRIPTION: Some linear algebra in Clojure
+
+
+#+HTML_DOCTYPE: html5
+#+HTML_LINK_UP: ..
+#+HTML_LINK_HOME: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
+#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
+#+OPTIONS: html-style:nil
+#+OPTIONS: num:nil
+#+OPTIONS: html-postamble:nil
+#+OPTIONS: html-scripts:nil
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (ns morelinear.householder
+    (:require [clojure.core.matrix :refer :all]))
+#+END_SRC
+
+* The A^{T}Ax=A^{T}b form
+
+Now that we have many ways to solve square linear systems we need to extend *Ax=b* to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
+
+\begin{equation}
+\begin{bmatrix}
+a_11 & a_12\\
+a_21 & a_22\\
+a_31 & a_32\\
+a_41 & a_42\\
+...\\
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+y_1\\
+y_2\\
+\\
+\end{bmatrix}
+\end{equation}
+
+
+If the measurements were ideal then the rows of *A* will not be independent and you will be able to find an explicit solution though Gaussian Elimination. But in the general case (with the addition of noise and rounding errors) no explicit solution will exist for *A_{skinny}x=b* . You could try to find a set of independent equations and throw away the extra equation to try to make a square matrix, but this is throwing information away.
+
+Since there is no *x* for which *A_{skinny}x=b* holds true we instead solve for a "close" system *A_{skinny}x=b_{close}* which does have a solution. In other words we want to find an *x* that will give us a *b_{close}* which is as close as possible to *b*. When we say "close" what we mean mathematically is that we want to minimize the sum of the difference between *b_{close}* and *b* - ie. *sum_of_all_values(b_{close}-b)*.
+
+The problem is that sums don't express very easily in matrix form. Fortunately we do have a mechanism which is really close - the *inner product*. The inner product of a vector *x* with itself - *x^{T}x* - is the sum of the squares of the values of *x*. While this is not equivalent, it actually does not change the solution b/c the minimum stays the minimum. So instead of  *sum_of_all_values(b_{close}-b)*. we can work with *(b_{close}-b)^{T}(b_{close}-b)* and guarantee the same solution
+
+If we plug in our equation for *b_{close}* for we get *(A_{skinny}x-b)^{T}(A_{skinny}x-b)*. 
+
+\begin{equation}
+(A_{skinny}x-b)^{T}(A_{skinny}x-b) \\
+((A_{skinny}x)^{T}-b^{T})(A_{skinny}x-b) \\
+(x^{T}A_{skinny}^{T}-b^{T})(A_{skinny}x-b) \\
+x^{T}A_{skinny}^{T}A_{skinny}x
+-x^{T}A_{skinny}^{T}b
+-b^{T}A_{skinny}x
++b^2
+\end{equation}
+
+
+As we learn in calculus, minimizing a function is done by take its derivative with respect to the parameter we are changing (here that's =x=), setting it equal to zero and then solving for that parameter (b/c the minimum point has zero slope). What /page 226-227/ shows is that the derivative of our difference equation give us the equation *A^{T}Ax=A^{T}b*. The right hand side *A^{T}b* is a vector, and in-fact the whole equation is in the form *Ax=b* which we know how to solve (again, solving for =x= here). Also note that *A^{T}A* is always square and singlular - and that b/c *A* was skinny it's actually smaller than *A*.
+
+* The LU case
+** Direct method
+We take the product *A^{T}A* and the product *A^{T}b* and solve
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+
+#+END_SRC
+** The numerically stable solution
+Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trik is presented in *Exercise 4.6.9* with the equations
+
+\begin{equation}
+\begin{bmatrix}
+I_{m*m} & A\\
+A^T & 0_{n*n}\\
+\end{bmatrix}
+\begin{bmatrix}
+x_1\\
+x_2\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b\\
+0\\
+\end{bmatrix}
+\end{equation}
+
+This special block has the property that it'll always be square no matter what shape *A* is. If you multiply out the block matrices you will get two equation and you will see that *x_{2}* is equal to the least squares solution. (/Note:/ crucially the second equation tells you that *x_{1}* is in the *N(A^{T})*)
+
+\begin{equation}
+\begin{bmatrix}
+x_1+Ax_{2}\\
+A^{T}x_{1}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+b\\
+0\\
+\end{bmatrix}
+\end{equation}
+
+I even double checked that this is true in a [[../asparapiss/][little demo program]] written in Clojure. Fitting a polynomial over some random points the *A^{T}Ax=A^{T}b* solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.

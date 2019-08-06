@@ -1,5 +1,5 @@
-#+TITLE: MoreLinear: some linear algebra in Clojure
-#+DESCRIPTION: Some linear algebra in Clojure
+#+TITLE: MoreLinear \\ linear algebra methods in Clojure
+#+DESCRIPTION: linear algebra methods in Clojure
 
 #+EXPORT_FILE_NAME: index.html
 #+HTML_DOCTYPE: html5
@@ -14,20 +14,66 @@
 #+OPTIONS: html-scripts:nil
 
 * Preface
-This is a continuation (with some overlap) of what I have been developing in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
+This has developed as a continuation of what I started in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However a few issues has started to crop up:
+- The ELisp linear algebra system I developed was done very much on the fly, from scratch, with no previous experience. Certain deficiencies started to accumulate and as the algorithms got a bit more complicated I started to spend more and more time writing helper functions and fixing things and less time writing actual code
+- It only runs in Emacs and is therefore a hassle to deal with "in the real world". I wanted to try using more practical language - in this case Clojure.
+- It had turned into a huge mega-document and it was easy to loose sight of the big picture. What the goals are and where it was all heading
 
-To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and the ~core.matrix~ library. (Note the *core* is meaningless and it's not part of the Clojure standard library) This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+The last point is the most important b/c it's also reflected in the book I am following: /Matrix Analysis and Applied Linear Algebra/ by Carl Meyer (which I will reference often). B/c of the inherant linear structure of text it's often difficult to provide enough context and direction - and once lost in the details of an algorithm you can forget what it was about. Hypertext is supposed to solve this with this landing page showering the big-picture goals and smaller sub-pages providing proofs and algorithms - which I will try to keep independent of each other
 
-Note that ~core.matrix~ is more of a "front end" API and it provides many different backends, some on the JVM others in JS. It's also not extremely performance focused and you can very easily end up doing operations that are very slow.
+This also cleanly maps to the whole Clojure namespacing concept and modularity and keeps up honest.
 
-If you are concerned about getting as much as you can out of your system then I suggest looking at the ~neanderthal~ library which provides a thin wrapper around BLAS. It makes it very easy to work with BLAS and if you're on an x64 system this is the best CPU based performance you can hope for really. This project has a ~neanderthal~ branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like. It's an interesting work flow and really forces you to think a lot harder about your algorithms
+Explaining Clojure is outside the scope of this project, but with some ELisp and reading between the lines things should be understandable.
 
-However my goal here is mostly educational and I'm interested in running on as many platforms as possible. As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output is tracker in the repository so you can clone the project and launch a REPL without touching Emacs.
+* Linear systems : Ax=b
+#+BEGIN_QUOTE
+*Note:* The LU and GramSchmidt have been implemented in ELisp : [[http://geokon-gh.github.io/elinear/index.html][elinear]] \\
+I'm hoping to eventually expand this section to include some motivational examples
+#+END_QUOTE
+We start off with the most straightforward square system *Ax=b*. We are give a know square system *A* and a known output *B* and we are tasked with finding the corresponding input if it exists. We so far have the following methods:
 
-Explaining Clojure is outside the scope of this project!
+- *The LU decompositon* :: Also known as Gaussian reduction. Reduces our system *A* to two systems/matrices *L* and *U*. One lower triangular and the other upper triangular
+- *The LU decompositon with partial pivoting* :: Similar to the previous method but we swap rows so that the pivot is always that largest column value.
+- *The LU decompositon  with complete pivoting* :: Again similar to the previous method but the columns are switched as well.
+- *The Gram Schmidt QR decomposition* :: Reduces the matrix *A* to an orthogonal basis *Q* and a upper triangular matrix *R*
+- [[./householder.html][*The Householder QR decomposition*]] :: An alternate method to get a *QR* matrix pair through /Householder reflectors/
+- *The Given QR decomposition* :: An alternate method to get a *QR* pair through rotation matrices
 
-* Project managment
-*TODO* Migrate to tools.deps
+* Least Squares
+The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the [[./leastsquares.html][Least Squares method]] to find a nearby solution
+
+* Similarity transforms : R^{-1}BRx=b
+Exploring the posibilities of transforming our system *A* into a different basis where it has a more convenient form *B*. We take out inputs *x* from the standard basis into this new more convenient basis, then pass we them through the simpler system *B* and finally take the output and transform it back to the standard basis to get the output *b*.
+
+- [[./hessenber.html][*Hessenberg Form*]] :: Using /Householder reflectors/ we transform our matrix *A* into a form that is /almost/ upper triangular
+
+* Other tools
+- *Cholesky Decomposition* :: Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get *A=LDU* (where *L* and *U* have *1*'s on the diagonal and *D* is unit diagonal. Since *A* is symmetric then *A=A^{T}* and therefore *LDU=(LDU)^{T}=U^{T}D^{T}L^{T}*. Since *D==D^{T}* and the *LU* factorization is unique then *L* must equal *U^{T}* and *U* is equal to *L^{T}* - so we can write *A=LDL^{T}*. Then we can split *D* but taking the square root of the diagonal elements (that's why they need to be positive!) and get *A=LD^{1/2}D^{1/2}L^{T}*. set *R=LD^{1/2}* and you can write *A=RR^{T}*
+
+* Notes on Clojure
+This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
+
+** ~core.matrix~
+In an effort to mitigate the issue I had in ELisp, I'm using the ~core.matrix~ library which acts as a "front end" API for many different backends - some on the JVM others in JS. It provides lots of helper functions so I can quickly write what I want. The library is generally very flexible and full features and uses a very generic N-dimensional array system.
+
+That said, it's also not extremely performant and you can very easily end up doing operations that are very slow. There are lot of cases that this library is simply not set up to handle in an intelligent way and the N-dimensional array paradigm is in many partical scenarios a hinderance.
+
+#+BEGIN_QUOTE
+For instance if you want to represent a convolution using matrices you would take you input signal (which in for instance a short audio clip will equal to ten of thousands of data points) and mutliply it by a band matrix that is =N=x=N=. In a N-dimensional dense matrix system such a multiplication is either impossible or exceedingly slow. In a more advance matrix system you would have a special band matrix object and special matrix mutliplication operators for it that would be very efficient.
+#+END_QUOTE
+
+A more full featured performant library will start mixing in band matrices, symmetric matrices, upper/lower diagonal matrices.. etc etc and so the whole system becomes quite complicated and interdependent - and for the education purposes of this project that's mostly just noise
+
+If you are concerned about getting as much as you can out of your system then I suggest looking at the ~neanderthal~ library which provides a thin wrapper around the Intel MKL (which in effect BLAS). It makes it very easy to work with BLAS and if you're on an x64 system this is more or less the best CPU based performance you can hope for really. 
+
+#+BEGIN_QUOTE
+*Note*: This project has a ~neanderthal~ branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like.
+
+  It's an interesting work flow and really forces you to think a lot harder about your algorithms. But there is more code noise and the helper function need to be written manually for each case (b/c each one has its own nuances). It also doesn't run on ARM or the browser. It does have the ability to run in OpenCL but this funcationality also strangely requires an x64 system to back it up (for passing the matrices to and from the GPU)
+
+#+END_QUOTE
+
+** Project managment
 Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
 #+BEGIN_SRC clojure :results output silent :session :tangle project.clj
 (defproject morelinear "0.1.0-SNAPSHOT"
@@ -43,8 +89,7 @@ Project management in Clojure is done through a top level ~project.clj~ file whi
   :profiles {:uberjar {:aot :all}})
 
 #+END_SRC
-The rest of the code will live in ~src/core.clj~ as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
-We start by declaring the project namespace and including all of ~core.matrix~. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
+I'm adding an empty ~core.clj~ for the time being. This is sorta like clojure's ~main.c~
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
   (ns morelinear.core
     (:require [clojure.core.matrix :refer :all])
@@ -56,19 +101,17 @@ We start by declaring the project namespace and including all of ~core.matrix~. 
     (println "Hello, World!"))
 
 #+END_SRC
-The ~-main~ is just a placeholder for the moment
-
+The ~-main~ is just a placeholder for the moment. This all might be removed later b/c a library doesn't really need to be executable.
 
 * TODOs
-- add some TODOs
-* SRC_Block template
-#+BEGIN_SRC clojure :results output silent :session :tangle 
-  (defn- matrix-template
-    "template"
-    [matrix]
-    )
-#+END_SRC
-
+- Is a lower triangular matrix orthogonal? Is L and orthogonal basis for *U* in *LU*?
+- Why does the jumbo matrix for the *LU* matrix work? (see least squares)
+- Schur decomposition/compliment
+- Implement the Sherman-Morrison update formula
+- Sensitivity/Condition numbers needs to be revisited and expanded on (page 126-128)
+- Do exercise 3.8.8
+- Tridiagonal matrices - 3.10.6
+- Implement the Least Squares numerical stability comparison (and maybe speed tests as well)
 * End
 #+BEGIN_QUOTE
 This webpage is generated from an org-document (at ~./index.org~) that also generates all the files described. 

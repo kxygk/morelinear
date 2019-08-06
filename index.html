@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-03 Sat 21:45 -->
+<!-- 2019-08-06 Tue 21:00 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MoreLinear: some linear algebra in Clojure</title>
+<title>MoreLinear \\ linear algebra methods in Clojure</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="George Kontsevich">
-<meta name="description" content="Some linear algebra in Clojure"
+<meta name="description" content="linear algebra methods in Clojure"
 >
 <link rel="stylesheet" type="text/css" href="../web/worg.css" />
 <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
@@ -18,54 +18,158 @@
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
-<h1 class="title">MoreLinear: some linear algebra in Clojure</h1>
+<h1 class="title">MoreLinear \\ linear algebra methods in Clojure</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orga43a2fc">Preface</a></li>
-<li><a href="#orgbd29bd7">Project managment</a></li>
-<li><a href="#org0aba06c"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#orgc34154e">SRC<sub>Block</sub> template</a></li>
-<li><a href="#org9c76cc9">End</a></li>
+<li><a href="#org69b0eee">Preface</a></li>
+<li><a href="#org9e25b42">Linear systems : Ax=b</a></li>
+<li><a href="#org793238b">Least Squares</a></li>
+<li><a href="#orgb9cbaae">Similarity transforms : R<sup>-1</sup>BRx=b</a></li>
+<li><a href="#org33946f8">Other tools</a></li>
+<li><a href="#org20b9801">Notes on Clojure</a>
+<ul>
+<li><a href="#org52a4ca4"><code>core.matrix</code></a></li>
+<li><a href="#org00592aa">Project managment</a></li>
+</ul>
+</li>
+<li><a href="#orgf2e586a"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org5f40e44">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orga43a2fc" class="outline-2">
-<h2 id="orga43a2fc">Preface</h2>
-<div class="outline-text-2" id="text-orga43a2fc">
+<div id="outline-container-org69b0eee" class="outline-2">
+<h2 id="org69b0eee">Preface</h2>
+<div class="outline-text-2" id="text-org69b0eee">
 <p>
-This is a continuation (with some overlap) of what I have been developing in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However as the algorithms become more complicated, the code started to get a little out of hand. A larger fraction of the time and code was spent on helper functions and extending the system to support different operations I needed and certain design simplifications and errors I had made at the beginning made the ultimate system inflexible and a bit unsatifying to work with.
+This has developed as a continuation of what I started in <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However a few issues has started to crop up:
+</p>
+<ul class="org-ul">
+<li>The ELisp linear algebra system I developed was done very much on the fly, from scratch, with no previous experience. Certain deficiencies started to accumulate and as the algorithms got a bit more complicated I started to spend more and more time writing helper functions and fixing things and less time writing actual code</li>
+<li>It only runs in Emacs and is therefore a hassle to deal with "in the real world". I wanted to try using more practical language - in this case Clojure.</li>
+<li>It had turned into a huge mega-document and it was easy to loose sight of the big picture. What the goals are and where it was all heading</li>
+</ul>
+
+<p>
+The last point is the most important b/c it's also reflected in the book I am following: <i>Matrix Analysis and Applied Linear Algebra</i> by Carl Meyer (which I will reference often). B/c of the inherant linear structure of text it's often difficult to provide enough context and direction - and once lost in the details of an algorithm you can forget what it was about. Hypertext is supposed to solve this with this landing page showering the big-picture goals and smaller sub-pages providing proofs and algorithms - which I will try to keep independent of each other
 </p>
 
 <p>
-To carry on working a bit less encumbered with my own mistakes, I've switched over to Clojure and the <code>core.matrix</code> library. (Note the <b>core</b> is meaningless and it's not part of the Clojure standard library) This already handles many little details I was lacking in my ELips implementation and as you'll see writing new algorithms will be much smoother. There will still need to be helper functions written, and there are probably places where I misuse the library due to ignorance. If you see any mistakes or room for improvement, please file an issue in the repo
+This also cleanly maps to the whole Clojure namespacing concept and modularity and keeps up honest.
 </p>
 
 <p>
-Note that <code>core.matrix</code> is more of a "front end" API and it provides many different backends, some on the JVM others in JS. It's also not extremely performance focused and you can very easily end up doing operations that are very slow.
-</p>
-
-<p>
-If you are concerned about getting as much as you can out of your system then I suggest looking at the <code>neanderthal</code> library which provides a thin wrapper around BLAS. It makes it very easy to work with BLAS and if you're on an x64 system this is the best CPU based performance you can hope for really. This project has a <code>neanderthal</code> branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like. It's an interesting work flow and really forces you to think a lot harder about your algorithms
-</p>
-
-<p>
-However my goal here is mostly educational and I'm interested in running on as many platforms as possible. As before, this is an org document and can be tangled into the full Clojure project without the need for any external files. The tangled output is tracker in the repository so you can clone the project and launch a REPL without touching Emacs.
-</p>
-
-<p>
-Explaining Clojure is outside the scope of this project!
+Explaining Clojure is outside the scope of this project, but with some ELisp and reading between the lines things should be understandable.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgbd29bd7" class="outline-2">
-<h2 id="orgbd29bd7">Project managment</h2>
-<div class="outline-text-2" id="text-orgbd29bd7">
+<div id="outline-container-org9e25b42" class="outline-2">
+<h2 id="org9e25b42">Linear systems : Ax=b</h2>
+<div class="outline-text-2" id="text-org9e25b42">
+<blockquote>
 <p>
-<b>TODO</b> Migrate to tools.deps
+<b>Note:</b> The LU and GramSchmidt have been implemented in ELisp : <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a> <br>
+I'm hoping to eventually expand this section to include some motivational examples
+</p>
+</blockquote>
+<p>
+We start off with the most straightforward square system <b>Ax=b</b>. We are give a know square system <b>A</b> and a known output <b>B</b> and we are tasked with finding the corresponding input if it exists. We so far have the following methods:
+</p>
+
+<dl class="org-dl">
+<dt><b>The LU decompositon</b></dt><dd>Also known as Gaussian reduction. Reduces our system <b>A</b> to two systems/matrices <b>L</b> and <b>U</b>. One lower triangular and the other upper triangular</dd>
+<dt><b>The LU decompositon with partial pivoting</b></dt><dd>Similar to the previous method but we swap rows so that the pivot is always that largest column value.</dd>
+<dt><b>The LU decompositon  with complete pivoting</b></dt><dd>Again similar to the previous method but the columns are switched as well.</dd>
+<dt><b>The Gram Schmidt QR decomposition</b></dt><dd>Reduces the matrix <b>A</b> to an orthogonal basis <b>Q</b> and a upper triangular matrix <b>R</b></dd>
+<dt><a href="./householder.html"><b>The Householder QR decomposition</b></a></dt><dd>An alternate method to get a <b>QR</b> matrix pair through <i>Householder reflectors</i></dd>
+<dt><b>The Given QR decomposition</b></dt><dd>An alternate method to get a <b>QR</b> pair through rotation matrices</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-org793238b" class="outline-2">
+<h2 id="org793238b">Least Squares</h2>
+<div class="outline-text-2" id="text-org793238b">
+<p>
+The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the <a href="./leastsquares.html">Least Squares method</a> to find a nearby solution
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgb9cbaae" class="outline-2">
+<h2 id="orgb9cbaae">Similarity transforms : R<sup>-1</sup>BRx=b</h2>
+<div class="outline-text-2" id="text-orgb9cbaae">
+<p>
+Exploring the posibilities of transforming our system <b>A</b> into a different basis where it has a more convenient form <b>B</b>. We take out inputs <b>x</b> from the standard basis into this new more convenient basis, then pass we them through the simpler system <b>B</b> and finally take the output and transform it back to the standard basis to get the output <b>b</b>.
+</p>
+
+<dl class="org-dl">
+<dt><a href="./hessenber.html"><b>Hessenberg Form</b></a></dt><dd>Using <i>Householder reflectors</i> we transform our matrix <b>A</b> into a form that is <i>almost</i> upper triangular</dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-org33946f8" class="outline-2">
+<h2 id="org33946f8">Other tools</h2>
+<div class="outline-text-2" id="text-org33946f8">
+<dl class="org-dl">
+<dt><b>Cholesky Decomposition</b></dt><dd>Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get <b>A=LDU</b> (where <b>L</b> and <b>U</b> have <b>1</b>'s on the diagonal and <b>D</b> is unit diagonal. Since <b>A</b> is symmetric then <b>A=A<sup>T</sup></b> and therefore <b>LDU=(LDU)<sup>T</sup>=U<sup>T</sup>D<sup>T</sup>L<sup>T</sup></b>. Since <b>D==D<sup>T</sup></b> and the <b>LU</b> factorization is unique then <b>L</b> must equal <b>U<sup>T</sup></b> and <b>U</b> is equal to <b>L<sup>T</sup></b> - so we can write <b>A=LDL<sup>T</sup></b>. Then we can split <b>D</b> but taking the square root of the diagonal elements (that's why they need to be positive!) and get <b>A=LD<sup>1/2</sup>D<sup>1/2</sup>L<sup>T</sup></b>. set <b>R=LD<sup>1/2</sup></b> and you can write <b>A=RR<sup>T</sup></b></dd>
+</dl>
+</div>
+</div>
+
+<div id="outline-container-org20b9801" class="outline-2">
+<h2 id="org20b9801">Notes on Clojure</h2>
+<div class="outline-text-2" id="text-org20b9801">
+<p>
+This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
+</p>
+</div>
+
+<div id="outline-container-org52a4ca4" class="outline-3">
+<h3 id="org52a4ca4"><code>core.matrix</code></h3>
+<div class="outline-text-3" id="text-org52a4ca4">
+<p>
+In an effort to mitigate the issue I had in ELisp, I'm using the <code>core.matrix</code> library which acts as a "front end" API for many different backends - some on the JVM others in JS. It provides lots of helper functions so I can quickly write what I want. The library is generally very flexible and full features and uses a very generic N-dimensional array system.
+</p>
+
+<p>
+That said, it's also not extremely performant and you can very easily end up doing operations that are very slow. There are lot of cases that this library is simply not set up to handle in an intelligent way and the N-dimensional array paradigm is in many partical scenarios a hinderance.
+</p>
+
+<blockquote>
+<p>
+For instance if you want to represent a convolution using matrices you would take you input signal (which in for instance a short audio clip will equal to ten of thousands of data points) and mutliply it by a band matrix that is <code>N=x=N</code>. In a N-dimensional dense matrix system such a multiplication is either impossible or exceedingly slow. In a more advance matrix system you would have a special band matrix object and special matrix mutliplication operators for it that would be very efficient.
+</p>
+</blockquote>
+
+<p>
+A more full featured performant library will start mixing in band matrices, symmetric matrices, upper/lower diagonal matrices.. etc etc and so the whole system becomes quite complicated and interdependent - and for the education purposes of this project that's mostly just noise
+</p>
+
+<p>
+If you are concerned about getting as much as you can out of your system then I suggest looking at the <code>neanderthal</code> library which provides a thin wrapper around the Intel MKL (which in effect BLAS). It makes it very easy to work with BLAS and if you're on an x64 system this is more or less the best CPU based performance you can hope for really. 
+</p>
+
+<blockquote>
+<p>
+<b>Note</b>: This project has a <code>neanderthal</code> branch where I starter implementing a few of the first functions. It should give you a good taste of what working in the more constrained BLAS environment looks like.
+</p>
+
+<p>
+It's an interesting work flow and really forces you to think a lot harder about your algorithms. But there is more code noise and the helper function need to be written manually for each case (b/c each one has its own nuances). It also doesn't run on ARM or the browser. It does have the ability to run in OpenCL but this funcationality also strangely requires an x64 system to back it up (for passing the matrices to and from the GPU)
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-org00592aa" class="outline-3">
+<h3 id="org00592aa">Project managment</h3>
+<div class="outline-text-3" id="text-org00592aa">
+<p>
 Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
 </p>
 <div class="org-src-container">
@@ -84,8 +188,7 @@ Project management in Clojure is done through a top level <code>project.clj</cod
 </pre>
 </div>
 <p>
-The rest of the code will live in <code>src/core.clj</code> as is the convention (maybe if there is a lot of code or parts to break off, these will be in separate namespaces/files..)
-We start by declaring the project namespace and including all of <code>core.matrix</code>. Since we will be using it extensively and I don't want to overload any of its names, I'm not even bothering to alias it.
+I'm adding an empty <code>core.clj</code> for the time being. This is sorta like clojure's <code>main.c</code>
 </p>
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.core</span>
@@ -100,36 +203,30 @@ We start by declaring the project namespace and including all of <code>core.matr
 </pre>
 </div>
 <p>
-The <code>-main</code> is just a placeholder for the moment
+The <code>-main</code> is just a placeholder for the moment. This all might be removed later b/c a library doesn't really need to be executable.
 </p>
 </div>
 </div>
+</div>
 
-
-<div id="outline-container-org0aba06c" class="outline-2">
-<h2 id="org0aba06c"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org0aba06c">
+<div id="outline-container-orgf2e586a" class="outline-2">
+<h2 id="orgf2e586a"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-orgf2e586a">
 <ul class="org-ul">
-<li>add some TODOs</li>
+<li>Is a lower triangular matrix orthogonal? Is L and orthogonal basis for <b>U</b> in <b>LU</b>?</li>
+<li>Why does the jumbo matrix for the <b>LU</b> matrix work? (see least squares)</li>
+<li>Schur decomposition/compliment</li>
+<li>Implement the Sherman-Morrison update formula</li>
+<li>Sensitivity/Condition numbers needs to be revisited and expanded on (page 126-128)</li>
+<li>Do exercise 3.8.8</li>
+<li>Tridiagonal matrices - 3.10.6</li>
+<li>Implement the Least Squares numerical stability comparison (and maybe speed tests as well)</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgc34154e" class="outline-2">
-<h2 id="orgc34154e">SRC<sub>Block</sub> template</h2>
-<div class="outline-text-2" id="text-orgc34154e">
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">matrix-template</span>
-  <span style="color: #036A07;">"template"</span>
-  [matrix<span style="color: #999999;">]</span>
-  <span style="color: #999999;">)</span>
-</pre>
-</div>
-</div>
-</div>
-
-<div id="outline-container-org9c76cc9" class="outline-2">
-<h2 id="org9c76cc9">End</h2>
-<div class="outline-text-2" id="text-org9c76cc9">
+<div id="outline-container-org5f40e44" class="outline-2">
+<h2 id="org5f40e44">End</h2>
+<div class="outline-text-2" id="text-org5f40e44">
 <blockquote>
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 

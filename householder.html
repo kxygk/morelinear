@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-03 Sat 21:45 -->
+<!-- 2019-08-06 Tue 20:44 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MoreLinear: Householder decomposition</title>
+<title>Householder decomposition</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="George Kontsevich">
 <meta name="description" content="The Householder QR decomposition"
@@ -40,28 +40,19 @@
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
-<h1 class="title">MoreLinear: Householder decomposition</h1>
+<h1 class="title">Householder decomposition</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org2c66d3f">Householder QR</a>
-<ul>
-<li><a href="#orgb30c1a5">elementary reflector</a></li>
-<li><a href="#orgbfd5334">elementary coordinate reflector</a></li>
-<li><a href="#org49f82e5">Zeroing the first column</a></li>
-<li><a href="#org0e7e3c4">Zeroing out the second column and so on..</a></li>
-<li><a href="#org060db64">Getting the reflectors</a></li>
-</ul>
-</li>
+<li><a href="#org4da1329">elementary reflector</a></li>
+<li><a href="#org6f79de1">elementary coordinate reflector</a></li>
+<li><a href="#orgb9942cf">Zeroing the first column</a></li>
+<li><a href="#org41b593c">Zeroing out the second column and so on..</a></li>
+<li><a href="#org9c0981d">Getting the reflectors</a></li>
 </ul>
 </div>
 </div>
-
-
-<div id="outline-container-org2c66d3f" class="outline-2">
-<h2 id="org2c66d3f">Householder QR</h2>
-<div class="outline-text-2" id="text-org2c66d3f">
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.householder</span>
   (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
@@ -71,11 +62,10 @@
 <p>
 The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
-</div>
 
-<div id="outline-container-orgb30c1a5" class="outline-3">
-<h3 id="orgb30c1a5">elementary reflector</h3>
-<div class="outline-text-3" id="text-orgb30c1a5">
+<div id="outline-container-org4da1329" class="outline-2">
+<h2 id="org4da1329">elementary reflector</h2>
+<div class="outline-text-2" id="text-org4da1329">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -147,9 +137,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-orgbfd5334" class="outline-3">
-<h3 id="orgbfd5334">elementary coordinate reflector</h3>
-<div class="outline-text-3" id="text-orgbfd5334">
+<div id="outline-container-org6f79de1" class="outline-2">
+<h2 id="org6f79de1">elementary coordinate reflector</h2>
+<div class="outline-text-2" id="text-org6f79de1">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -226,9 +216,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org49f82e5" class="outline-3">
-<h3 id="org49f82e5">Zeroing the first column</h3>
-<div class="outline-text-3" id="text-org49f82e5">
+<div id="outline-container-orgb9942cf" class="outline-2">
+<h2 id="orgb9942cf">Zeroing the first column</h2>
+<div class="outline-text-2" id="text-orgb9942cf">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -274,9 +264,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-org0e7e3c4" class="outline-3">
-<h3 id="org0e7e3c4">Zeroing out the second column and so on..</h3>
-<div class="outline-text-3" id="text-org0e7e3c4">
+<div id="outline-container-org41b593c" class="outline-2">
+<h2 id="org41b593c">Zeroing out the second column and so on..</h2>
+<div class="outline-text-2" id="text-org41b593c">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -392,9 +382,9 @@ If you looking at the result I got when running <code>(first-column-reflector ..
 </div>
 </div>
 
-<div id="outline-container-org060db64" class="outline-3">
-<h3 id="org060db64">Getting the reflectors</h3>
-<div class="outline-text-3" id="text-org060db64">
+<div id="outline-container-org9c0981d" class="outline-2">
+<h2 id="org9c0981d">Getting the reflectors</h2>
+<div class="outline-text-2" id="text-org9c0981d">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
@@ -533,7 +523,6 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 <p>
 In a more sophisticated linear algebra system you may want to keep the resulting <b>R</b> matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 </p>
-</div>
 </div>
 </div>
 </div>
