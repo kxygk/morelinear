@@ -14,21 +14,24 @@
 #+OPTIONS: html-scripts:nil
 
 * Preface
-This has developed as a continuation of what I started in [[http://geokon-gh.github.io/elinear/index.html][elinear]]. There I had developed a linear algebra system from scratch in ELisp and showed how to use it in several different fundamental applications. However a few issues has started to crop up:
-- The ELisp linear algebra system I developed was done very much on the fly, from scratch, with no previous experience. Certain deficiencies started to accumulate and as the algorithms got a bit more complicated I started to spend more and more time writing helper functions and fixing things and less time writing actual code
-- It only runs in Emacs and is therefore a hassle to deal with "in the real world". I wanted to try using more practical language - in this case Clojure.
-- It had turned into a huge mega-document and it was easy to loose sight of the big picture. What the goals are and where it was all heading
+This project developed out of an initial effort to build a working linear algebra system in ELisp called [[http://geokon-gh.github.io/elinear/index.html][~elinear~]]
 
-The last point is the most important b/c it's also reflected in the book I am following: /Matrix Analysis and Applied Linear Algebra/ by Carl Meyer (which I will reference often). B/c of the inherant linear structure of text it's often difficult to provide enough context and direction - and once lost in the details of an algorithm you can forget what it was about. Hypertext is supposed to solve this with this landing page showering the big-picture goals and smaller sub-pages providing proofs and algorithms - which I will try to keep independent of each other
+As before I am following the textbook /Matrix Analysis and Applied Linear Algebra/ by Carl Meyer. I highly recommend it and I will reference it often, but this document won't depend on any information presented in ~elinear~ or the book.
 
-This also cleanly maps to the whole Clojure namespacing concept and modularity and keeps up honest.
-
-Explaining Clojure is outside the scope of this project, but with some ELisp and reading between the lines things should be understandable.
-
+Unlike [[http://geokon-gh.github.io/elinear/index.html][~elinear~]] this project doesn't explain Clojure nor the details of how to represent matrices on the computer. For more details, see the notes at the end.
 * Linear systems : Ax=b
 #+BEGIN_QUOTE
-*Note:* The LU and GramSchmidt have been implemented in ELisp : [[http://geokon-gh.github.io/elinear/index.html][elinear]] \\
-I'm hoping to eventually expand this section to include some motivational examples
+*Note:* The LU and GramSchmidt have been implemented in ELisp if you'd like to see how it's done: [[http://geokon-gh.github.io/elinear/index.html][elinear]]
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+*/Notes on getting a good numerical solution:/*
+
+/Section 1.5/ goes into a good amount of detail of why floating point arithmetic will introduce errors and how to mitigate the problem. It's suggested to use *row-scaling* and *column-scaling*.
+
+*Row-scaling* will alter the magnitude of the output value of your linear system, while *column scaling* will alter the scale of your inputs. Don't hesitate to have the inputs and outputs use different units. /page 28/ suggests scaling the rows such that the maximum magnitude of each row is equal to *1* (ie. divide the row by the largest coefficient)
+
+The topic of /residuals/, /sensitivity/ and /coditioning/ will be revisited later
 #+END_QUOTE
 We start off with the most straightforward square system *Ax=b*. We are give a know square system *A* and a known output *B* and we are tasked with finding the corresponding input if it exists. We so far have the following methods:
 
@@ -47,9 +50,10 @@ Exploring the posibilities of transforming our system *A* into a different basis
 
 - [[./hessenber.html][*Hessenberg Form*]] :: Using /Householder reflectors/ we transform our matrix *A* into a form that is /almost/ upper triangular
 
-* Other tools
+* Other tools..
 - *Cholesky Decomposition* :: Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get *A=LDU* (where *L* and *U* have *1*'s on the diagonal and *D* is unit diagonal. Since *A* is symmetric then *A=A^{T}* and therefore *LDU=(LDU)^{T}=U^{T}D^{T}L^{T}*. Since *D==D^{T}* and the *LU* factorization is unique then *L* must equal *U^{T}* and *U* is equal to *L^{T}* - so we can write *A=LDL^{T}*. Then we can split *D* but taking the square root of the diagonal elements (that's why they need to be positive!) and get *A=LD^{1/2}D^{1/2}L^{T}*. set *R=LD^{1/2}* and you can write *A=RR^{T}*
 
+- *Vandermonder Matrices* :: [[../elinear/vandermonde.html][First introduced in ~elinear~]], they need to revisited again b/c they are very useful
 * Notes on Clojure
 This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
 
@@ -112,6 +116,8 @@ The ~-main~ is just a placeholder for the moment. This all might be removed late
 - Do exercise 3.8.8
 - Tridiagonal matrices - 3.10.6
 - Implement the Least Squares numerical stability comparison (and maybe speed tests as well)
+- Maybe work out a motivational exercise to drive all this..
+- Figure out why the Cholesky doesn't need a permutation: https://math.stackexchange.com/questions/621045/why-does-cholesky-decomposition-exist
 * End
 #+BEGIN_QUOTE
 This webpage is generated from an org-document (at ~./index.org~) that also generates all the files described. 
