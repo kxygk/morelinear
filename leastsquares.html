@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-06 Tue 13:49 -->
+<!-- 2019-08-08 Thu 14:53 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MoreLinear: Least Squares</title>
+<title>Least Squares</title>
 <meta name="generator" content="Org mode">
 <meta name="author" content="George Kontsevich">
 <meta name="description" content="Some linear algebra in Clojure"
@@ -40,26 +40,30 @@
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
-<h1 class="title">MoreLinear: Least Squares</h1>
+<h1 class="title">Least Squares</h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org82a1508">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
-<li><a href="#org9ffaad4">The LU case</a>
+<li><a href="#org0b0aa42">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
+<li><a href="#org0627578">The LU case</a>
 <ul>
-<li><a href="#org9734501">Direct method</a></li>
-<li><a href="#orgcaf1294">The numerically stable solution</a></li>
+<li><a href="#orgdfccf51">Direct method</a></li>
+<li><a href="#org8f5a966">The numerically stable solution</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.householder</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
+</pre>
+</div>
 
-
-<div id="outline-container-org82a1508" class="outline-2">
-<h2 id="org82a1508">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
-<div class="outline-text-2" id="text-org82a1508">
+<div id="outline-container-org0b0aa42" class="outline-2">
+<h2 id="org0b0aa42">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
+<div class="outline-text-2" id="text-org0b0aa42">
 <p>
 Now that we have many ways to solve square linear systems we need to extend <b>Ax=b</b> to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
 </p>
@@ -118,13 +122,13 @@ As we learn in calculus, minimizing a function is done by take its derivative wi
 </div>
 </div>
 
-<div id="outline-container-org9ffaad4" class="outline-2">
-<h2 id="org9ffaad4">The LU case</h2>
-<div class="outline-text-2" id="text-org9ffaad4">
+<div id="outline-container-org0627578" class="outline-2">
+<h2 id="org0627578">The LU case</h2>
+<div class="outline-text-2" id="text-org0627578">
 </div>
-<div id="outline-container-org9734501" class="outline-3">
-<h3 id="org9734501">Direct method</h3>
-<div class="outline-text-3" id="text-org9734501">
+<div id="outline-container-orgdfccf51" class="outline-3">
+<h3 id="orgdfccf51">Direct method</h3>
+<div class="outline-text-3" id="text-orgdfccf51">
 <p>
 We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve
 </p>
@@ -134,11 +138,11 @@ We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> 
 </div>
 </div>
 </div>
-<div id="outline-container-orgcaf1294" class="outline-3">
-<h3 id="orgcaf1294">The numerically stable solution</h3>
-<div class="outline-text-3" id="text-orgcaf1294">
+<div id="outline-container-org8f5a966" class="outline-3">
+<h3 id="org8f5a966">The numerically stable solution</h3>
+<div class="outline-text-3" id="text-org8f5a966">
 <p>
-Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trik is presented in <b>Exercise 4.6.9</b> with the equations
+Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in <b>Exercise 4.6.9</b> with the equations
 </p>
 
 \begin{equation}
@@ -158,9 +162,8 @@ b\\
 \end{equation}
 
 <p>
-This special block has the property that it'll always be square no matter what shape <b>A</b> is. If you multiply out the block matrices you will get two equation and you will see that <b>x<sub>2</sub></b> is equal to the least squares solution. (<i>Note:</i> crucially the second equation tells you that <b>x<sub>1</sub></b> is in the <b>N(A<sup>T</sup>)</b>)
+This special block has the property that it'll always be square no matter what shape <b>A</b> is. If you multiply out the block matrices you will get two equations
 </p>
-
 \begin{equation}
 \begin{bmatrix}
 x_1+Ax_{2}\\
@@ -172,6 +175,42 @@ b\\
 0\\
 \end{bmatrix}
 \end{equation}
+
+\begin{equation}
+x_1+Ax_{2} = b
+\end{equation}
+
+\begin{equation}
+A^{T}x_{1} = 0
+\end{equation}
+
+<p>
+Note how the second equation tell us <b>x<sub>1</sub></b> is in the <b>N(A<sup>T</sup>)</b>
+</p>
+
+<p>
+Now we multiple both sides of our first equation by <b>A<sup>T</sup></b>
+</p>
+
+\begin{equation}
+A^{T}(x_1+Ax_{2}) = A^{T}b
+\end{equation}
+
+\begin{equation}
+A^{T}x_1+A^{T}Ax_{2} = A^{T}b
+\end{equation}
+
+\begin{equation}
+A^{T}Ax_{2} = A^{T}b
+\end{equation}
+
+<p>
+We just used the fact that <b>x<sub>1</sub></b> was in the nullspace of <b>A<sup>T</sup></b> to drop the first term and now we see how <b>x<sub>2</sub></b> is also a solution to the <i>least squares</i> equation
+</p>
+
+<p>
+So we can use any method that works on solving square matrices, use it on our jumbo matrix and get a solution for the least squares problem. All without computing <b>A<sup>T</sup>A</b>.
+</p>
 
 <p>
 I even double checked that this is true in a <a href="../asparapiss/">little demo program</a> written in Clojure. Fitting a polynomial over some random points the <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.

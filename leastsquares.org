@@ -71,7 +71,7 @@ We take the product *A^{T}A* and the product *A^{T}b* and solve
 
 #+END_SRC
 ** The numerically stable solution
-Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trik is presented in *Exercise 4.6.9* with the equations
+Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in *Exercise 4.6.9* with the equations
 
 \begin{equation}
 \begin{bmatrix}
@@ -89,8 +89,7 @@ b\\
 \end{bmatrix}
 \end{equation}
 
-This special block has the property that it'll always be square no matter what shape *A* is. If you multiply out the block matrices you will get two equation and you will see that *x_{2}* is equal to the least squares solution. (/Note:/ crucially the second equation tells you that *x_{1}* is in the *N(A^{T})*)
-
+This special block has the property that it'll always be square no matter what shape *A* is. If you multiply out the block matrices you will get two equations
 \begin{equation}
 \begin{bmatrix}
 x_1+Ax_{2}\\
@@ -102,5 +101,33 @@ b\\
 0\\
 \end{bmatrix}
 \end{equation}
+
+\begin{equation}
+x_1+Ax_{2} = b
+\end{equation}
+
+\begin{equation}
+A^{T}x_{1} = 0
+\end{equation}
+
+Note how the second equation tell us *x_{1}* is in the *N(A^{T})*
+
+Now we multiple both sides of our first equation by *A^{T}*
+
+\begin{equation}
+A^{T}(x_1+Ax_{2}) = A^{T}b
+\end{equation}
+
+\begin{equation}
+A^{T}x_1+A^{T}Ax_{2} = A^{T}b
+\end{equation}
+
+\begin{equation}
+A^{T}Ax_{2} = A^{T}b
+\end{equation}
+
+We just used the fact that *x_{1}* was in the nullspace of *A^{T}* to drop the first term and now we see how *x_{2}* is also a solution to the /least squares/ equation
+
+So we can use any method that works on solving square matrices, use it on our jumbo matrix and get a solution for the least squares problem. All without computing *A^{T}A*.
 
 I even double checked that this is true in a [[../asparapiss/][little demo program]] written in Clojure. Fitting a polynomial over some random points the *A^{T}Ax=A^{T}b* solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.
