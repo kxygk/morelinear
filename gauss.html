@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-08-12 Mon 21:55 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LU Decomposition: Gaussian reduction</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="George Kontsevich">
+<meta name="description" content="Some linear algebra in Clojure"
+>
+<link rel="stylesheet" type="text/css" href="../web/worg.css" />
+<link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href=".."> UP </a>
+ |
+ <a accesskey="H" href=".."> HOME </a>
+</div><div id="content">
+<h1 class="title">LU Decomposition: Gaussian reduction</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgfd9f0f8">Ax=b</a></li>
+</ul>
+</div>
+</div>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.gauss</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
+            [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]))</span>
+(set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
+</pre>
+</div>
+
+<div id="outline-container-orgfd9f0f8" class="outline-2">
+<h2 id="orgfd9f0f8">Ax=b</h2>
+<div class="outline-text-2" id="text-orgfd9f0f8">
+<p>
+This section is a placeholder of sorts and fills in some gaps in functionality in <code>core.matrix</code>. For a detailed explanation of the LU decomposition, see <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</code></a> 
+</p>
+
+<blockquote>
+<p>
+<b>Note</b>: The <code>core.matrix</code> library is embarassingly inadequate here. We now need to enable one of the backends (which I am loading at the top with the <code>:vectorz</code>) b/c it turns out the default <code>core.matrix</code> backend doesn't implement parts of its own API. (the <code>lu</code> in this case)
+</p>
+</blockquote>
+<p>
+Gaussian Elimination gives us the form <b>PA=LU</b> and the <code>core.matrix</code> library gives us a method to do this <code>clojure.core.matrix.linear/lu</code>. We now need to add functions to do forward and backward substitution to actually solve the system. The functions <a href="https://github.com/mikera/core.matrix/blob/core.matrix-0.62.0/src/main/clojure/clojure/core/matrix/impl/ndarray.clj#L379">are there</a> but I have no idea how to access them b/c they're wrapped in some macro and not visible on any namespace I could poke at..
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">forward-substitution-rec</span>
+  <span style="color: #036A07;">""</span>
+  [lower-triangular output-vector partial-input-vector step-number<span style="color: #999999;">]</span>
+
+  (<span style="color: #0000FF;">let</span> [substitution-sum (scalar (inner-product (subvector (get-row lower-triangular
+                                                                    0<span style="color: #999999;">)</span>
+                                                           0
+                                                           step-number<span style="color: #999999;">)</span>
+                                                (subvector partial-input-vector
+                                                           0
+                                                           step-number<span style="color: #999999;">)))</span>
+
+        new-input-value (/ (- (mget output-vector
+                                    step-number<span style="color: #999999;">)</span>
+                              substitution-sum<span style="color: #999999;">)</span>
+                           (mget lower-triangular
+                                 0
+                                 step-number<span style="color: #999999;">))]</span>
+    (<span style="color: #0000FF;">if</span> (= step-number
+           (dec (ecount partial-input-vector<span style="color: #999999;">)))</span>
+      (mset partial-input-vector 
+            step-number
+            new-input-value<span style="color: #999999;">)</span>
+      (<span style="color: #0000FF;">recur</span> (matrix (submatrix lower-triangular
+                                1
+                                (dec (row-count lower-triangular<span style="color: #999999;">))</span>
+                                0
+                                (column-count lower-triangular<span style="color: #999999;">)))</span>
+             output-vector
+             (mset partial-input-vector 
+                   step-number
+                   new-input-value<span style="color: #999999;">)</span>
+             (inc step-number<span style="color: #999999;">)))))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">forward-substitution</span>
+  <span style="color: #036A07;">"Lx=b by forward subsitution, where L is lower triangular"</span>
+  [lower-triangular output-vector<span style="color: #999999;">]</span>
+  (forward-substitution-rec lower-triangular
+                            output-vector
+                            (zero-array (shape output-vector<span style="color: #999999;">))</span>
+                            0<span style="color: #999999;">))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">backward-substitution</span>
+  <span style="color: #036A07;">"Ux=b by backward subsitution, where U is upper triangular"</span>
+  [upper-triangular output-vector<span style="color: #999999;">]</span>
+  (reshape (reverse (to-vector (forward-substitution
+                                (reshape (reverse (to-vector upper-triangular<span style="color: #999999;">))</span>
+                                         (shape upper-triangular<span style="color: #999999;">))</span>
+                                (reshape (reverse (to-vector output-vector<span style="color: #999999;">))</span>
+                                         (shape output-vector<span style="color: #999999;">)))))</span>
+           (shape output-vector<span style="color: #999999;">)))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">flips the matrix around to make it lower triangular..</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">then reuses the forward-substitution code</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">finally flips the result. A bit ugly, but short and easier to debug</span>
+</pre>
+</div>
+
+<p>
+Putting it all together to solve the square <b>Ax=b</b> system
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">solve-with-lu</span>
+  <span style="color: #036A07;">"Solve Ax=b directly using Gaussian elimination with backward/forward substitution"</span>
+  [A b<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [{L <span style="color: #D0372D;">:L</span>
+         U <span style="color: #D0372D;">:U</span>
+         P <span style="color: #D0372D;">:P</span>} (<span style="color: #6434A3;">linear</span>/lu A<span style="color: #999999;">)</span>
+        Pb (mmul P b<span style="color: #999999;">)</span>
+        y (forward-substitution L Pb<span style="color: #999999;">)]</span>
+    (backward-substitution U y<span style="color: #999999;">)))</span>
+</pre>
+</div>
+<p>
+Test example:
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [A [[0.4 0.6 0.8 0.9<span style="color: #999999;">]</span>
+         [0.4 0.6 0.6 0.8<span style="color: #999999;">]</span>
+         [0.2 0.2 0.4 0.2<span style="color: #999999;">]</span>
+         [0.5 0.3 0.3 0.8<span style="color: #999999;">]]</span>
+      {L <span style="color: #D0372D;">:L</span>
+       U <span style="color: #D0372D;">:U</span>
+       P <span style="color: #D0372D;">:P</span>} (<span style="color: #6434A3;">linear</span>/lu A<span style="color: #999999;">)</span>
+      b [2.0 5.0 8.0 1.0<span style="color: #999999;">]]</span>
+  (pm (mmul L
+            (forward-substitution L
+                                  b<span style="color: #999999;">)))</span>
+  <span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">[2.000 5.000 8.000 1.000]</span>
+  (pm (mmul U
+            (backward-substitution U
+                                   b<span style="color: #999999;">)))</span>
+  <span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">[2.000 5.000 8.000 1.000]</span>
+  (pm (mmul A (solve-with-lu A (mmul P b<span style="color: #999999;">)))))</span>
+  <span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">[2.000 5.000 8.000 1.000]</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+#+TITLE: LU Decomposition: Gaussian reduction
+#+DESCRIPTION: Some linear algebra in Clojure
+
+
+#+HTML_DOCTYPE: html5
+#+HTML_LINK_UP: ..
+#+HTML_LINK_HOME: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
+#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
+#+OPTIONS: html-style:nil
+#+OPTIONS: num:nil
+#+OPTIONS: html-postamble:nil
+#+OPTIONS: html-scripts:nil
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/gauss.clj
+  (ns morelinear.gauss
+    (:require [clojure.core.matrix :refer :all]
+	      [clojure.core.matrix.linear :as linear]))
+  (set-current-implementation :vectorz) 
+#+END_SRC
+
+* Ax=b
+This section is a placeholder of sorts and fills in some gaps in functionality in ~core.matrix~. For a detailed explanation of the LU decomposition, see [[http://geokon-gh.github.io/elinear/index.html][~elinear~]] 
+
+#+BEGIN_QUOTE
+*Note*: The ~core.matrix~ library is embarassingly inadequate here. We now need to enable one of the backends (which I am loading at the top with the ~:vectorz~) b/c it turns out the default ~core.matrix~ backend doesn't implement parts of its own API. (the ~lu~ in this case)
+#+END_QUOTE
+Gaussian Elimination gives us the form *PA=LU* and the ~core.matrix~ library gives us a method to do this ~clojure.core.matrix.linear/lu~. We now need to add functions to do forward and backward substitution to actually solve the system. The functions [[https://github.com/mikera/core.matrix/blob/core.matrix-0.62.0/src/main/clojure/clojure/core/matrix/impl/ndarray.clj#L379][are there]] but I have no idea how to access them b/c they're wrapped in some macro and not visible on any namespace I could poke at..
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/gauss.clj
+(defn- forward-substitution-rec
+  ""
+  [lower-triangular output-vector partial-input-vector step-number]
+
+  (let [substitution-sum (scalar (inner-product (subvector (get-row lower-triangular
+								    0)
+							   0
+							   step-number)
+						(subvector partial-input-vector
+							   0
+							   step-number)))
+
+	new-input-value (/ (- (mget output-vector
+				    step-number)
+			      substitution-sum)
+			   (mget lower-triangular
+				 0
+				 step-number))]
+    (if (= step-number
+           (dec (ecount partial-input-vector)))
+      (mset partial-input-vector 
+            step-number
+            new-input-value)
+      (recur (matrix (submatrix lower-triangular
+			        1
+			        (dec (row-count lower-triangular))
+			        0
+			        (column-count lower-triangular)))
+	     output-vector
+	     (mset partial-input-vector 
+	           step-number
+	           new-input-value)
+	     (inc step-number)))))
+
+(defn forward-substitution
+  "Lx=b by forward subsitution, where L is lower triangular"
+  [lower-triangular output-vector]
+  (forward-substitution-rec lower-triangular
+			    output-vector
+			    (zero-array (shape output-vector))
+			    0))
+
+(defn backward-substitution
+  "Ux=b by backward subsitution, where U is upper triangular"
+  [upper-triangular output-vector]
+  (reshape (reverse (to-vector (forward-substitution
+                                (reshape (reverse (to-vector upper-triangular))
+	                                 (shape upper-triangular))
+                                (reshape (reverse (to-vector output-vector))
+	                                 (shape output-vector)))))
+           (shape output-vector)))
+;; flips the matrix around to make it lower triangular..
+;; then reuses the forward-substitution code
+;; finally flips the result. A bit ugly, but short and easier to debug
+#+END_SRC
+
+Putting it all together to solve the square *Ax=b* system
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/gauss.clj
+  (defn solve-with-lu
+    "Solve Ax=b directly using Gaussian elimination with backward/forward substitution"
+    [A b]
+    (let [{L :L
+	   U :U
+	   P :P} (linear/lu A)
+	  Pb (mmul P b)
+	  y (forward-substitution L Pb)]
+      (backward-substitution U y)))
+#+END_SRC
+Test example:
+#+BEGIN_SRC clojure
+  (let [A [[0.4 0.6 0.8 0.9]
+	   [0.4 0.6 0.6 0.8]
+	   [0.2 0.2 0.4 0.2]
+	   [0.5 0.3 0.3 0.8]]
+	{L :L
+	 U :U
+	 P :P} (linear/lu A)
+	b [2.0 5.0 8.0 1.0]]
+    (pm (mmul L
+	      (forward-substitution L
+				    b)))
+    ;;[2.000 5.000 8.000 1.000]
+    (pm (mmul U
+	      (backward-substitution U
+				     b)))
+    ;;[2.000 5.000 8.000 1.000]
+    (pm (mmul A (solve-with-lu A (mmul P b)))))
+    ;;[2.000 5.000 8.000 1.000]
+#+END_SRC
