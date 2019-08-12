@@ -78,34 +78,12 @@ If you are concerned about getting as much as you can out of your system then I 
 #+END_QUOTE
 
 ** Project managment
-Project management in Clojure is done through a top level ~project.clj~ file which specified project details and the dependencies we will need. In our case it's just ~core.matrix~
-#+BEGIN_SRC clojure :results output silent :session :tangle project.clj
-(defproject morelinear "0.1.0-SNAPSHOT"
-  :description "linea-systems in Clojure"
-  :url "http://geokon-gh.github.io/morelinear/index.html"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [
-                 [org.clojure/clojure "1.10.0"]
-                 [net.mikera/core.matrix "0.62.0"]]
-  :main ^:skip-aot morelinear.core
-  :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
-
+Project management in Clojure is done through a top level ~deps.edn~ file which specifies project dependencies . In our case it's ~core.matrix~ and the ~vectorz~ backend (without which some functionality is broken).
+#+BEGIN_SRC clojure :results output silent :session :tangle deps.edn
+  {:deps
+   {net.mikera/core.matrix {:mvn/version "0.62.0"}
+    net.mikera/vectorz-clj {:mvn/version "0.48.0"}}}
 #+END_SRC
-I'm adding an empty ~core.clj~ for the time being. This is sorta like clojure's ~main.c~
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/core.clj
-  (ns morelinear.core
-    (:require [clojure.core.matrix :refer :all])
-    (:gen-class))
-
-  (defn -main
-    "I don't do a whole lot ... yet."
-    [& args]
-    (println "Hello, World!"))
-
-#+END_SRC
-The ~-main~ is just a placeholder for the moment. This all might be removed later b/c a library doesn't really need to be executable.
 
 * TODOs
 - Is a lower triangular matrix orthogonal? Is L and orthogonal basis for *U* in *LU*?

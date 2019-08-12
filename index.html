@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-06 Tue 21:53 -->
+<!-- 2019-08-12 Mon 14:15 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear \\ linear algebra methods in Clojure</title>
@@ -23,26 +23,26 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org10cdb22">Preface</a></li>
-<li><a href="#orgcb6ff09">Linear systems : Ax=b</a></li>
-<li><a href="#orgd76ac6a">Least Squares</a></li>
-<li><a href="#orgb9f9e69">Similarity transforms : R<sup>-1</sup>BRx=b</a></li>
-<li><a href="#org1f2a081">Other tools..</a></li>
-<li><a href="#orgdf19cc8">Notes on Clojure</a>
+<li><a href="#org81bec76">Preface</a></li>
+<li><a href="#org9aa4db9">Linear systems : Ax=b</a></li>
+<li><a href="#orgd77db23">Least Squares</a></li>
+<li><a href="#org4f092e3">Similarity transforms : R<sup>-1</sup>BRx=b</a></li>
+<li><a href="#org8d3ff2b">Other tools..</a></li>
+<li><a href="#org4c6ed1c">Notes on Clojure</a>
 <ul>
-<li><a href="#org922c788"><code>core.matrix</code></a></li>
-<li><a href="#org88031a8">Project managment</a></li>
+<li><a href="#org029d44a"><code>core.matrix</code></a></li>
+<li><a href="#org9fb6395">Project managment</a></li>
 </ul>
 </li>
-<li><a href="#org4300190"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org0621981">End</a></li>
+<li><a href="#org2013f91"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#orgbe6135a">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org10cdb22" class="outline-2">
-<h2 id="org10cdb22">Preface</h2>
-<div class="outline-text-2" id="text-org10cdb22">
+<div id="outline-container-org81bec76" class="outline-2">
+<h2 id="org81bec76">Preface</h2>
+<div class="outline-text-2" id="text-org81bec76">
 <p>
 This project developed out of an initial effort to build a working linear algebra system in ELisp called <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</code></a>
 </p>
@@ -56,9 +56,9 @@ Unlike <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</co
 </p>
 </div>
 </div>
-<div id="outline-container-orgcb6ff09" class="outline-2">
-<h2 id="orgcb6ff09">Linear systems : Ax=b</h2>
-<div class="outline-text-2" id="text-orgcb6ff09">
+<div id="outline-container-org9aa4db9" class="outline-2">
+<h2 id="org9aa4db9">Linear systems : Ax=b</h2>
+<div class="outline-text-2" id="text-org9aa4db9">
 <blockquote>
 <p>
 <b>Note:</b> The LU and GramSchmidt have been implemented in ELisp if you'd like to see how it's done: <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>
@@ -97,18 +97,18 @@ We start off with the most straightforward square system <b>Ax=b</b>. We are giv
 </div>
 </div>
 
-<div id="outline-container-orgd76ac6a" class="outline-2">
-<h2 id="orgd76ac6a">Least Squares</h2>
-<div class="outline-text-2" id="text-orgd76ac6a">
+<div id="outline-container-orgd77db23" class="outline-2">
+<h2 id="orgd77db23">Least Squares</h2>
+<div class="outline-text-2" id="text-orgd77db23">
 <p>
 The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the <a href="./leastsquares.html">Least Squares method</a> to find a nearby solution
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgb9f9e69" class="outline-2">
-<h2 id="orgb9f9e69">Similarity transforms : R<sup>-1</sup>BRx=b</h2>
-<div class="outline-text-2" id="text-orgb9f9e69">
+<div id="outline-container-org4f092e3" class="outline-2">
+<h2 id="org4f092e3">Similarity transforms : R<sup>-1</sup>BRx=b</h2>
+<div class="outline-text-2" id="text-org4f092e3">
 <p>
 Exploring the posibilities of transforming our system <b>A</b> into a different basis where it has a more convenient form <b>B</b>. We take out inputs <b>x</b> from the standard basis into this new more convenient basis, then pass we them through the simpler system <b>B</b> and finally take the output and transform it back to the standard basis to get the output <b>b</b>.
 </p>
@@ -119,9 +119,9 @@ Exploring the posibilities of transforming our system <b>A</b> into a different 
 </div>
 </div>
 
-<div id="outline-container-org1f2a081" class="outline-2">
-<h2 id="org1f2a081">Other tools..</h2>
-<div class="outline-text-2" id="text-org1f2a081">
+<div id="outline-container-org8d3ff2b" class="outline-2">
+<h2 id="org8d3ff2b">Other tools..</h2>
+<div class="outline-text-2" id="text-org8d3ff2b">
 <dl class="org-dl">
 <dt><b>Cholesky Decomposition</b></dt><dd>Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get <b>A=LDU</b> (where <b>L</b> and <b>U</b> have <b>1</b>'s on the diagonal and <b>D</b> is unit diagonal. Since <b>A</b> is symmetric then <b>A=A<sup>T</sup></b> and therefore <b>LDU=(LDU)<sup>T</sup>=U<sup>T</sup>D<sup>T</sup>L<sup>T</sup></b>. Since <b>D==D<sup>T</sup></b> and the <b>LU</b> factorization is unique then <b>L</b> must equal <b>U<sup>T</sup></b> and <b>U</b> is equal to <b>L<sup>T</sup></b> - so we can write <b>A=LDL<sup>T</sup></b>. Then we can split <b>D</b> but taking the square root of the diagonal elements (that's why they need to be positive!) and get <b>A=LD<sup>1/2</sup>D<sup>1/2</sup>L<sup>T</sup></b>. set <b>R=LD<sup>1/2</sup></b> and you can write <b>A=RR<sup>T</sup></b></dd>
 
@@ -129,17 +129,17 @@ Exploring the posibilities of transforming our system <b>A</b> into a different 
 </dl>
 </div>
 </div>
-<div id="outline-container-orgdf19cc8" class="outline-2">
-<h2 id="orgdf19cc8">Notes on Clojure</h2>
-<div class="outline-text-2" id="text-orgdf19cc8">
+<div id="outline-container-org4c6ed1c" class="outline-2">
+<h2 id="org4c6ed1c">Notes on Clojure</h2>
+<div class="outline-text-2" id="text-org4c6ed1c">
 <p>
 This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
 </p>
 </div>
 
-<div id="outline-container-org922c788" class="outline-3">
-<h3 id="org922c788"><code>core.matrix</code></h3>
-<div class="outline-text-3" id="text-org922c788">
+<div id="outline-container-org029d44a" class="outline-3">
+<h3 id="org029d44a"><code>core.matrix</code></h3>
+<div class="outline-text-3" id="text-org029d44a">
 <p>
 In an effort to mitigate the issue I had in ELisp, I'm using the <code>core.matrix</code> library which acts as a "front end" API for many different backends - some on the JVM others in JS. It provides lots of helper functions so I can quickly write what I want. The library is generally very flexible and full features and uses a very generic N-dimensional array system.
 </p>
@@ -174,52 +174,25 @@ It's an interesting work flow and really forces you to think a lot harder about 
 </div>
 </div>
 
-<div id="outline-container-org88031a8" class="outline-3">
-<h3 id="org88031a8">Project managment</h3>
-<div class="outline-text-3" id="text-org88031a8">
+<div id="outline-container-org9fb6395" class="outline-3">
+<h3 id="org9fb6395">Project managment</h3>
+<div class="outline-text-3" id="text-org9fb6395">
 <p>
-Project management in Clojure is done through a top level <code>project.clj</code> file which specified project details and the dependencies we will need. In our case it's just <code>core.matrix</code>
+Project management in Clojure is done through a top level <code>deps.edn</code> file which specifies project dependencies . In our case it's <code>core.matrix</code> and the <code>vectorz</code> backend (without which some functionality is broken).
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defproject</span> <span style="color: #006699;">morelinear</span> <span style="color: #008000;">"0.1.0-SNAPSHOT"</span>
-  <span style="color: #D0372D;">:description</span> <span style="color: #008000;">"linea-systems in Clojure"</span>
-  <span style="color: #D0372D;">:url</span> <span style="color: #008000;">"http://geokon-gh.github.io/morelinear/index.html"</span>
-  <span style="color: #D0372D;">:license</span> {<span style="color: #D0372D;">:name</span> <span style="color: #008000;">"Eclipse Public License"</span>
-            <span style="color: #D0372D;">:url</span> <span style="color: #008000;">"http://www.eclipse.org/legal/epl-v10.html"</span><span style="color: #999999;">}</span>
-  <span style="color: #D0372D;">:dependencies</span> [
-                 [<span style="color: #6434A3;">org.clojure</span>/clojure <span style="color: #008000;">"1.10.0"</span><span style="color: #999999;">]</span>
-                 [<span style="color: #6434A3;">net.mikera</span>/core.matrix <span style="color: #008000;">"0.62.0"</span><span style="color: #999999;">]]</span>
-  <span style="color: #D0372D;">:main</span> ^<span style="color: #D0372D;">:skip-aot</span> morelinear.core
-  <span style="color: #D0372D;">:target-path</span> <span style="color: #008000;">"target/%s"</span>
-  <span style="color: #D0372D;">:profiles</span> {<span style="color: #D0372D;">:uberjar</span> {<span style="color: #D0372D;">:aot</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">}})</span>
-
+<pre class="src src-clojure">{<span style="color: #D0372D;">:deps</span>
+ {<span style="color: #6434A3;">net.mikera</span>/core.matrix {<span style="color: #D0372D;">:</span><span style="color: #6434A3;">mvn</span><span style="color: #333333; background-color: #FFFFFF;">/</span><span style="color: #D0372D;">version</span> <span style="color: #008000;">"0.62.0"</span><span style="color: #999999;">}</span>
+  <span style="color: #6434A3;">net.mikera</span>/vectorz-clj {<span style="color: #D0372D;">:</span><span style="color: #6434A3;">mvn</span><span style="color: #333333; background-color: #FFFFFF;">/</span><span style="color: #D0372D;">version</span> <span style="color: #008000;">"0.48.0"</span><span style="color: #999999;">}}}</span>
 </pre>
 </div>
-<p>
-I'm adding an empty <code>core.clj</code> for the time being. This is sorta like clojure's <code>main.c</code>
-</p>
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.core</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">])</span>
-  (<span style="color: #D0372D;">:gen-class</span><span style="color: #999999;">))</span>
-
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">-main</span>
-  <span style="color: #036A07;">"I don't do a whole lot ... yet."</span>
-  [&amp; args<span style="color: #999999;">]</span>
-  (println <span style="color: #008000;">"Hello, World!"</span><span style="color: #999999;">))</span>
-
-</pre>
-</div>
-<p>
-The <code>-main</code> is just a placeholder for the moment. This all might be removed later b/c a library doesn't really need to be executable.
-</p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org4300190" class="outline-2">
-<h2 id="org4300190"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org4300190">
+<div id="outline-container-org2013f91" class="outline-2">
+<h2 id="org2013f91"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org2013f91">
 <ul class="org-ul">
 <li>Is a lower triangular matrix orthogonal? Is L and orthogonal basis for <b>U</b> in <b>LU</b>?</li>
 <li>Why does the jumbo matrix for the <b>LU</b> matrix work? (see least squares)</li>
@@ -234,9 +207,9 @@ The <code>-main</code> is just a placeholder for the moment. This all might be r
 </ul>
 </div>
 </div>
-<div id="outline-container-org0621981" class="outline-2">
-<h2 id="org0621981">End</h2>
-<div class="outline-text-2" id="text-org0621981">
+<div id="outline-container-orgbe6135a" class="outline-2">
+<h2 id="orgbe6135a">End</h2>
+<div class="outline-text-2" id="text-orgbe6135a">
 <blockquote>
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 
