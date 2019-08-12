@@ -13,9 +13,12 @@
 #+OPTIONS: html-postamble:nil
 #+OPTIONS: html-scripts:nil
 
-#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
-  (ns morelinear.householder
-    (:require [clojure.core.matrix :refer :all]))
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+  (ns morelinear.leastsquares
+    (:require [clojure.core.matrix :refer :all]
+	      [clojure.core.matrix.linear :as linear]
+	      [morelinear.gauss :as gauss]))
+  (set-current-implementation :vectorz) 
 #+END_SRC
 
 * The A^{T}Ax=A^{T}b form
@@ -66,9 +69,27 @@ As we learn in calculus, minimizing a function is done by take its derivative wi
 
 * The LU case
 ** Direct method
-We take the product *A^{T}A* and the product *A^{T}b* and solve
+We take the product *A^{T}A* and the product *A^{T}b* and solve *A^{T}Ax=A^{T}b* just like we solve an *Ax=b* system
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+    (defn lu-direct
+      "Solve ATA=ATb directly"
+      [linear-system output-vector]
+      (let [AT (transpose linear-system)
+	    ATA (mmul AT linear-system)
+	    ATb (mmul AT output-vector)]
+	(gauss/solve-with-lu ATA ATb)))
+#+END_SRC
 
+#+BEGIN_SRC clojure
+  ;; missile problem from page 232
+  (let [A [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]]
+	b [0.000 0.008 0.015 0.019 0.02]]
+    (lu-direct A b))
+  ;; (-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444)
 #+END_SRC
 ** The numerically stable solution
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in *Exercise 4.6.9* with the equations
@@ -130,4 +151,51 @@ We just used the fact that *x_{1}* was in the nullspace of *A^{T}* to drop the f
 
 So we can use any method that works on solving square matrices, use it on our jumbo matrix and get a solution for the least squares problem. All without computing *A^{T}A*.
 
-I even double checked that this is true in a [[../asparapiss/][little demo program]] written in Clojure. Fitting a polynomial over some random points the *A^{T}Ax=A^{T}b* solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+  (defn- jumbo-matrix
+    "Use the big block matrix method to compute the least squares solution"
+    [input-matrix]
+    (let [num-rows (row-count input-matrix)
+	  num-columns (column-count input-matrix)
+	  identity (identity-matrix num-rows)
+	  AT (transpose input-matrix)
+	  zeroes (zero-matrix num-columns
+			      num-columns)]
+      (join-along 0
+		  (join-along 1
+			      identity
+			      input-matrix)
+		  (join-along 1
+			      AT
+			      zeroes))))
+
+  (defn- pad-with-zeroes
+    "Takes the INPUT-VECTOR and make it longer with some zeroes padded on the end"
+    [input-vector number-of-zeroes]
+    (join-along 0
+		input-vector
+		(zero-vector number-of-zeroes)))
+
+  (defn lu-jumbo
+    ""
+    [input-matrix output-vector]
+
+    (subvector (gauss/solve-with-lu (jumbo-matrix input-matrix)
+				    (pad-with-zeroes output-vector
+						     (column-count input-matrix)))
+	       (row-count input-matrix)
+	       (column-count input-matrix)))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+  ;; missile problem from page 232 but redone with the big matrix method
+  (let [A [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]]
+	b [0.000 0.008 0.015 0.019 0.02]]
+    (lu-jumbo A b))
+  ;; [-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444]
+#+END_SRC
+

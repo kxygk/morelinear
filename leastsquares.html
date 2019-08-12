@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-08 Thu 14:53 -->
+<!-- 2019-08-12 Mon 21:58 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Least Squares</title>
@@ -45,25 +45,28 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org0b0aa42">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
-<li><a href="#org0627578">The LU case</a>
+<li><a href="#org44792a4">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
+<li><a href="#orgfdc2250">The LU case</a>
 <ul>
-<li><a href="#orgdfccf51">Direct method</a></li>
-<li><a href="#org8f5a966">The numerically stable solution</a></li>
+<li><a href="#orgac226d2">Direct method</a></li>
+<li><a href="#org0c054d0">The numerically stable solution</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.householder</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.leastsquares</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
+            [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]</span>
+            [morelinear.gauss <span style="color: #D0372D;">:as</span> gauss<span style="color: #999999;">]))</span>
+(set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
 </pre>
 </div>
 
-<div id="outline-container-org0b0aa42" class="outline-2">
-<h2 id="org0b0aa42">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
-<div class="outline-text-2" id="text-org0b0aa42">
+<div id="outline-container-org44792a4" class="outline-2">
+<h2 id="org44792a4">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
+<div class="outline-text-2" id="text-org44792a4">
 <p>
 Now that we have many ways to solve square linear systems we need to extend <b>Ax=b</b> to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
 </p>
@@ -122,25 +125,44 @@ As we learn in calculus, minimizing a function is done by take its derivative wi
 </div>
 </div>
 
-<div id="outline-container-org0627578" class="outline-2">
-<h2 id="org0627578">The LU case</h2>
-<div class="outline-text-2" id="text-org0627578">
+<div id="outline-container-orgfdc2250" class="outline-2">
+<h2 id="orgfdc2250">The LU case</h2>
+<div class="outline-text-2" id="text-orgfdc2250">
 </div>
-<div id="outline-container-orgdfccf51" class="outline-3">
-<h3 id="orgdfccf51">Direct method</h3>
-<div class="outline-text-3" id="text-orgdfccf51">
+<div id="outline-container-orgac226d2" class="outline-3">
+<h3 id="orgac226d2">Direct method</h3>
+<div class="outline-text-3" id="text-orgac226d2">
 <p>
-We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve
+We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> just like we solve an <b>Ax=b</b> system
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">lu-direct</span>
+  <span style="color: #036A07;">"Solve ATA=ATb directly"</span>
+  [linear-system output-vector<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [AT (transpose linear-system<span style="color: #999999;">)</span>
+        ATA (mmul AT linear-system<span style="color: #999999;">)</span>
+        ATb (mmul AT output-vector<span style="color: #999999;">)]</span>
+    (<span style="color: #6434A3;">gauss</span>/solve-with-lu ATA ATb<span style="color: #999999;">)))</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">missile problem from page 232</span>
+(<span style="color: #0000FF;">let</span> [A [[1.0 0.0 0.0<span style="color: #999999;">]</span>
+         [1.0 0.25 0.0625<span style="color: #999999;">]</span>
+         [1.0 0.50 0.25<span style="color: #999999;">]</span>
+         [1.0 0.75 0.5625<span style="color: #999999;">]</span>
+         [1.0 1.00 1.0<span style="color: #999999;">]]</span>
+      b [0.000 0.008 0.015 0.019 0.02<span style="color: #999999;">]]</span>
+  (lu-direct A b<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">(-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444)</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org8f5a966" class="outline-3">
-<h3 id="org8f5a966">The numerically stable solution</h3>
-<div class="outline-text-3" id="text-org8f5a966">
+<div id="outline-container-org0c054d0" class="outline-3">
+<h3 id="org0c054d0">The numerically stable solution</h3>
+<div class="outline-text-3" id="text-org0c054d0">
 <p>
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in <b>Exercise 4.6.9</b> with the equations
 </p>
@@ -212,9 +234,55 @@ We just used the fact that <b>x<sub>1</sub></b> was in the nullspace of <b>A<sup
 So we can use any method that works on solving square matrices, use it on our jumbo matrix and get a solution for the least squares problem. All without computing <b>A<sup>T</sup>A</b>.
 </p>
 
-<p>
-I even double checked that this is true in a <a href="../asparapiss/">little demo program</a> written in Clojure. Fitting a polynomial over some random points the <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> solution (light blue) quickly gives a broken result as the number of polynomial factors is increased. While the "stable solution" (dark blue) blows up much later.
-</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">jumbo-matrix</span>
+  <span style="color: #036A07;">"Use the big block matrix method to compute the least squares solution"</span>
+  [input-matrix<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [num-rows (row-count input-matrix<span style="color: #999999;">)</span>
+        num-columns (column-count input-matrix<span style="color: #999999;">)</span>
+        identity (identity-matrix num-rows<span style="color: #999999;">)</span>
+        AT (transpose input-matrix<span style="color: #999999;">)</span>
+        zeroes (zero-matrix num-columns
+                            num-columns<span style="color: #999999;">)]</span>
+    (join-along 0
+                (join-along 1
+                            identity
+                            input-matrix<span style="color: #999999;">)</span>
+                (join-along 1
+                            AT
+                            zeroes<span style="color: #999999;">))))</span>
+
+(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">pad-with-zeroes</span>
+  <span style="color: #036A07;">"Takes the INPUT-VECTOR and make it longer with some zeroes padded on the end"</span>
+  [input-vector number-of-zeroes<span style="color: #999999;">]</span>
+  (join-along 0
+              input-vector
+              (zero-vector number-of-zeroes<span style="color: #999999;">)))</span>
+
+(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">lu-jumbo</span>
+  <span style="color: #036A07;">""</span>
+  [input-matrix output-vector<span style="color: #999999;">]</span>
+
+  (subvector (<span style="color: #6434A3;">gauss</span>/solve-with-lu (jumbo-matrix input-matrix<span style="color: #999999;">)</span>
+                                  (pad-with-zeroes output-vector
+                                                   (column-count input-matrix<span style="color: #999999;">)))</span>
+             (row-count input-matrix<span style="color: #999999;">)</span>
+             (column-count input-matrix<span style="color: #999999;">)))</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">missile problem from page 232 but redone with the big matrix method</span>
+(<span style="color: #0000FF;">let</span> [A [[1.0 0.0 0.0<span style="color: #999999;">]</span>
+         [1.0 0.25 0.0625<span style="color: #999999;">]</span>
+         [1.0 0.50 0.25<span style="color: #999999;">]</span>
+         [1.0 0.75 0.5625<span style="color: #999999;">]</span>
+         [1.0 1.00 1.0<span style="color: #999999;">]]</span>
+      b [0.000 0.008 0.015 0.019 0.02<span style="color: #999999;">]]</span>
+  (lu-jumbo A b<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444]</span>
+</pre>
+</div>
 </div>
 </div>
 </div>
