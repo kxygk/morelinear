@@ -277,7 +277,7 @@ In ~core.matrix~ there is a convenient ~(block-diagonal-matrix .. )~ function to
 So far we've been looking at *Q_{1}Q_{2}* .. *Q_{n}A=R*, but ultimately we want to get to *A=QR*. The reflectors are their own inverse, so written out like that the equation remains easily invertable. While by contrast *Q^{-1}A=R* is not so easy to invert... b/c *Q^{-1}* may not be a reflector at all. So we flip the equation ahead of time *A=Q_{n}* .. *Q_{2}Q_{1}R* and we make sure to build *Q* in the right order *Q=Q_{1}Q_{2}* .. *Q_{1}*
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
-  (defn householder-reduce-to-QR
+  (defn- reduce-to-qr
     "Increase the dimension of a reflector by padding it with an identity matrix"
     [reduction-matrix input-matrix]
     (if (or (= 0 (row-count input-matrix))
@@ -297,10 +297,10 @@ So far we've been looking at *Q_{1}Q_{2}* .. *Q_{n}A=R*, but ultimately we want 
 			      1
 			      (dec (column-count input-matrix))))))))
 
-  (defn householder-QR
+  (defn qr!
     "A wrapper for the real function"
     [input-matrix]
-    (householder-reduce-to-QR (identity-matrix (row-count input-matrix))
+    (reduce-to-qr (identity-matrix (row-count input-matrix))
 			      input-matrix))
 #+END_SRC
 The function reduces the input matrix to *R* and returns *Q*.
@@ -310,7 +310,7 @@ The function reduces the input matrix to *R* and returns *Q*.
 		   [72.0 13.0 98.0 12.0]
 		   [28.0 38.0 73.0 20.0]]))
 
-  (def Q (householder-QR A))
+  (def Q (qr! A))
   (pm Q)
   ;; [[0.473  0.073 -0.690 -0.543]
   ;;  [0.231  0.897 -0.041  0.374]
@@ -334,7 +334,7 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 		   [72.0 13.0 98.0]
 		   [28.0 38.0 73.0]
 		   [65.0 23.0 85.0]]))
-  (def Q (householder-QR A))
+  (def Q (qr! A))
   (pm Q)
   ;; [[0.385  0.122 -0.678 -0.578 -0.207]
   ;;  [0.188  0.907 -0.042  0.374 -0.024]
@@ -357,7 +357,7 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
   (def A (mutable [[43.0 36.0 38.0 90.0 54.0]
 		   [21.0 98.0 55.0 48.0 92.0]
 		   [72.0 13.0 98.0 12.0 47.0]]))
-  (def Q (householder-QR A))
+  (def Q (qr! A))
   (pm Q)
   ;;  [[0.497  0.108 -0.861]
   ;; [0.243  0.935  0.258]

@@ -45,7 +45,7 @@
 			  1
 			  (dec (column-count input-matrix)))))))
 
-(defn householder-reduce-to-QR
+(defn- reduce-to-qr
   "Increase the dimension of a reflector by padding it with an identity matrix"
   [reduction-matrix input-matrix]
   (if (or (= 0 (row-count input-matrix))
@@ -65,8 +65,8 @@
 			    1
 			    (dec (column-count input-matrix))))))))
 
-(defn householder-QR
+(defn qr!
   "A wrapper for the real function"
   [input-matrix]
-  (householder-reduce-to-QR (identity-matrix (row-count input-matrix))
+  (reduce-to-qr (identity-matrix (row-count input-matrix))
 			    input-matrix))
