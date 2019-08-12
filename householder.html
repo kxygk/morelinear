@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-12 Mon 22:09 -->
+<!-- 2019-08-12 Mon 23:39 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Householder decomposition</title>
@@ -45,11 +45,11 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org36ca4e8">elementary reflector</a></li>
-<li><a href="#org69ba6aa">elementary coordinate reflector</a></li>
-<li><a href="#org2266597">Zeroing the first column</a></li>
-<li><a href="#orge7abab7">Zeroing out the second column and so on..</a></li>
-<li><a href="#org7e407c6">Getting the reflectors</a></li>
+<li><a href="#org8df0307">elementary reflector</a></li>
+<li><a href="#orgc8fa9af">elementary coordinate reflector</a></li>
+<li><a href="#orgf234e66">Zeroing the first column</a></li>
+<li><a href="#orgefef553">Zeroing out the second column and so on..</a></li>
+<li><a href="#org04b8198">Getting the reflectors</a></li>
 </ul>
 </div>
 </div>
@@ -63,9 +63,9 @@
 The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
 
-<div id="outline-container-org36ca4e8" class="outline-2">
-<h2 id="org36ca4e8">elementary reflector</h2>
-<div class="outline-text-2" id="text-org36ca4e8">
+<div id="outline-container-org8df0307" class="outline-2">
+<h2 id="org8df0307">elementary reflector</h2>
+<div class="outline-text-2" id="text-org8df0307">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -137,9 +137,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-org69ba6aa" class="outline-2">
-<h2 id="org69ba6aa">elementary coordinate reflector</h2>
-<div class="outline-text-2" id="text-org69ba6aa">
+<div id="outline-container-orgc8fa9af" class="outline-2">
+<h2 id="orgc8fa9af">elementary coordinate reflector</h2>
+<div class="outline-text-2" id="text-orgc8fa9af">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -216,9 +216,9 @@ We got some seemingly random matrix out. If we then multiply it times out random
 </div>
 
 
-<div id="outline-container-org2266597" class="outline-2">
-<h2 id="org2266597">Zeroing the first column</h2>
-<div class="outline-text-2" id="text-org2266597">
+<div id="outline-container-orgf234e66" class="outline-2">
+<h2 id="orgf234e66">Zeroing the first column</h2>
+<div class="outline-text-2" id="text-orgf234e66">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -264,9 +264,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-orge7abab7" class="outline-2">
-<h2 id="orge7abab7">Zeroing out the second column and so on..</h2>
-<div class="outline-text-2" id="text-orge7abab7">
+<div id="outline-container-orgefef553" class="outline-2">
+<h2 id="orgefef553">Zeroing out the second column and so on..</h2>
+<div class="outline-text-2" id="text-orgefef553">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -382,9 +382,9 @@ If you looking at the result I got when running <code>(first-column-reflector ..
 </div>
 </div>
 
-<div id="outline-container-org7e407c6" class="outline-2">
-<h2 id="org7e407c6">Getting the reflectors</h2>
-<div class="outline-text-2" id="text-org7e407c6">
+<div id="outline-container-org04b8198" class="outline-2">
+<h2 id="org04b8198">Getting the reflectors</h2>
+<div class="outline-text-2" id="text-org04b8198">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
@@ -419,31 +419,52 @@ So far we've been looking at <b>Q<sub>1</sub>Q<sub>2</sub></b> .. <b>Q<sub>n</su
 </p>
 
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">reduce-to-qr</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">make-padded-reflector</span>
+  <span style="color: #036A07;">"Make a reflector that leaves the first columns untouched"</span>
+  [padding-size reflector<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [padding (identity-matrix padding-size<span style="color: #999999;">)]</span>
+    (join-along 0
+                (join-along 1
+                            padding
+                            (zero-matrix (row-count padding<span style="color: #999999;">)</span>
+                                         (column-count reflector<span style="color: #999999;">)))</span>
+                (join-along 1
+                            (zero-matrix (row-count reflector<span style="color: #999999;">)</span>
+                                         (column-count padding<span style="color: #999999;">))</span>
+                            reflector<span style="color: #999999;">))))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">crazy code b/c `</span><span style="color: #D0372D; font-style: italic;">block-diagonal-matrix</span><span style="color: #8D8D84; font-style: italic;">` code is broken</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">see: https://github.com/mikera/vectorz-clj/issues/70</span>
+
+
+(<span style="color: #0000FF;">defn-</span> <span style="color: #006699;">reduce-to-qr</span>
   <span style="color: #036A07;">"Increase the dimension of a reflector by padding it with an identity matrix"</span>
   [reduction-matrix input-matrix<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 0 (row-count input-matrix<span style="color: #999999;">))</span>
-          (= 0 (column-count input-matrix<span style="color: #999999;">)))</span>
+  (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 1 (row-count input-matrix<span style="color: #999999;">))</span>
+          (= 1 (column-count input-matrix<span style="color: #999999;">)))</span>
     reduction-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
-    (<span style="color: #0000FF;">let</span> [reflector (first-column-reflector input-matrix<span style="color: #999999;">)]</span>
+    (<span style="color: #0000FF;">let</span> [reflector (first-column-reflector input-matrix<span style="color: #999999;">)</span>
+          padding-size (- (row-count reduction-matrix<span style="color: #999999;">)</span>
+                          (row-count input-matrix<span style="color: #999999;">))</span>
+          padding (identity-matrix padding-size<span style="color: #999999;">)</span>
+          padded-reflector (<span style="color: #0000FF;">if</span> (zero? padding-size<span style="color: #999999;">)</span>
+                             reflector
+                             (make-padded-reflector padding-size
+                                                    reflector<span style="color: #999999;">))]</span>
       (<span style="color: #0000FF;">do</span> (assign! input-matrix
                    (mmul reflector
                          input-matrix<span style="color: #999999;">))</span>
           (<span style="color: #0000FF;">recur</span> (mmul reduction-matrix
-                       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix<span style="color: #999999;">)</span>
-                                                                   (row-count input-matrix<span style="color: #999999;">)))</span>
-                                               reflector<span style="color: #999999;">]))</span>
+                       padded-reflector<span style="color: #999999;">)</span>
                  (submatrix input-matrix
                             1
                             (dec (row-count input-matrix<span style="color: #999999;">))</span>
                             1
                             (dec (column-count input-matrix<span style="color: #999999;">))))))))</span>
-
-(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">qr</span>
-  <span style="color: #036A07;">"A wrapper for the real function"</span>
-  [input-matrix<span style="color: #999999;">]</span>
-  (reduce-to-QR (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
-                            input-matrix<span style="color: #999999;">))</span>
+  (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">qr!</span>
+    <span style="color: #036A07;">"A wrapper for the real function"</span>
+    [input-matrix<span style="color: #999999;">]</span>
+    (reduce-to-qr (identity-matrix (row-count input-matrix<span style="color: #999999;">))</span>
+                              input-matrix<span style="color: #999999;">))</span>
 </pre>
 </div>
 <p>
@@ -455,7 +476,7 @@ The function reduces the input matrix to <b>R</b> and returns <b>Q</b>.
                  [72.0 13.0 98.0 12.0<span style="color: #999999;">]</span>
                  [28.0 38.0 73.0 20.0<span style="color: #999999;">]]))</span>
 
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr A<span style="color: #999999;">))</span>
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr! A<span style="color: #999999;">))</span>
 (pm Q<span style="color: #999999;">)</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.473  0.073 -0.690 -0.543]</span>
 <span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.231  0.897 -0.041  0.374]</span>
@@ -482,7 +503,7 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
                  [72.0 13.0 98.0<span style="color: #999999;">]</span>
                  [28.0 38.0 73.0<span style="color: #999999;">]</span>
                  [65.0 23.0 85.0<span style="color: #999999;">]]))</span>
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr A<span style="color: #999999;">))</span>
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr! A<span style="color: #999999;">))</span>
 (pm Q<span style="color: #999999;">)</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[0.385  0.122 -0.678 -0.578 -0.207]</span>
 <span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[0.188  0.907 -0.042  0.374 -0.024]</span>
@@ -505,7 +526,7 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 (<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">A</span> (mutable [[43.0 36.0 38.0 90.0 54.0<span style="color: #999999;">]</span>
                  [21.0 98.0 55.0 48.0 92.0<span style="color: #999999;">]</span>
                  [72.0 13.0 98.0 12.0 47.0<span style="color: #999999;">]]))</span>
-(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr A<span style="color: #999999;">))</span>
+(<span style="color: #0000FF;">def</span> <span style="color: #BA36A5;">Q</span> (qr! A<span style="color: #999999;">))</span>
 (pm Q<span style="color: #999999;">)</span>
 <span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[[0.497  0.108 -0.861]</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.243  0.935  0.258]</span>

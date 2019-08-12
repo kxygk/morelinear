@@ -45,28 +45,49 @@
 			  1
 			  (dec (column-count input-matrix)))))))
 
+(defn- make-padded-reflector
+  "Make a reflector that leaves the first columns untouched"
+  [padding-size reflector]
+  (let [padding (identity-matrix padding-size)]
+    (join-along 0
+		(join-along 1
+			    padding
+			    (zero-matrix (row-count padding)
+					 (column-count reflector)))
+		(join-along 1
+			    (zero-matrix (row-count reflector)
+					 (column-count padding))
+			    reflector))))
+;; crazy code b/c `block-diagonal-matrix` code is broken
+;; see: https://github.com/mikera/vectorz-clj/issues/70
+
+
 (defn- reduce-to-qr
   "Increase the dimension of a reflector by padding it with an identity matrix"
   [reduction-matrix input-matrix]
-  (if (or (= 0 (row-count input-matrix))
-	  (= 0 (column-count input-matrix)))
-    reduction-matrix ;; base case
-    (let [reflector (first-column-reflector input-matrix)]
-      (do (assign! input-matrix
-		   (mmul reflector
-			 input-matrix))
+  (let [reflector (first-column-reflector input-matrix)
+	padding-size (- (row-count reduction-matrix)
+			(row-count input-matrix))
+	padding (identity-matrix padding-size)
+	padded-reflector (if (zero? padding-size)
+			   reflector
+			   (make-padded-reflector padding-size
+						  reflector))]
+    (do (assign! input-matrix
+		 (mmul reflector
+		       input-matrix))
+	(if (or (= 1 (row-count input-matrix))
+		(= 1 (column-count input-matrix)))
+	  reduction-matrix ;; base case
 	  (recur (mmul reduction-matrix
-		       (block-diagonal-matrix [(identity-matrix (- (row-count reduction-matrix)
-								   (row-count input-matrix)))
-					       reflector]))
+		       padded-reflector)
 		 (submatrix input-matrix
 			    1
 			    (dec (row-count input-matrix))
 			    1
 			    (dec (column-count input-matrix))))))))
-
-(defn qr!
-  "A wrapper for the real function"
-  [input-matrix]
-  (reduce-to-qr (identity-matrix (row-count input-matrix))
-			    input-matrix))
+  (defn qr!
+    "A wrapper for the real function"
+    [input-matrix]
+    (reduce-to-qr (identity-matrix (row-count input-matrix))
+			      input-matrix))
