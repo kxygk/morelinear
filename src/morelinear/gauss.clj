@@ -22,19 +22,19 @@
 				 0
 				 step-number))]
     (if (= step-number
-           (dec (ecount partial-input-vector)))
+	   (dec (ecount partial-input-vector)))
       (mset partial-input-vector 
-            step-number
-            new-input-value)
+	    step-number
+	    new-input-value)
       (recur (matrix (submatrix lower-triangular
-			        1
-			        (dec (row-count lower-triangular))
-			        0
-			        (column-count lower-triangular)))
+				1
+				(dec (row-count lower-triangular))
+				0
+				(column-count lower-triangular)))
 	     output-vector
 	     (mset partial-input-vector 
-	           step-number
-	           new-input-value)
+		   step-number
+		   new-input-value)
 	     (inc step-number)))))
 
 (defn forward-substitution
@@ -48,12 +48,21 @@
 (defn backward-substitution
   "Ux=b by backward subsitution, where U is upper triangular"
   [upper-triangular output-vector]
-  (reshape (reverse (to-vector (forward-substitution
-                                (reshape (reverse (to-vector upper-triangular))
-	                                 (shape upper-triangular))
-                                (reshape (reverse (to-vector output-vector))
-	                                 (shape output-vector)))))
-           (shape output-vector)))
+  (let[rank (column-count upper-triangular)
+       U (submatrix upper-triangular
+		    0
+		    rank
+		    0
+		    rank)
+       b-short (subvector output-vector 0 rank)
+       flipped-to-L (reshape (reverse (to-vector U))
+			     (shape U))
+       flipped-b (reshape (reverse (to-vector b-short))
+			  (shape b-short))
+       flipped-input (forward-substitution flipped-to-L
+					   flipped-b)]
+    (reshape (reverse (to-vector flipped-input))
+	     (shape b-short))))
 ;; flips the matrix around to make it lower triangular..
 ;; then reuses the forward-substitution code
 ;; finally flips the result. A bit ugly, but short and easier to debug

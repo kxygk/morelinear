@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-12 Mon 21:55 -->
+<!-- 2019-08-13 Tue 15:00 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LU Decomposition: Gaussian reduction</title>
@@ -23,7 +23,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgfd9f0f8">Ax=b</a></li>
+<li><a href="#orgc62b0c4">Ax=b</a></li>
 </ul>
 </div>
 </div>
@@ -35,9 +35,9 @@
 </pre>
 </div>
 
-<div id="outline-container-orgfd9f0f8" class="outline-2">
-<h2 id="orgfd9f0f8">Ax=b</h2>
-<div class="outline-text-2" id="text-orgfd9f0f8">
+<div id="outline-container-orgc62b0c4" class="outline-2">
+<h2 id="orgc62b0c4">Ax=b</h2>
+<div class="outline-text-2" id="text-orgc62b0c4">
 <p>
 This section is a placeholder of sorts and fills in some gaps in functionality in <code>core.matrix</code>. For a detailed explanation of the LU decomposition, see <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</code></a> 
 </p>
@@ -96,12 +96,21 @@ Gaussian Elimination gives us the form <b>PA=LU</b> and the <code>core.matrix</c
 (<span style="color: #0000FF;">defn</span> <span style="color: #006699;">backward-substitution</span>
   <span style="color: #036A07;">"Ux=b by backward subsitution, where U is upper triangular"</span>
   [upper-triangular output-vector<span style="color: #999999;">]</span>
-  (reshape (reverse (to-vector (forward-substitution
-                                (reshape (reverse (to-vector upper-triangular<span style="color: #999999;">))</span>
-                                         (shape upper-triangular<span style="color: #999999;">))</span>
-                                (reshape (reverse (to-vector output-vector<span style="color: #999999;">))</span>
-                                         (shape output-vector<span style="color: #999999;">)))))</span>
-           (shape output-vector<span style="color: #999999;">)))</span>
+  (<span style="color: #0000FF;">let</span>[rank (column-count upper-triangular<span style="color: #999999;">)</span>
+       U (submatrix upper-triangular
+                    0
+                    rank
+                    0
+                    rank<span style="color: #999999;">)</span>
+       b-short (subvector output-vector 0 rank<span style="color: #999999;">)</span>
+       flipped-to-L (reshape (reverse (to-vector U<span style="color: #999999;">))</span>
+                             (shape U<span style="color: #999999;">))</span>
+       flipped-b (reshape (reverse (to-vector b-short<span style="color: #999999;">))</span>
+                          (shape b-short<span style="color: #999999;">))</span>
+       flipped-input (forward-substitution flipped-to-L
+                                           flipped-b<span style="color: #999999;">)]</span>
+    (reshape (reverse (to-vector flipped-input<span style="color: #999999;">))</span>
+             (shape b-short<span style="color: #999999;">))))</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">flips the matrix around to make it lower triangular..</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">then reuses the forward-substitution code</span>
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">finally flips the result. A bit ugly, but short and easier to debug</span>
@@ -127,7 +136,15 @@ Putting it all together to solve the square <b>Ax=b</b> system
 Test example:
 </p>
 <div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [A [[0.4 0.6 0.8 0.9<span style="color: #999999;">]</span>
+<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [skinny-A [[ 1.0 2.0 <span style="color: #999999;">]</span>
+                [ 0.0 3.0 <span style="color: #999999;">]</span>
+                [ 0.0 0.0 <span style="color: #999999;">]]</span>
+      long-b [ 5.0 6.0 999.0 <span style="color: #999999;">]]</span>
+  (pm (backward-substitution skinny-A
+                             long-b<span style="color: #999999;">)))</span>
+<span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">[1.000 2.000]</span>
+
+(<span style="color: #0000FF;">let</span> [A [[0.4 0.6 0.8 0.9<span style="color: #999999;">]</span>
          [0.4 0.6 0.6 0.8<span style="color: #999999;">]</span>
          [0.2 0.2 0.4 0.2<span style="color: #999999;">]</span>
          [0.5 0.3 0.3 0.8<span style="color: #999999;">]]</span>

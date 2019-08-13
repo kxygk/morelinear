@@ -28,60 +28,69 @@ This section is a placeholder of sorts and fills in some gaps in functionality i
 #+END_QUOTE
 Gaussian Elimination gives us the form *PA=LU* and the ~core.matrix~ library gives us a method to do this ~clojure.core.matrix.linear/lu~. We now need to add functions to do forward and backward substitution to actually solve the system. The functions [[https://github.com/mikera/core.matrix/blob/core.matrix-0.62.0/src/main/clojure/clojure/core/matrix/impl/ndarray.clj#L379][are there]] but I have no idea how to access them b/c they're wrapped in some macro and not visible on any namespace I could poke at..
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/gauss.clj
-(defn- forward-substitution-rec
-  ""
-  [lower-triangular output-vector partial-input-vector step-number]
+  (defn- forward-substitution-rec
+    ""
+    [lower-triangular output-vector partial-input-vector step-number]
+  
+    (let [substitution-sum (scalar (inner-product (subvector (get-row lower-triangular
+								      0)
+							     0
+							     step-number)
+						  (subvector partial-input-vector
+							     0
+							     step-number)))
+        
+	  new-input-value (/ (- (mget output-vector
+				      step-number)
+				substitution-sum)
+			     (mget lower-triangular
+				   0
+				   step-number))]
+      (if (= step-number
+	     (dec (ecount partial-input-vector)))
+	(mset partial-input-vector 
+	      step-number
+	      new-input-value)
+	(recur (matrix (submatrix lower-triangular
+				  1
+				  (dec (row-count lower-triangular))
+				  0
+				  (column-count lower-triangular)))
+	       output-vector
+	       (mset partial-input-vector 
+		     step-number
+		     new-input-value)
+	       (inc step-number)))))
 
-  (let [substitution-sum (scalar (inner-product (subvector (get-row lower-triangular
-								    0)
-							   0
-							   step-number)
-						(subvector partial-input-vector
-							   0
-							   step-number)))
+  (defn forward-substitution
+    "Lx=b by forward subsitution, where L is lower triangular"
+    [lower-triangular output-vector]
+    (forward-substitution-rec lower-triangular
+			      output-vector
+			      (zero-array (shape output-vector))
+			      0))
 
-	new-input-value (/ (- (mget output-vector
-				    step-number)
-			      substitution-sum)
-			   (mget lower-triangular
-				 0
-				 step-number))]
-    (if (= step-number
-           (dec (ecount partial-input-vector)))
-      (mset partial-input-vector 
-            step-number
-            new-input-value)
-      (recur (matrix (submatrix lower-triangular
-			        1
-			        (dec (row-count lower-triangular))
-			        0
-			        (column-count lower-triangular)))
-	     output-vector
-	     (mset partial-input-vector 
-	           step-number
-	           new-input-value)
-	     (inc step-number)))))
-
-(defn forward-substitution
-  "Lx=b by forward subsitution, where L is lower triangular"
-  [lower-triangular output-vector]
-  (forward-substitution-rec lower-triangular
-			    output-vector
-			    (zero-array (shape output-vector))
-			    0))
-
-(defn backward-substitution
-  "Ux=b by backward subsitution, where U is upper triangular"
-  [upper-triangular output-vector]
-  (reshape (reverse (to-vector (forward-substitution
-                                (reshape (reverse (to-vector upper-triangular))
-	                                 (shape upper-triangular))
-                                (reshape (reverse (to-vector output-vector))
-	                                 (shape output-vector)))))
-           (shape output-vector)))
-;; flips the matrix around to make it lower triangular..
-;; then reuses the forward-substitution code
-;; finally flips the result. A bit ugly, but short and easier to debug
+  (defn backward-substitution
+    "Ux=b by backward subsitution, where U is upper triangular"
+    [upper-triangular output-vector]
+    (let[rank (column-count upper-triangular)
+	 U (submatrix upper-triangular
+		      0
+		      rank
+		      0
+		      rank)
+	 b-short (subvector output-vector 0 rank)
+	 flipped-to-L (reshape (reverse (to-vector U))
+			       (shape U))
+	 flipped-b (reshape (reverse (to-vector b-short))
+			    (shape b-short))
+	 flipped-input (forward-substitution flipped-to-L
+					     flipped-b)]
+      (reshape (reverse (to-vector flipped-input))
+	       (shape b-short))))
+  ;; flips the matrix around to make it lower triangular..
+  ;; then reuses the forward-substitution code
+  ;; finally flips the result. A bit ugly, but short and easier to debug
 #+END_SRC
 
 Putting it all together to solve the square *Ax=b* system
@@ -98,6 +107,14 @@ Putting it all together to solve the square *Ax=b* system
 #+END_SRC
 Test example:
 #+BEGIN_SRC clojure
+  (let [skinny-A [[ 1.0 2.0 ]
+		  [ 0.0 3.0 ]
+		  [ 0.0 0.0 ]]
+	long-b [ 5.0 6.0 999.0 ]]
+    (pm (backward-substitution skinny-A
+			       long-b)))
+  ;;[1.000 2.000]
+
   (let [A [[0.4 0.6 0.8 0.9]
 	   [0.4 0.6 0.6 0.8]
 	   [0.2 0.2 0.4 0.2]
