@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-12 Mon 21:58 -->
+<!-- 2019-08-13 Tue 15:17 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Least Squares</title>
@@ -45,13 +45,14 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org44792a4">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
-<li><a href="#orgfdc2250">The LU case</a>
+<li><a href="#orgbfd3ddd">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
+<li><a href="#org4061fa9">The LU case</a>
 <ul>
-<li><a href="#orgac226d2">Direct method</a></li>
-<li><a href="#org0c054d0">The numerically stable solution</a></li>
+<li><a href="#org1fe4bad">Direct method</a></li>
+<li><a href="#org3e859de">The numerically stable solution</a></li>
 </ul>
 </li>
+<li><a href="#orgabd1098">The QR case</a></li>
 </ul>
 </div>
 </div>
@@ -59,14 +60,15 @@
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.leastsquares</span>
   (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
             [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]</span>
-            [morelinear.gauss <span style="color: #D0372D;">:as</span> gauss<span style="color: #999999;">]))</span>
+            [morelinear.gauss <span style="color: #D0372D;">:as</span> gauss<span style="color: #999999;">]</span>
+            [morelinear.householder <span style="color: #D0372D;">:as</span> householder<span style="color: #999999;">]))</span>
 (set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
 </pre>
 </div>
 
-<div id="outline-container-org44792a4" class="outline-2">
-<h2 id="org44792a4">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
-<div class="outline-text-2" id="text-org44792a4">
+<div id="outline-container-orgbfd3ddd" class="outline-2">
+<h2 id="orgbfd3ddd">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
+<div class="outline-text-2" id="text-orgbfd3ddd">
 <p>
 Now that we have many ways to solve square linear systems we need to extend <b>Ax=b</b> to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
 </p>
@@ -125,13 +127,13 @@ As we learn in calculus, minimizing a function is done by take its derivative wi
 </div>
 </div>
 
-<div id="outline-container-orgfdc2250" class="outline-2">
-<h2 id="orgfdc2250">The LU case</h2>
-<div class="outline-text-2" id="text-orgfdc2250">
+<div id="outline-container-org4061fa9" class="outline-2">
+<h2 id="org4061fa9">The LU case</h2>
+<div class="outline-text-2" id="text-org4061fa9">
 </div>
-<div id="outline-container-orgac226d2" class="outline-3">
-<h3 id="orgac226d2">Direct method</h3>
-<div class="outline-text-3" id="text-orgac226d2">
+<div id="outline-container-org1fe4bad" class="outline-3">
+<h3 id="org1fe4bad">Direct method</h3>
+<div class="outline-text-3" id="text-org1fe4bad">
 <p>
 We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> just like we solve an <b>Ax=b</b> system
 </p>
@@ -154,15 +156,19 @@ We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> 
          [1.0 0.75 0.5625<span style="color: #999999;">]</span>
          [1.0 1.00 1.0<span style="color: #999999;">]]</span>
       b [0.000 0.008 0.015 0.019 0.02<span style="color: #999999;">]]</span>
-  (lu-direct A b<span style="color: #999999;">))</span>
-<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">(-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444)</span>
+  (pm (lu-direct A b<span style="color: #999999;">))</span>
+  (pm (mmul A (lu-direct A
+                         b<span style="color: #999999;">))))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[-0.000 0.040 -0.019]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[-0.000 0.009 0.015 0.019 0.020]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">the results are shown rounded..</span>
 </pre>
 </div>
 </div>
 </div>
-<div id="outline-container-org0c054d0" class="outline-3">
-<h3 id="org0c054d0">The numerically stable solution</h3>
-<div class="outline-text-3" id="text-org0c054d0">
+<div id="outline-container-org3e859de" class="outline-3">
+<h3 id="org3e859de">The numerically stable solution</h3>
+<div class="outline-text-3" id="text-org3e859de">
 <p>
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in <b>Exercise 4.6.9</b> with the equations
 </p>
@@ -283,6 +289,59 @@ So we can use any method that works on solving square matrices, use it on our ju
 <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444]</span>
 </pre>
 </div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgabd1098" class="outline-2">
+<h2 id="orgabd1098">The QR case</h2>
+<div class="outline-text-2" id="text-orgabd1098">
+<p>
+With the <b>QR</b> decomposition we similarly get to avoid computing the <b>A<sup>T</sup>A</b> product. Since <b>A=QR</b> we can write rewrite <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>:
+</p>
+
+\begin{equation}
+A^{T}Ax=A^{T}b \\
+(QR)^{T}QRx = (QR)^{T}b \\
+R^{T}Q^{T}QRx = R^{T}Q^{T}b
+\end{equation}
+
+<p>
+Now since <b>Q<sup>T</sup></b> is equivalent to <b>Q<sup>-1</sup></b> (see: <a href="./householder.html">Householder transform</a>) this simplifies further to:
+</p>
+\begin{equation}
+R^{T}Rx = R^{T}Q^{T}b \\
+Rx = Q^{T}b \\
+\end{equation}
+
+<p>
+The <b>R</b> matrix is upper triangular so the left side solves directly through backsubsitution, while the right side evaluates to some column vector.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">householder-qr</span>
+  <span style="color: #036A07;">""</span>
+  [A b<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [R (mutable A<span style="color: #999999;">)</span>
+        Q (<span style="color: #6434A3;">householder</span>/qr! R<span style="color: #999999;">)</span>
+        QT (transpose Q<span style="color: #999999;">)</span>
+        QTb (mmul QT b<span style="color: #999999;">)]</span>
+    (<span style="color: #6434A3;">gauss</span>/backward-substitution R QTb<span style="color: #999999;">)))</span>
+</pre>
+</div>
+<div class="org-src-container">
+<pre class="src src-clojure"><span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">missile problem from page 232</span>
+(<span style="color: #0000FF;">let</span> [A [[1.0 0.0 0.0<span style="color: #999999;">]</span>
+         [1.0 0.25 0.0625<span style="color: #999999;">]</span>
+         [1.0 0.50 0.25<span style="color: #999999;">]</span>
+         [1.0 0.75 0.5625<span style="color: #999999;">]</span>
+         [1.0 1.00 1.0<span style="color: #999999;">]]</span>
+      b [0.000 0.008 0.015 0.019 0.02<span style="color: #999999;">]]</span>
+  (pm (householder-qr A b<span style="color: #999999;">))</span>
+  (pm (mmul A (householder-qr A b<span style="color: #999999;">))))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.003 0.016 0.005]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[0.003 0.007 0.012 0.017 0.023]</span>
+</pre>
 </div>
 </div>
 </div>

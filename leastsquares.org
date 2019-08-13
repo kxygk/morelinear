@@ -17,7 +17,8 @@
   (ns morelinear.leastsquares
     (:require [clojure.core.matrix :refer :all]
 	      [clojure.core.matrix.linear :as linear]
-	      [morelinear.gauss :as gauss]))
+	      [morelinear.gauss :as gauss]
+	      [morelinear.householder :as householder]))
   (set-current-implementation :vectorz) 
 #+END_SRC
 
@@ -88,8 +89,12 @@ We take the product *A^{T}A* and the product *A^{T}b* and solve *A^{T}Ax=A^{T}b*
 	   [1.0 0.75 0.5625]
 	   [1.0 1.00 1.0]]
 	b [0.000 0.008 0.015 0.019 0.02]]
-    (lu-direct A b))
-  ;; (-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444)
+    (pm (lu-direct A b))
+    (pm (mmul A (lu-direct A
+			   b))))
+  ;; [-0.000 0.040 -0.019]
+  ;; [-0.000 0.009 0.015 0.019 0.020]
+  ;; the results are shown rounded..
 #+END_SRC
 ** The numerically stable solution
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in *Exercise 4.6.9* with the equations
@@ -199,3 +204,43 @@ So we can use any method that works on solving square matrices, use it on our ju
   ;; [-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444]
 #+END_SRC
 
+* The QR case
+With the *QR* decomposition we similarly get to avoid computing the *A^{T}A* product. Since *A=QR* we can write rewrite *A^{T}Ax=A^{T}b*:
+
+\begin{equation}
+A^{T}Ax=A^{T}b \\
+(QR)^{T}QRx = (QR)^{T}b \\
+R^{T}Q^{T}QRx = R^{T}Q^{T}b
+\end{equation}
+
+Now since *Q^{T}* is equivalent to *Q^{-1}* (see: [[./householder.html][Householder transform]]) this simplifies further to:
+\begin{equation}
+R^{T}Rx = R^{T}Q^{T}b \\
+Rx = Q^{T}b \\
+\end{equation}
+
+The *R* matrix is upper triangular so the left side solves directly through backsubsitution, while the right side evaluates to some column vector.
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+  (defn householder-qr
+    ""
+    [A b]
+    (let [R (mutable A)
+	  Q (householder/qr! R)
+	  QT (transpose Q)
+	  QTb (mmul QT b)]
+      (gauss/backward-substitution R QTb)))
+#+END_SRC
+#+BEGIN_SRC clojure
+  ;; missile problem from page 232
+  (let [A [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]]
+	b [0.000 0.008 0.015 0.019 0.02]]
+    (pm (householder-qr A b))
+    (pm (mmul A (householder-qr A b))))
+  ;; [0.003 0.016 0.005]
+  ;; [0.003 0.007 0.012 0.017 0.023]
+#+END_SRC
