@@ -70,9 +70,9 @@
 (defn solve-with-lu
   "Solve Ax=b directly using Gaussian elimination with backward/forward substitution"
   [A b]
-  (let [{L :L
-	 U :U
-	 P :P} (linear/lu A)
+  (let [{:keys [L
+		U
+		P]} (linear/lu A)
 	Pb (mmul P b)
 	y (forward-substitution L Pb)]
     (backward-substitution U y)))

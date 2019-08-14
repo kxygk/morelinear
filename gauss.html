@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-13 Tue 15:00 -->
+<!-- 2019-08-14 Wed 20:13 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LU Decomposition: Gaussian reduction</title>
@@ -23,7 +23,7 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgc62b0c4">Ax=b</a></li>
+<li><a href="#org4ef3923">Ax=b</a></li>
 </ul>
 </div>
 </div>
@@ -35,9 +35,9 @@
 </pre>
 </div>
 
-<div id="outline-container-orgc62b0c4" class="outline-2">
-<h2 id="orgc62b0c4">Ax=b</h2>
-<div class="outline-text-2" id="text-orgc62b0c4">
+<div id="outline-container-org4ef3923" class="outline-2">
+<h2 id="org4ef3923">Ax=b</h2>
+<div class="outline-text-2" id="text-org4ef3923">
 <p>
 This section is a placeholder of sorts and fills in some gaps in functionality in <code>core.matrix</code>. For a detailed explanation of the LU decomposition, see <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</code></a> 
 </p>
@@ -124,9 +124,9 @@ Putting it all together to solve the square <b>Ax=b</b> system
 <pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">solve-with-lu</span>
   <span style="color: #036A07;">"Solve Ax=b directly using Gaussian elimination with backward/forward substitution"</span>
   [A b<span style="color: #999999;">]</span>
-  (<span style="color: #0000FF;">let</span> [{L <span style="color: #D0372D;">:L</span>
-         U <span style="color: #D0372D;">:U</span>
-         P <span style="color: #D0372D;">:P</span>} (<span style="color: #6434A3;">linear</span>/lu A<span style="color: #999999;">)</span>
+  (<span style="color: #0000FF;">let</span> [{<span style="color: #D0372D;">:keys</span> [L
+                U
+                P]} (<span style="color: #6434A3;">linear</span>/lu A<span style="color: #999999;">)</span>
         Pb (mmul P b<span style="color: #999999;">)</span>
         y (forward-substitution L Pb<span style="color: #999999;">)]</span>
     (backward-substitution U y<span style="color: #999999;">)))</span>
