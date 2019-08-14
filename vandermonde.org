@@ -1,0 +1,101 @@
+#+TITLE:  Vandermonde matrices
+#+DESCRIPTION: Solving polynomials using Vandermonde matrices
+
+#+HTML_DOCTYPE: html5
+#+HTML_LINK_UP: ..
+#+HTML_LINK_HOME: ..
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
+#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
+#+OPTIONS: html-style:nil
+#+OPTIONS: num:nil
+#+OPTIONS: html-postamble:nil
+#+OPTIONS: html-scripts:nil
+
+* Solving polynomials
+~pages 185-186~ introduces the Vandermonde matix which provides us with a way to solve for polynomials that fit a set of given points. 
+
+Polynomials are equations of the form:
+\begin{equation}
+y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
+\end{equation}
+It's a typicaly non-linear function of the form *y=f(x)* that takes inputs =x= and returns outputs =y=. Given a polynomial (ie. given it's *a_{n}* factors) and given a value for =y= there can be multiple solutions for =x=. At first blush this doesn't seem related to the problems we're tackling with matrices. 
+
+The critical insight that we need to understand how to use Vandermonde matrices is that it's linear in terms of it's own polynomial factors. We are ultimately interested in finding a polynomial /that fits/, so what we want to do is actually solve for the =a_{n}= polynomial factors. In other words we aren't taking *y=f(x)* and solving for *x*. We are taking a corresponding *y=f(a)* and solving for the polynomial factors *a_{n}*. The *x*'s are baked into the *f()*.
+
+To see how this is built up we simply take the polynomial function and a series of points/measurements =[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]= and write out the polynomial equations out.
+\begin{equation}
+y_1=a_{1}+a_{2}x_1+a_{3}x_{1}^{2}+a_{4}x_{1}^{3}+...\\
+y_2=a_{1}+a_{2}x_2+a_{3}x_{2}^{2}+a_{4}x_{2}^{3}+...\\
+y_3=a_{1}+a_{2}x_3+a_{3}x_{3}^{2}+a_{4}x_{3}^{3}+...\\
+...
+\end{equation}
+This is now a standard matrix problem with the =a='s being the unknown. The =x='s look nonlinear, but they're actually known values and not something we are solving for. Writen out in matrix form we get
+
+\begin{equation}
+\begin{bmatrix}
+1 & x_1 & x_{1}^2 & x_{1}^3 ..\\
+1 & x_2 & x_{2}^2 & x_{2}^3 ..\\
+1 & x_3 & x_{3}^2 & x_{3}^3 ..\\
+...\\
+\end{bmatrix}
+\begin{bmatrix}
+a_1\\
+a_2\\
+a_3\\
+a_4\\
+...\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+y_1\\
+y_2\\
+y_3\\
+...\\
+\end{bmatrix}
+\end{equation}
+
+Where all the values of the x-matrix are known. (the x-matrix is the actual /Vandermonde matrix/ - *V*)
+
+Th next trick is that we can adjust he number of terms in the polynomial (the number of exponents of x and the the number of *a_{n}*'s) so that the matrix is always square - and in the general case non-singular. Now since we know how to solve *Ax=b* using the *LU decomposition* we can solve for all the polynomial factors *a_{n}* in this equivalent system *Va=y* - where the *V* is the matrix of exponents of =x=.
+
+Once we solve for the *a_{n}*'s we can then reconstruct the non-linear polynomial equation we started looking at in the beginning
+
+\begin{equation}
+y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
+\end{equation}
+
+It will not only hold true for all our =(x,y)= points but also for all other values of =x= we want to test - so we will have in the end fit a polynomial curve through all our points.
+
+
+* Vandermonde matrices
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
+  (ns morelinear.vandermonde
+    (:require [clojure.core.matrix :refer :all]
+	      [clojure.core.matrix.linear :as linear]))
+  (set-current-implementation :vectorz) 
+#+END_SRC
+
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
+  (defn polynomial-matrix
+    "Take a vector of input X's and build a vandermonde matrix.
+    The DEGREE shouldn't be larger than the number of values given.
+    If non provided it will be chosen to be the maximal value
+    and your resulting matrix will be square"
+    ([polynomial-input-values
+      degree]
+     (mapv (fn [x]
+	     (mapv (fn [power]
+		     (pow x power))
+		   (range degree)))
+	   polynomial-input-values))
+
+    ;; Default square matrix case
+    ([polynomial-input-values]
+     (polynomial-matrix polynomial-input-values
+			(ecount polynomial-input-values))))
+
+#+END_SRC
+
+As explained, in the full matrix case we can solve for the polynomial coefficients *a* with either *Va=y* where *V* is the Vandermonde matrix of ~x~'s and *y* is a vector of their corresponding ~y~ values. But we can also fit lower degree polynomials in a "best fit" kind of way. In this non-singular case we want to use a least squares method. See [[./leastsquares.html][the Least Squares Method]] for the finishing steps

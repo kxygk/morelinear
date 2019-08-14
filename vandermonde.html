@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- 2019-08-14 Wed 21:00 -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vandermonde matrices</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="George Kontsevich">
+<meta name="description" content="Solving polynomials using Vandermonde matrices"
+>
+<link rel="stylesheet" type="text/css" href="../web/worg.css" />
+<link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../MathJax/MathJax.js?config=TeX-AMS_CHTML"></script>
+</head>
+<body>
+<div id="org-div-home-and-up">
+ <a accesskey="h" href=".."> UP </a>
+ |
+ <a accesskey="H" href=".."> HOME </a>
+</div><div id="content">
+<h1 class="title">Vandermonde matrices</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org4ddf2a7">Solving polynomials</a></li>
+<li><a href="#org0857439">Vandermonde matrices</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org4ddf2a7" class="outline-2">
+<h2 id="org4ddf2a7">Solving polynomials</h2>
+<div class="outline-text-2" id="text-org4ddf2a7">
+<p>
+<code>pages 185-186</code> introduces the Vandermonde matix which provides us with a way to solve for polynomials that fit a set of given points. 
+</p>
+
+<p>
+Polynomials are equations of the form:
+</p>
+\begin{equation}
+y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
+\end{equation}
+<p>
+It's a typicaly non-linear function of the form <b>y=f(x)</b> that takes inputs <code>x</code> and returns outputs <code>y</code>. Given a polynomial (ie. given it's <b>a<sub>n</sub></b> factors) and given a value for <code>y</code> there can be multiple solutions for <code>x</code>. At first blush this doesn't seem related to the problems we're tackling with matrices. 
+</p>
+
+<p>
+The critical insight that we need to understand how to use Vandermonde matrices is that it's linear in terms of it's own polynomial factors. We are ultimately interested in finding a polynomial <i>that fits</i>, so what we want to do is actually solve for the <code>a_{n}</code> polynomial factors. In other words we aren't taking <b>y=f(x)</b> and solving for <b>x</b>. We are taking a corresponding <b>y=f(a)</b> and solving for the polynomial factors <b>a<sub>n</sub></b>. The <b>x</b>'s are baked into the <b>f()</b>.
+</p>
+
+<p>
+To see how this is built up we simply take the polynomial function and a series of points/measurements <code>[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]</code> and write out the polynomial equations out.
+</p>
+\begin{equation}
+y_1=a_{1}+a_{2}x_1+a_{3}x_{1}^{2}+a_{4}x_{1}^{3}+...\\
+y_2=a_{1}+a_{2}x_2+a_{3}x_{2}^{2}+a_{4}x_{2}^{3}+...\\
+y_3=a_{1}+a_{2}x_3+a_{3}x_{3}^{2}+a_{4}x_{3}^{3}+...\\
+...
+\end{equation}
+<p>
+This is now a standard matrix problem with the <code>a</code>'s being the unknown. The <code>x</code>'s look nonlinear, but they're actually known values and not something we are solving for. Writen out in matrix form we get
+</p>
+
+\begin{equation}
+\begin{bmatrix}
+1 & x_1 & x_{1}^2 & x_{1}^3 ..\\
+1 & x_2 & x_{2}^2 & x_{2}^3 ..\\
+1 & x_3 & x_{3}^2 & x_{3}^3 ..\\
+...\\
+\end{bmatrix}
+\begin{bmatrix}
+a_1\\
+a_2\\
+a_3\\
+a_4\\
+...\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+y_1\\
+y_2\\
+y_3\\
+...\\
+\end{bmatrix}
+\end{equation}
+
+<p>
+Where all the values of the x-matrix are known. (the x-matrix is the actual <i>Vandermonde matrix</i> - <b>V</b>)
+</p>
+
+<p>
+Th next trick is that we can adjust he number of terms in the polynomial (the number of exponents of x and the the number of <b>a<sub>n</sub></b>'s) so that the matrix is always square - and in the general case non-singular. Now since we know how to solve <b>Ax=b</b> using the <b>LU decomposition</b> we can solve for all the polynomial factors <b>a<sub>n</sub></b> in this equivalent system <b>Va=y</b> - where the <b>V</b> is the matrix of exponents of <code>x</code>.
+</p>
+
+<p>
+Once we solve for the <b>a<sub>n</sub></b>'s we can then reconstruct the non-linear polynomial equation we started looking at in the beginning
+</p>
+
+\begin{equation}
+y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
+\end{equation}
+
+<p>
+It will not only hold true for all our <code>(x,y)</code> points but also for all other values of <code>x</code> we want to test - so we will have in the end fit a polynomial curve through all our points.
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org0857439" class="outline-2">
+<h2 id="org0857439">Vandermonde matrices</h2>
+<div class="outline-text-2" id="text-org0857439">
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.vandermonde</span>
+  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
+            [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]))</span>
+(set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">polynomial-matrix</span>
+  <span style="color: #036A07;">"Take a vector of input X's and build a vandermonde matrix.</span>
+<span style="color: #036A07;">  The DEGREE shouldn't be larger than the number of values given.</span>
+<span style="color: #036A07;">  If non provided it will be chosen to be the maximal value</span>
+<span style="color: #036A07;">  and your resulting matrix will be square"</span>
+  ([polynomial-input-values degree<span style="color: #999999;">]</span>
+   (mapv (<span style="color: #0000FF;">fn</span> [x<span style="color: #999999;">]</span>
+           (mapv (<span style="color: #0000FF;">fn</span> [power<span style="color: #999999;">]</span>
+                   (pow x power<span style="color: #999999;">))</span>
+                 (range degree<span style="color: #999999;">)))</span>
+         polynomial-input-values<span style="color: #999999;">))</span>
+
+  <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">Default square matrix case</span>
+  ([polynomial-input-values<span style="color: #999999;">]</span>
+   (polynomial-matrix polynomial-input-values
+           (ecount polynomial-input-values<span style="color: #999999;">))))</span>
+
+</pre>
+</div>
+
+<p>
+As explained, in the full matrix case we can solve for the polynomial coefficients <b>a</b> with either <b>Va=y</b> where <b>V</b> is the Vandermonde matrix of <code>x</code>'s and <b>y</b> is a vector of their corresponding <code>y</code> values. But we can also fit lower degree polynomials in a "best fit" kind of way. In this non-singular case we want to use a least squares method. See <a href="./leastsquares.html">the Least Squares Method</a> for the finishing steps
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>
