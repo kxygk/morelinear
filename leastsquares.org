@@ -88,13 +88,16 @@ We take the product *A^{T}A* and the product *A^{T}b* and solve *A^{T}Ax=A^{T}b*
 	   [1.0 0.50 0.25]
 	   [1.0 0.75 0.5625]
 	   [1.0 1.00 1.0]]
-	b [0.000 0.008 0.015 0.019 0.02]]
-    (pm (lu-direct A b))
-    (pm (mmul A (lu-direct A
-			   b))))
+	b [0.000 0.008 0.015 0.019 0.02]
+	x (lu-direct A b)]
+     (pm x)
+     (mmul A x))
   ;; [-0.000 0.040 -0.019]
-  ;; [-0.000 0.009 0.015 0.019 0.020]
-  ;; the results are shown rounded..
+  ;; [-2.2857142857142797E-4
+  ;;  0.008514285714285717
+  ;;  0.01482857142857143
+  ;;  0.018714285714285718
+  ;;  0.020171428571428573]
 #+END_SRC
 ** The numerically stable solution
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in *Exercise 4.6.9* with the equations
@@ -199,9 +202,16 @@ So we can use any method that works on solving square matrices, use it on our ju
 	   [1.0 0.50 0.25]
 	   [1.0 0.75 0.5625]
 	   [1.0 1.00 1.0]]
-	b [0.000 0.008 0.015 0.019 0.02]]
-    (lu-jumbo A b))
-  ;; [-2.2857142857142797E-4 0.03982857142857144 -0.019428571428571444]
+	b [0.000 0.008 0.015 0.019 0.02]
+	x (lu-jumbo A b)]
+    (pm x)
+    (mmul A x))
+  ;; [-0.000 0.040 -0.019]
+  ;; [-2.2857142857142797E-4
+  ;;  0.008514285714285717
+  ;;  0.01482857142857143
+  ;;  0.018714285714285718
+  ;;  0.020171428571428573]
 #+END_SRC
 
 * The QR case
@@ -222,7 +232,7 @@ Rx = Q^{T}b \\
 The *R* matrix is upper triangular so the left side solves directly through backsubsitution, while the right side evaluates to some column vector.
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
-  (defn householder-qr
+  (defn householder-qr-long
     ""
     [A b]
     (let [R (mutable A)
@@ -231,6 +241,36 @@ The *R* matrix is upper triangular so the left side solves directly through back
 	  QTb (mmul QT b)]
       (gauss/backward-substitution R QTb)))
 #+END_SRC
+
+However when we test the result...
+#+BEGIN_SRC clojure
+    ;; missile problem from page 232
+  (let [A [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]]
+	b [0.000 0.008 0.015 0.019 0.02]
+	x (householder-qr-long A b)]
+    (pm x)
+    (mmul A x))
+  ;; [0.003 0.016 0.005]
+  ;; [0.0027999653563131775
+  ;;  0.007000017321843412
+  ;;  0.011800034643686824
+  ;;  0.017200017321843415
+  ;;  0.023199965356313183]
+#+END_SRC
+The values are .. in the right direction but clearly much more off the mark than in the previous solutions. The trick, as mentioned in the Householder transform section, is to reduce *A* and *b* simultaneously with reflectors and skip forming *Q* entirely.
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
+  (defn householder-qr
+    ""
+    [A b]
+    (householder/reduction A b)
+    (gauss/backward-substitution A b))
+#+END_SRC
+
 #+BEGIN_SRC clojure
   ;; missile problem from page 232
   (let [A [[1.0 0.0 0.0]
@@ -238,9 +278,16 @@ The *R* matrix is upper triangular so the left side solves directly through back
 	   [1.0 0.50 0.25]
 	   [1.0 0.75 0.5625]
 	   [1.0 1.00 1.0]]
-	b [0.000 0.008 0.015 0.019 0.02]]
-    (pm (householder-qr A b))
-    (pm (mmul A (householder-qr A b))))
-  ;; [0.003 0.016 0.005]
-  ;; [0.003 0.007 0.012 0.017 0.023]
+	R (mutable A)
+	b (mutable [0.000 0.008 0.015 0.019 0.02])
+	x (householder-qr R b)]
+    (pm x)
+    (mmul A x))
+  ;; [-0.000 0.040 -0.019]
+  ;; [-2.2857142857143017E-4
+  ;;  0.008514285714285716
+  ;;  0.014828571428571434
+  ;;  0.01871428571428572
+  ;;  0.020171428571428573]
 #+END_SRC
+And now the results match closely to what we got before

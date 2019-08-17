@@ -47,7 +47,7 @@
 	     (row-count input-matrix)
 	     (column-count input-matrix)))
 
-(defn householder-qr
+(defn householder-qr-long
   ""
   [A b]
   (let [R (mutable A)
@@ -55,3 +55,9 @@
 	QT (transpose Q)
 	QTb (mmul QT b)]
     (gauss/backward-substitution R QTb)))
+
+(defn householder-qr
+  ""
+  [A b]
+  (householder/reduction A b)
+  (gauss/backward-substitution A b))
