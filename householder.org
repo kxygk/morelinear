@@ -276,11 +276,11 @@ It's also important to note that everything we'd discussed also works on overdef
 
 The last section managed to get the *R* in the *QR*. The next step is combining all these intermediary relfectors (those *S* matrices) into a matrix *Q*
 
-This step it unfortunately not quite as elegant as the reduction (or I haven't found the right solution!). 
+In /Matrix Computation/ by Golub it's actually recommended to keep a list of the reflections - if necessary.
 
-The easiest solution is to work backwards from the last iteration step where there reflector matrix is just *1*. Then going back up one iteration we would take *1* and combine it with the =first-column-reflector= we got at that step.. and so on up the iterations till we got to back to the *Q_{1}*. Unfortunately with this method we build up *Q* as we work back up the stack and after we have finished the reduction. So as we reduce we need to keep around all these intermediary reflector till we get the last one (the *1*). Only then can we combine them.
+The recommended way of combining them is by working backwards from the last iteration step where the reflector matrix is just *1*. Going back up one iteration we would take *1* and combine it with the =first-column-reflector= we got at that step.. and so on up the iterations till we got to back to the *Q_{1}*. This way the matrices grow as you go back up. However unfortunately building *Q* as you work up the stack and after we have finished the reduction means you need to keep around all these intermediary reflector till you get the last one (the *1*). Only then can we combine them.
 
-The better but uglier solution is to combine the reflectors as we go, starting with *Q_{1}*. At each iteration of the reduction we got a new ~(first-column-reflector .. )~ , and just like with *S* in the 2^{nd} column case, we pad the matrix and make it =n by n=
+Here I attempt an alternate solution that combines the reflectors as we go, starting with *Q_{1}*. At each iteration of the reduction we got a new ~(first-column-reflector .. )~ , and just like with *S* in the 2^{nd} column case, we pad the matrix and make it =n by n=
 
  \begin{equation}
  Q_{k}
@@ -412,3 +412,61 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
   ;;  [72.000 13.000 98.000 12.000 47.000]]
 #+END_SRC
 In a more sophisticated linear algebra system you may want to keep the resulting *R* matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
+#+BEGIN_QUOTE
+*Note*: In the little testing I've done, my solution is not giving very accurate results
+#+END_QUOTE
+
+** Extended reduction
+While the last section is the more flexible, we will see in [[./leastsquares.html][Least Squares]] problem that it can actually make sense to just reduce both the linear systems *A* and the output-vector *b* with the same reflectors at the same time - and in so doing avoid making *Q* entirely. This is computationally favorable as well. So we just need to expend ~reduce-to-r~ to handle reducing an output vector in parallel.
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
+  (defn reduction
+    "Reduce an INPUT-MATRIX to a /lower triangular/ or /upper trapeziodal/ orthonormal matrix 
+    and apply the reduction to the OUTPUT-VECTOR as well"
+    [input-matrix output-vector]
+    (let [reflector (first-column-reflector input-matrix)]
+      (assign! input-matrix
+	       (mmul reflector
+		     input-matrix))
+      (assign! output-vector
+	       (mmul reflector
+		     output-vector))
+      (if (or (= 1 (row-count input-matrix))
+	      (= 1 (column-count input-matrix)))
+	input-matrix ;; base case
+	(recur (submatrix input-matrix
+			  1
+			  (dec (row-count input-matrix))
+			  1
+			  (dec (column-count input-matrix)))
+	       (subvector output-vector
+			  1
+			  (dec (ecount output-vector)))))))
+#+END_SRC
+
+#+BEGIN_SRC clojure
+  (let [A (mutable [[43.0 36.0 38.0 ]
+		    [21.0 98.0 55.0 ]
+		    [72.0 13.0 98.0 ]
+		    [28.0 38.0 73.0 ]])
+	b (mutable [ 11.0 22.0 33.0 44.0 ])]
+    (reduction A b)
+    (pm A)
+    (pm b))
+  ;; [[90.874 61.690 130.830]
+  ;;  [ 0.000 93.313  29.311]
+  ;;  [-0.000  0.000  37.767]
+  ;;  [ 0.000 -0.000   0.000]]
+  ;; [49.993 16.814 27.554 -9.424]
+  ;; nil
+
+
+
+  (let [A (mutable [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]])
+	b (mutable [0.000 0.008 0.015 0.019 0.02])]
+    (reduction A b)
+    (pm A) (pm b))
+#+END_SRC

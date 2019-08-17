@@ -91,3 +91,26 @@
     [input-matrix]
     (reduce-to-qr (identity-matrix (row-count input-matrix))
 			      input-matrix))
+
+(defn reduction
+  "Reduce an INPUT-MATRIX to a /lower triangular/ or /upper trapeziodal/ orthonormal matrix 
+  and apply the reduction to the OUTPUT-VECTOR as well"
+  [input-matrix output-vector]
+  (let [reflector (first-column-reflector input-matrix)]
+    (assign! input-matrix
+	     (mmul reflector
+		   input-matrix))
+    (assign! output-vector
+	     (mmul reflector
+		   output-vector))
+    (if (or (= 1 (row-count input-matrix))
+	    (= 1 (column-count input-matrix)))
+      input-matrix ;; base case
+      (recur (submatrix input-matrix
+			1
+			(dec (row-count input-matrix))
+			1
+			(dec (column-count input-matrix)))
+	     (subvector output-vector
+			1
+			(dec (ecount output-vector)))))))

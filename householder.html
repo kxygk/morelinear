@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-17 Sat 19:51 -->
+<!-- 2019-08-17 Sat 20:01 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Householder decomposition</title>
@@ -45,11 +45,11 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org8958f9c">elementary reflector</a></li>
-<li><a href="#org85fa037">elementary coordinate reflector</a></li>
-<li><a href="#orgecbf355">Zeroing the first column</a></li>
-<li><a href="#orgeaaec4b">Zeroing out the second column and so on..</a></li>
-<li><a href="#org8c2e05d">Getting the reflectors</a></li>
+<li><a href="#orgf9881d5">elementary reflector</a></li>
+<li><a href="#org57b64bb">elementary coordinate reflector</a></li>
+<li><a href="#org6207122">Zeroing the first column</a></li>
+<li><a href="#org91e39af">Zeroing out the second column and so on..</a></li>
+<li><a href="#org61e6e81">Getting the reflectors</a></li>
 </ul>
 </div>
 </div>
@@ -63,9 +63,9 @@
 The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
 
-<div id="outline-container-org8958f9c" class="outline-2">
-<h2 id="org8958f9c">elementary reflector</h2>
-<div class="outline-text-2" id="text-org8958f9c">
+<div id="outline-container-orgf9881d5" class="outline-2">
+<h2 id="orgf9881d5">elementary reflector</h2>
+<div class="outline-text-2" id="text-orgf9881d5">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -137,9 +137,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-org85fa037" class="outline-2">
-<h2 id="org85fa037">elementary coordinate reflector</h2>
-<div class="outline-text-2" id="text-org85fa037">
+<div id="outline-container-org57b64bb" class="outline-2">
+<h2 id="org57b64bb">elementary coordinate reflector</h2>
+<div class="outline-text-2" id="text-org57b64bb">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -216,9 +216,9 @@ We got some seemingly random matrix out. If we then multiply it times our random
 </div>
 
 
-<div id="outline-container-orgecbf355" class="outline-2">
-<h2 id="orgecbf355">Zeroing the first column</h2>
-<div class="outline-text-2" id="text-orgecbf355">
+<div id="outline-container-org6207122" class="outline-2">
+<h2 id="org6207122">Zeroing the first column</h2>
+<div class="outline-text-2" id="text-org6207122">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -264,9 +264,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-orgeaaec4b" class="outline-2">
-<h2 id="orgeaaec4b">Zeroing out the second column and so on..</h2>
-<div class="outline-text-2" id="text-orgeaaec4b">
+<div id="outline-container-org91e39af" class="outline-2">
+<h2 id="org91e39af">Zeroing out the second column and so on..</h2>
+<div class="outline-text-2" id="text-org91e39af">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -404,23 +404,23 @@ It's also important to note that everything we'd discussed also works on overdef
 </div>
 </div>
 </div>
-<div id="outline-container-org8c2e05d" class="outline-2">
-<h2 id="org8c2e05d">Getting the reflectors</h2>
-<div class="outline-text-2" id="text-org8c2e05d">
+<div id="outline-container-org61e6e81" class="outline-2">
+<h2 id="org61e6e81">Getting the reflectors</h2>
+<div class="outline-text-2" id="text-org61e6e81">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
 
 <p>
-This step it unfortunately not quite as elegant as the reduction (or I haven't found the right solution!). 
+In <i>Matrix Computation</i> by Golub it's actually recommended to keep a list of the reflections - if necessary.
 </p>
 
 <p>
-The easiest solution is to work backwards from the last iteration step where there reflector matrix is just <b>1</b>. Then going back up one iteration we would take <b>1</b> and combine it with the <code>first-column-reflector</code> we got at that step.. and so on up the iterations till we got to back to the <b>Q<sub>1</sub></b>. Unfortunately with this method we build up <b>Q</b> as we work back up the stack and after we have finished the reduction. So as we reduce we need to keep around all these intermediary reflector till we get the last one (the <b>1</b>). Only then can we combine them.
+The recommended way of combining them is by working backwards from the last iteration step where the reflector matrix is just <b>1</b>. Going back up one iteration we would take <b>1</b> and combine it with the <code>first-column-reflector</code> we got at that step.. and so on up the iterations till we got to back to the <b>Q<sub>1</sub></b>. This way the matrices grow as you go back up. However unfortunately building <b>Q</b> as you work up the stack and after we have finished the reduction means you need to keep around all these intermediary reflector till you get the last one (the <b>1</b>). Only then can we combine them.
 </p>
 
 <p>
-The better but uglier solution is to combine the reflectors as we go, starting with <b>Q<sub>1</sub></b>. At each iteration of the reduction we got a new <code>(first-column-reflector .. )</code> , and just like with <b>S</b> in the 2<sup>nd</sup> column case, we pad the matrix and make it <code>n by n</code>
+Here I attempt an alternate solution that combines the reflectors as we go, starting with <b>Q<sub>1</sub></b>. At each iteration of the reduction we got a new <code>(first-column-reflector .. )</code> , and just like with <b>S</b> in the 2<sup>nd</sup> column case, we pad the matrix and make it <code>n by n</code>
 </p>
 
 \begin{equation}
