@@ -33,12 +33,12 @@
 (defn reduce-to-r
   "Reduce a matrix to a lower triangular orthonormal matrix"
   [input-matrix]
-  (if (or (= 1 (row-count input-matrix))
-	  (= 1 (column-count input-matrix))) 
-    input-matrix ;; base case
-    (do (assign! input-matrix
-		 (mmul (first-column-reflector input-matrix)
-		       input-matrix))
+  (do (assign! input-matrix
+	       (mmul (first-column-reflector input-matrix)
+		     input-matrix))
+      (if (or (= 1 (row-count input-matrix))
+	      (= 1 (column-count input-matrix)))
+	input-matrix ;; base case
 	(recur (submatrix input-matrix
 			  1
 			  (dec (row-count input-matrix))

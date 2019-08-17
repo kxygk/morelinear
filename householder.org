@@ -113,7 +113,7 @@ For instance we can take some random vector and say we want to reflect it onto t
   ;;  [0.099 -0.079 -0.091  0.988]]
   ;; nil
 #+END_SRC
-We got some seemingly random matrix out. If we then multiply it times out random vector, it reflects perfectly to *e_1*
+We got some seemingly random matrix out. If we then multiply it times our random vector, it reflects perfectly to *e_1*
 #+BEGIN_SRC clojure
   (pm (mmul (elementary-coordinate-reflector [24 77 89 12]
 					     [1 0 0 0])
@@ -210,12 +210,12 @@ When tackling the third column we do this again, getting the next submatrix of *
   (defn reduce-to-r
     "Reduce a matrix to a lower triangular orthonormal matrix"
     [input-matrix]
-    (if (or (= 1 (row-count input-matrix))
-	    (= 1 (column-count input-matrix))) 
-      input-matrix ;; base case
-      (do (assign! input-matrix
-		   (mmul (first-column-reflector input-matrix)
-			 input-matrix))
+    (do (assign! input-matrix
+		 (mmul (first-column-reflector input-matrix)
+		       input-matrix))
+	(if (or (= 1 (row-count input-matrix))
+		(= 1 (column-count input-matrix)))
+	  input-matrix ;; base case
 	  (recur (submatrix input-matrix
 			    1
 			    (dec (row-count input-matrix))
@@ -231,20 +231,19 @@ When tackling the third column we do this again, getting the next submatrix of *
 
 Now to test it I'm reusing the same random matrix from the previous example:
 #+BEGIN_SRC clojure
-  (def A (mutable [[43.0 36.0 38.0 90.0]
-		   [21.0 98.0 55.0 48.0]
-		   [72.0 13.0 98.0 12.0]
-		   [28.0 38.0 73.0 20.0]]))
+  (let [A (mutable [[43.0 36.0 38.0 90.0]
+		    [21.0 98.0 55.0 48.0]
+		    [72.0 13.0 98.0 12.0]
+		    [28.0 38.0 73.0 20.0]])]
 
-  (pm A)
-  ;; [[43.000 36.000 38.000 90.000]
-  ;;  [21.000 98.000 55.000 48.000]
-  ;;  [72.000 13.000 98.000 12.000]
-  ;;  [28.000 38.000 73.000 20.000]]
-  ;; nil
-  (reduce-to-r A)
-
-  (pm A)
+    (pm A)
+    ;; [[43.000 36.000 38.000 90.000]
+    ;;  [21.000 98.000 55.000 48.000]
+    ;;  [72.000 13.000 98.000 12.000]
+    ;;  [28.000 38.000 73.000 20.000]]
+    ;; nil
+    (reduce-to-r A)
+    (pm A))
   ;; [[90.874 61.690 130.830  69.349]
   ;;  [ 0.000 93.313  29.311  49.102]
   ;;  [-0.000  0.000  37.767 -48.089]
@@ -253,6 +252,26 @@ Now to test it I'm reusing the same random matrix from the previous example:
 #+END_SRC
 If you looking at the result I got when running ~(first-column-reflector ..)~  then you'll see that the first column and row have been preserved as we expect.
 
+It's also important to note that everything we'd discussed also works on overdefined/skinny matrices. ie. where you have more equations than unknowns
+#+BEGIN_SRC clojure
+  (let [A (mutable [[43.0 36.0 38.0 ]
+		    [21.0 98.0 55.0 ]
+		    [72.0 13.0 98.0 ]
+		    [28.0 38.0 73.0 ]])]
+
+    (pm A)
+    ;;[[43.000 36.000 38.000]
+    ;; [21.000 98.000 55.000]
+    ;; [72.000 13.000 98.000]
+    ;; [28.000 38.000 73.000]]
+    ;; nil
+    (reduce-to-r A)
+    (pm A))
+  ;; [[90.874 61.690 130.830]
+  ;;  [ 0.000 93.313  29.311]
+  ;;  [-0.000  0.000  37.767]
+  ;;  [ 0.000 -0.000   0.000]]
+#+END_SRC
 ** Getting the reflectors
 
 The last section managed to get the *R* in the *QR*. The next step is combining all these intermediary relfectors (those *S* matrices) into a matrix *Q*
