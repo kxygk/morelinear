@@ -35,7 +35,7 @@ The topic of /residuals/, /sensitivity/ and /coditioning/ will be revisited late
 #+END_QUOTE
 We start off with the most straightforward square system *Ax=b*. We are give a know square system *A* and a known output *B* and we are tasked with finding the corresponding input if it exists. We so far have the following methods:
 
-- *The LU decompositon* :: Also known as Gaussian reduction. Reduces our system *A* to two systems/matrices *L* and *U*. One lower triangular and the other upper triangular
+- [[./gauss.html][*The LU decompositon*]] :: Also known as Gaussian reduction. Reduces our system *A* to two systems/matrices *L* and *U*. One lower triangular and the other upper triangular
 - *The LU decompositon with partial pivoting* :: Similar to the previous method but we swap rows so that the pivot is always that largest column value.
 - *The LU decompositon  with complete pivoting* :: Again similar to the previous method but the columns are switched as well.
 - *The Gram Schmidt QR decomposition* :: Reduces the matrix *A* to an orthogonal basis *Q* and a upper triangular matrix *R*
@@ -48,12 +48,12 @@ The next step is extending the previous method to non-square systems and systems
 * Similarity transforms : R^{-1}BRx=b
 Exploring the posibilities of transforming our system *A* into a different basis where it has a more convenient form *B*. We take out inputs *x* from the standard basis into this new more convenient basis, then pass we them through the simpler system *B* and finally take the output and transform it back to the standard basis to get the output *b*.
 
-- [[./hessenber.html][*Hessenberg Form*]] :: Using /Householder reflectors/ we transform our matrix *A* into a form that is /almost/ upper triangular
+- [[./hessenberg.html][*Hessenberg Form*]] :: Using /Householder reflectors/ we transform our matrix *A* into a form that is /almost/ upper triangular
 
 * Other tools..
 - *Cholesky Decomposition* :: Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get *A=LDU* (where *L* and *U* have *1*'s on the diagonal and *D* is unit diagonal. Since *A* is symmetric then *A=A^{T}* and therefore *LDU=(LDU)^{T}=U^{T}D^{T}L^{T}*. Since *D==D^{T}* and the *LU* factorization is unique then *L* must equal *U^{T}* and *U* is equal to *L^{T}* - so we can write *A=LDL^{T}*. Then we can split *D* but taking the square root of the diagonal elements (that's why they need to be positive!) and get *A=LD^{1/2}D^{1/2}L^{T}*. set *R=LD^{1/2}* and you can write *A=RR^{T}*
 
-- *Vandermonder Matrices* :: [[../elinear/vandermonde.html][First introduced in ~elinear~]], they need to revisited again b/c they are very useful
+- [[./vandermonde.html][*Vandermonder Matrices*]] :: These matrices are used to solve for a polynomials equation /f(x)/ such that it fits a list of =x/y= coordinates. This is especially useful in combination with the Least Squares method to fit approximate polynomials
 * Notes on Clojure
 This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
 
