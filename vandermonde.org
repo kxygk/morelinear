@@ -180,3 +180,43 @@ As before the Least Squares solutions come in a few flavors and it also works on
 		      :householder)
   ;;(251.1770462843548 0.3111353706549809 -0.001904254283169026)
 #+END_SRC
+
+Now that we've got the polynomial factors we want to just wrap this up and be able to get the polynomial function itself
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
+  (defn polynomial-function
+    [degree points method]
+    (let [factors (polynomial-factors degree
+				      points
+				      method)]
+      (fn [x] (reduce + (map-indexed (fn [index
+					  factor]
+				       (* factor
+					  (pow x index)))
+				     factors)))))
+
+#+END_SRC
+
+#+BEGIN_SRC clojure
+  (let [our-function (polynomial-function 3
+					  [[138.0 165.0]
+					   [275.0 197.0]
+					   [277.0 262.0]
+					   [186.0 277.0]
+					   [154.0 240.0]
+					   [236.0 141.0]
+					   [322.0 123.0]
+					   [358.0 122.0]
+					   [182.0 289.0]
+					   [118.0 294.0]
+					   [108.0 292.0]
+					   [54.0  259.0]]
+					  :householder)]
+    (println (our-function 11))
+    (println (our-function 50))
+    (println (our-function 70))
+    (println (our-function 150))
+    (println (our-function 250))
+    (println (our-function 350)))
+  ;;(251.1770462843548 0.3111353706549809 -0.001904254283169026)
+#+END_SRC

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-21 Wed 21:03 -->
+<!-- 2019-08-21 Wed 21:20 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vandermonde matrices</title>
@@ -45,17 +45,17 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgce49a13">Solving polynomials</a></li>
-<li><a href="#orge909f42">Vandermonde matrices</a></li>
-<li><a href="#org799fcec">Full rank case</a></li>
-<li><a href="#orgafeaee1">Least Squares</a></li>
+<li><a href="#org0613c50">Solving polynomials</a></li>
+<li><a href="#org65e3fb3">Vandermonde matrices</a></li>
+<li><a href="#org714b83f">Full rank case</a></li>
+<li><a href="#org23fc910">Least Squares</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orgce49a13" class="outline-2">
-<h2 id="orgce49a13">Solving polynomials</h2>
-<div class="outline-text-2" id="text-orgce49a13">
+<div id="outline-container-org0613c50" class="outline-2">
+<h2 id="org0613c50">Solving polynomials</h2>
+<div class="outline-text-2" id="text-org0613c50">
 <p>
 <code>pages 185-186</code> introduces the Vandermonde matix which provides us with a way to solve for polynomials that fit a set of given points. 
 </p>
@@ -118,9 +118,9 @@ Again, all the values of the x-matrix are known. (the x-matrix is the actual <i>
 </div>
 
 
-<div id="outline-container-orge909f42" class="outline-2">
-<h2 id="orge909f42">Vandermonde matrices</h2>
-<div class="outline-text-2" id="text-orge909f42">
+<div id="outline-container-org65e3fb3" class="outline-2">
+<h2 id="org65e3fb3">Vandermonde matrices</h2>
+<div class="outline-text-2" id="text-org65e3fb3">
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.vandermonde</span>
   (<span style="color: #D0372D;">:require</span> [morelinear.leastsquares <span style="color: #D0372D;">:as</span> leastsquares<span style="color: #999999;">]</span>
@@ -161,9 +161,9 @@ The number of polynomials terms (ie. the <b>degree</b> <i>n</i> in the last x<su
 </div>
 </div>
 
-<div id="outline-container-org799fcec" class="outline-2">
-<h2 id="org799fcec">Full rank case</h2>
-<div class="outline-text-2" id="text-org799fcec">
+<div id="outline-container-org714b83f" class="outline-2">
+<h2 id="org714b83f">Full rank case</h2>
+<div class="outline-text-2" id="text-org714b83f">
 <p>
 If we have as many polynomial terms as we have points then we are left with a square x-matrix which we can solve using Gaussian elimination (excluding singular/degenerate cases). In other words we can use the <b>LU decomposition</b> to solve for all the polynomial factors <b>a<sub>n</sub></b> in this equivalent system <b>Va=y</b> - where the <b>V</b> is the matrix of exponents of <code>x</code>.
 </p>
@@ -182,9 +182,9 @@ It will not only hold true for all our <code>(x,y)</code> points but also for al
 </div>
 </div>
 
-<div id="outline-container-orgafeaee1" class="outline-2">
-<h2 id="orgafeaee1">Least Squares</h2>
-<div class="outline-text-2" id="text-orgafeaee1">
+<div id="outline-container-org23fc910" class="outline-2">
+<h2 id="org23fc910">Least Squares</h2>
+<div class="outline-text-2" id="text-org23fc910">
 <p>
 However with our least squares method we now have an alternate solution. We can choose a <b>degree</b> that is <i>lower</i> than the number of points/values we have and then solve for approximate solutions. This is often the preferrable solution. In general when we fit a polynomial we have a decent idea of the degree of the function that drives whatever we are measuring. We also know that the input values are not perfect, so if we overfit the points with a high-degree polynomial the results will also be very noisy. So typically we preselect the degree of the polynomial and then try to give the function as many data points as we can to get the best approximation of the underlying function as we can.
 </p>
@@ -265,6 +265,50 @@ As before the Least Squares solutions come in a few flavors and it also works on
                      [108.0 292.0<span style="color: #999999;">]</span>
                      [54.0  259.0<span style="color: #999999;">]]</span>
                     <span style="color: #D0372D;">:householder</span><span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">(251.1770462843548 0.3111353706549809 -0.001904254283169026)</span>
+</pre>
+</div>
+
+<p>
+Now that we've got the polynomial factors we want to just wrap this up and be able to get the polynomial function itself
+</p>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">polynomial-function</span>
+  [degree points method<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [factors (polynomial-factors degree
+                                    points
+                                    method<span style="color: #999999;">)]</span>
+    (<span style="color: #0000FF;">fn</span> [x] (reduce + (map-indexed (<span style="color: #0000FF;">fn</span> [index
+                                        factor<span style="color: #999999;">]</span>
+                                     (* factor
+                                        (pow x index<span style="color: #999999;">)))</span>
+                                   factors<span style="color: #999999;">)))))</span>
+
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [our-function (polynomial-function 3
+                                        [[138.0 165.0<span style="color: #999999;">]</span>
+                                         [275.0 197.0<span style="color: #999999;">]</span>
+                                         [277.0 262.0<span style="color: #999999;">]</span>
+                                         [186.0 277.0<span style="color: #999999;">]</span>
+                                         [154.0 240.0<span style="color: #999999;">]</span>
+                                         [236.0 141.0<span style="color: #999999;">]</span>
+                                         [322.0 123.0<span style="color: #999999;">]</span>
+                                         [358.0 122.0<span style="color: #999999;">]</span>
+                                         [182.0 289.0<span style="color: #999999;">]</span>
+                                         [118.0 294.0<span style="color: #999999;">]</span>
+                                         [108.0 292.0<span style="color: #999999;">]</span>
+                                         [54.0  259.0<span style="color: #999999;">]]</span>
+                                        <span style="color: #D0372D;">:householder</span><span style="color: #999999;">)]</span>
+  (println (our-function 11<span style="color: #999999;">))</span>
+  (println (our-function 50<span style="color: #999999;">))</span>
+  (println (our-function 70<span style="color: #999999;">))</span>
+  (println (our-function 150<span style="color: #999999;">))</span>
+  (println (our-function 250<span style="color: #999999;">))</span>
+  (println (our-function 350<span style="color: #999999;">)))</span>
 <span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">(251.1770462843548 0.3111353706549809 -0.001904254283169026)</span>
 </pre>
 </div>

@@ -68,3 +68,14 @@
 						       degree))]
     (leastsquares/householder-qr vandermonde-matrix
 				 (:y xy))))
+
+(defn polynomial-function
+  [degree points method]
+  (let [factors (polynomial-factors degree
+				    points
+				    method)]
+    (fn [x] (reduce + (map-indexed (fn [index
+					factor]
+				     (* factor
+					(pow x index)))
+				   factors)))))
