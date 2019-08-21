@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-14 Wed 21:00 -->
+<!-- 2019-08-21 Wed 21:03 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vandermonde matrices</title>
@@ -45,15 +45,17 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org4ddf2a7">Solving polynomials</a></li>
-<li><a href="#org0857439">Vandermonde matrices</a></li>
+<li><a href="#orgce49a13">Solving polynomials</a></li>
+<li><a href="#orge909f42">Vandermonde matrices</a></li>
+<li><a href="#org799fcec">Full rank case</a></li>
+<li><a href="#orgafeaee1">Least Squares</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org4ddf2a7" class="outline-2">
-<h2 id="org4ddf2a7">Solving polynomials</h2>
-<div class="outline-text-2" id="text-org4ddf2a7">
+<div id="outline-container-orgce49a13" class="outline-2">
+<h2 id="orgce49a13">Solving polynomials</h2>
+<div class="outline-text-2" id="text-orgce49a13">
 <p>
 <code>pages 185-186</code> introduces the Vandermonde matix which provides us with a way to solve for polynomials that fit a set of given points. 
 </p>
@@ -65,15 +67,15 @@ Polynomials are equations of the form:
 y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
 \end{equation}
 <p>
-It's a typicaly non-linear function of the form <b>y=f(x)</b> that takes inputs <code>x</code> and returns outputs <code>y</code>. Given a polynomial (ie. given it's <b>a<sub>n</sub></b> factors) and given a value for <code>y</code> there can be multiple solutions for <code>x</code>. At first blush this doesn't seem related to the problems we're tackling with matrices. 
+It's a typicaly non-linear function of the form <b>y=f(x)</b> that takes inputs <code>x</code> and returns outputs <code>y</code>. Given a polynomial (ie. given its <b>a<sub>n</sub></b> factors) and given a value for <code>y</code> there can be multiple solutions for <code>x</code>. At first blush this doesn't seem related to the problems we've been tackling with matrices. 
 </p>
 
 <p>
-The critical insight that we need to understand how to use Vandermonde matrices is that it's linear in terms of it's own polynomial factors. We are ultimately interested in finding a polynomial <i>that fits</i>, so what we want to do is actually solve for the <code>a_{n}</code> polynomial factors. In other words we aren't taking <b>y=f(x)</b> and solving for <b>x</b>. We are taking a corresponding <b>y=f(a)</b> and solving for the polynomial factors <b>a<sub>n</sub></b>. The <b>x</b>'s are baked into the <b>f()</b>.
+The Vandermonde matrix does a clever inversion of our typical problem. While we typically are looking for <code>x</code> given <code>y</code> here because we are ultimately interested in finding a polynomial <i>that fits</i> what we do instead is set up the problem to solve for the <code>a_{n}</code> polynomial factors. Instead of taking <b>y=f(x)</b> and solving for <b>x</b> we are taking a corresponding <b>y=f(a)</b> and solving for the polynomial factors <b>a<sub>n</sub></b>. We will see that the <b>x</b>'s are baked into the <b>f()</b>.
 </p>
 
 <p>
-To see how this is built up we simply take the polynomial function and a series of points/measurements <code>[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]</code> and write out the polynomial equations out.
+To see how this is built up we simply take the polynomial function and a series of points/measurements <code>[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]</code> and write out the equations.
 </p>
 \begin{equation}
 y_1=a_{1}+a_{2}x_1+a_{3}x_{1}^{2}+a_{4}x_{1}^{3}+...\\
@@ -81,8 +83,9 @@ y_2=a_{1}+a_{2}x_2+a_{3}x_{2}^{2}+a_{4}x_{2}^{3}+...\\
 y_3=a_{1}+a_{2}x_3+a_{3}x_{3}^{2}+a_{4}x_{3}^{3}+...\\
 ...
 \end{equation}
+
 <p>
-This is now a standard matrix problem with the <code>a</code>'s being the unknown. The <code>x</code>'s look nonlinear, but they're actually known values and not something we are solving for. Writen out in matrix form we get
+No we we want to pull out the <b>a</b>'s to make this look like an <b>Ax=b</b> type of equation. While the <code>x</code>'s in the equations look nonlinear they're actually known values coordinates of our <code>x,y</code> points so they're fixed scalar values and they not something we are solving for. Writen out in matrix form we get
 </p>
 
 \begin{equation}
@@ -109,15 +112,64 @@ y_3\\
 \end{equation}
 
 <p>
-Where all the values of the x-matrix are known. (the x-matrix is the actual <i>Vandermonde matrix</i> - <b>V</b>)
+Again, all the values of the x-matrix are known. (the x-matrix is the actual <i>Vandermonde matrix</i> - <b>V</b>)
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-orge909f42" class="outline-2">
+<h2 id="orge909f42">Vandermonde matrices</h2>
+<div class="outline-text-2" id="text-orge909f42">
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.vandermonde</span>
+  (<span style="color: #D0372D;">:require</span> [morelinear.leastsquares <span style="color: #D0372D;">:as</span> leastsquares<span style="color: #999999;">]</span>
+            [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
+            [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]))</span>
+(set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
+</pre>
+</div>
+<p>
+So given a series of <code>x</code>'s we can build up this matrix directly.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">polynomial-matrix</span>
+  <span style="color: #036A07;">"Take a vector of input X's and build a vandermonde matrix.</span>
+<span style="color: #036A07;">  The DEGREE shouldn't be larger than the number of values given.</span>
+<span style="color: #036A07;">  If non provided it will be chosen to be the maximal value</span>
+<span style="color: #036A07;">  and your resulting matrix will be square"</span>
+  ([polynomial-input-values
+    degree<span style="color: #999999;">]</span>
+   (mapv (<span style="color: #0000FF;">fn</span> [x<span style="color: #999999;">]</span>
+           (mapv (<span style="color: #0000FF;">fn</span> [power<span style="color: #999999;">]</span>
+                   (pow x power<span style="color: #999999;">))</span>
+                 (range degree<span style="color: #999999;">)))</span>
+         polynomial-input-values<span style="color: #999999;">))</span>
+
+  <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">Default square matrix case</span>
+  ([polynomial-input-values<span style="color: #999999;">]</span>
+   (polynomial-matrix polynomial-input-values
+                      (ecount polynomial-input-values<span style="color: #999999;">))))</span>
+
+</pre>
+</div>
+
+<p>
+The number of polynomials terms (ie. the <b>degree</b> <i>n</i> in the last x<sup>n</sup>) is variable. 
+</p>
+</div>
+</div>
+
+<div id="outline-container-org799fcec" class="outline-2">
+<h2 id="org799fcec">Full rank case</h2>
+<div class="outline-text-2" id="text-org799fcec">
+<p>
+If we have as many polynomial terms as we have points then we are left with a square x-matrix which we can solve using Gaussian elimination (excluding singular/degenerate cases). In other words we can use the <b>LU decomposition</b> to solve for all the polynomial factors <b>a<sub>n</sub></b> in this equivalent system <b>Va=y</b> - where the <b>V</b> is the matrix of exponents of <code>x</code>.
 </p>
 
 <p>
-Th next trick is that we can adjust he number of terms in the polynomial (the number of exponents of x and the the number of <b>a<sub>n</sub></b>'s) so that the matrix is always square - and in the general case non-singular. Now since we know how to solve <b>Ax=b</b> using the <b>LU decomposition</b> we can solve for all the polynomial factors <b>a<sub>n</sub></b> in this equivalent system <b>Va=y</b> - where the <b>V</b> is the matrix of exponents of <code>x</code>.
-</p>
-
-<p>
-Once we solve for the <b>a<sub>n</sub></b>'s we can then reconstruct the non-linear polynomial equation we started looking at in the beginning
+Once we solve for the <b>a<sub>n</sub></b>'s we can then stick them back into non-linear polynomial equation we started looking at in the beginning and get a solution.
 </p>
 
 \begin{equation}
@@ -130,43 +182,92 @@ It will not only hold true for all our <code>(x,y)</code> points but also for al
 </div>
 </div>
 
+<div id="outline-container-orgafeaee1" class="outline-2">
+<h2 id="orgafeaee1">Least Squares</h2>
+<div class="outline-text-2" id="text-orgafeaee1">
+<p>
+However with our least squares method we now have an alternate solution. We can choose a <b>degree</b> that is <i>lower</i> than the number of points/values we have and then solve for approximate solutions. This is often the preferrable solution. In general when we fit a polynomial we have a decent idea of the degree of the function that drives whatever we are measuring. We also know that the input values are not perfect, so if we overfit the points with a high-degree polynomial the results will also be very noisy. So typically we preselect the degree of the polynomial and then try to give the function as many data points as we can to get the best approximation of the underlying function as we can.
+</p>
 
-<div id="outline-container-org0857439" class="outline-2">
-<h2 id="org0857439">Vandermonde matrices</h2>
-<div class="outline-text-2" id="text-org0857439">
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.vandermonde</span>
-  (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]</span>
-            [clojure.core.matrix.linear <span style="color: #D0372D;">:as</span> linear<span style="color: #999999;">]))</span>
-(set-current-implementation <span style="color: #D0372D;">:vectorz</span>) 
-</pre>
-</div>
-
-
-<div class="org-src-container">
-<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">polynomial-matrix</span>
-  <span style="color: #036A07;">"Take a vector of input X's and build a vandermonde matrix.</span>
-<span style="color: #036A07;">  The DEGREE shouldn't be larger than the number of values given.</span>
-<span style="color: #036A07;">  If non provided it will be chosen to be the maximal value</span>
-<span style="color: #036A07;">  and your resulting matrix will be square"</span>
-  ([polynomial-input-values degree<span style="color: #999999;">]</span>
-   (mapv (<span style="color: #0000FF;">fn</span> [x<span style="color: #999999;">]</span>
-           (mapv (<span style="color: #0000FF;">fn</span> [power<span style="color: #999999;">]</span>
-                   (pow x power<span style="color: #999999;">))</span>
-                 (range degree<span style="color: #999999;">)))</span>
-         polynomial-input-values<span style="color: #999999;">))</span>
-
-  <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">Default square matrix case</span>
-  ([polynomial-input-values<span style="color: #999999;">]</span>
-   (polynomial-matrix polynomial-input-values
-           (ecount polynomial-input-values<span style="color: #999999;">))))</span>
-
-</pre>
-</div>
+<blockquote>
+<p>
+<b>Note</b>: That this doesn't always hold. If you have some non-linear function that you are approximating with a Taylor series, then cut off the number of polynomials serves no purpose
+</p>
+</blockquote>
 
 <p>
-As explained, in the full matrix case we can solve for the polynomial coefficients <b>a</b> with either <b>Va=y</b> where <b>V</b> is the Vandermonde matrix of <code>x</code>'s and <b>y</b> is a vector of their corresponding <code>y</code> values. But we can also fit lower degree polynomials in a "best fit" kind of way. In this non-singular case we want to use a least squares method. See <a href="./leastsquares.html">the Least Squares Method</a> for the finishing steps
+As before the Least Squares solutions come in a few flavors and it also works on the square case (even when the matrix is singular) - so we can skip writing a function for the square case and just have one polynomial solver for all square and skinny matrices
 </p>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">split-into-x-y</span>
+  [points<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [vector-of-xs-and-ys (apply mapv vector points<span style="color: #999999;">)]</span>
+    {<span style="color: #D0372D;">:x</span> (mutable (first vector-of-xs-and-ys<span style="color: #999999;">))</span>
+     <span style="color: #D0372D;">:y</span> (mutable (second vector-of-xs-and-ys<span style="color: #999999;">))}))</span>
+
+
+(<span style="color: #0000FF;">defmulti</span> <span style="color: #006699;">polynomial-factors</span>
+  <span style="color: #036A07;">"Solve for a polynomial equation of DEGREE that fits the given POINTS</span>
+<span style="color: #036A07;">  and return the list of polynomial factors.</span>
+<span style="color: #036A07;">  the underlying least squares METHOD used can be:</span>
+<span style="color: #036A07;">  :lu</span>
+<span style="color: #036A07;">  :lu-jumbo</span>
+<span style="color: #036A07;">  :householder"</span>
+  (<span style="color: #0000FF;">fn</span> [degree
+       points
+       method<span style="color: #999999;">]</span>
+    method<span style="color: #999999;">))</span>
+
+(<span style="color: #0000FF;">defmethod</span> <span style="color: #006699;">polynomial-factors</span> <span style="color: #D0372D;">:lu</span>
+  [degree
+   points
+   method<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [xy (split-into-x-y points<span style="color: #999999;">)]</span>
+    (<span style="color: #6434A3;">leastsquares</span>/lu-direct (polynomial-matrix (<span style="color: #D0372D;">:x</span> xy<span style="color: #999999;">)</span>
+                                               degree<span style="color: #999999;">)</span>
+                            (<span style="color: #D0372D;">:y</span> xy<span style="color: #999999;">))))</span>
+
+(<span style="color: #0000FF;">defmethod</span> <span style="color: #006699;">polynomial-factors</span> <span style="color: #D0372D;">:lu-jumbo</span>
+  [degree
+   points
+   method<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [xy (split-into-x-y points<span style="color: #999999;">)]</span>
+    (<span style="color: #6434A3;">leastsquares</span>/lu-jumbo (polynomial-matrix (<span style="color: #D0372D;">:x</span> xy<span style="color: #999999;">)</span>
+                                              degree<span style="color: #999999;">)</span>
+                           (<span style="color: #D0372D;">:y</span> xy<span style="color: #999999;">))))</span>
+
+(<span style="color: #0000FF;">defmethod</span> <span style="color: #006699;">polynomial-factors</span> <span style="color: #D0372D;">:householder</span>
+  [degree
+   points
+   method<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [xy (split-into-x-y points<span style="color: #999999;">)</span>
+        vandermonde-matrix (mutable (polynomial-matrix (<span style="color: #D0372D;">:x</span> xy<span style="color: #999999;">)</span>
+                                                       degree<span style="color: #999999;">))]</span>
+    (<span style="color: #6434A3;">leastsquares</span>/householder-qr vandermonde-matrix
+                                 (<span style="color: #D0372D;">:y</span> xy<span style="color: #999999;">))))</span>
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<pre class="src src-clojure">(polynomial-factors 3
+                    [[138.0 165.0<span style="color: #999999;">]</span>
+                     [275.0 197.0<span style="color: #999999;">]</span>
+                     [277.0 262.0<span style="color: #999999;">]</span>
+                     [186.0 277.0<span style="color: #999999;">]</span>
+                     [154.0 240.0<span style="color: #999999;">]</span>
+                     [236.0 141.0<span style="color: #999999;">]</span>
+                     [322.0 123.0<span style="color: #999999;">]</span>
+                     [358.0 122.0<span style="color: #999999;">]</span>
+                     [182.0 289.0<span style="color: #999999;">]</span>
+                     [118.0 294.0<span style="color: #999999;">]</span>
+                     [108.0 292.0<span style="color: #999999;">]</span>
+                     [54.0  259.0<span style="color: #999999;">]]</span>
+                    <span style="color: #D0372D;">:householder</span><span style="color: #999999;">)</span>
+<span style="color: #8D8D84;">;;</span><span style="color: #8D8D84; font-style: italic;">(251.1770462843548 0.3111353706549809 -0.001904254283169026)</span>
+</pre>
+</div>
 </div>
 </div>
 </div>

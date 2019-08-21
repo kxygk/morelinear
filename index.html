@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-17 Sat 19:36 -->
+<!-- 2019-08-21 Wed 20:57 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear \\ linear algebra methods in Clojure</title>
@@ -23,26 +23,26 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org0bfaa70">Preface</a></li>
-<li><a href="#org25f314c">Linear systems : Ax=b</a></li>
-<li><a href="#org5b6b776">Least Squares</a></li>
-<li><a href="#orga222133">Similarity transforms : R<sup>-1</sup>BRx=b</a></li>
-<li><a href="#org284fd03">Other tools..</a></li>
-<li><a href="#orgf2cb0a7">Notes on Clojure</a>
+<li><a href="#org1c15e94">Preface</a></li>
+<li><a href="#org7826799">Linear systems : Ax=b</a></li>
+<li><a href="#org76055f5">Least Squares</a></li>
+<li><a href="#org6b2f899">Similarity transforms : R<sup>-1</sup>BRx=b</a></li>
+<li><a href="#org7c797d9">Other tools..</a></li>
+<li><a href="#org78e6a0a">Notes on Clojure</a>
 <ul>
-<li><a href="#orgf501497"><code>core.matrix</code></a></li>
-<li><a href="#org58b7ce2">Project managment</a></li>
+<li><a href="#org7521783"><code>core.matrix</code></a></li>
+<li><a href="#org473984e">Project managment</a></li>
 </ul>
 </li>
-<li><a href="#org8288a26"><span class="todo TODO">TODO</span> s</a></li>
-<li><a href="#org6cdbb74">End</a></li>
+<li><a href="#org7acaa77"><span class="todo TODO">TODO</span> s</a></li>
+<li><a href="#org36e394c">End</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org0bfaa70" class="outline-2">
-<h2 id="org0bfaa70">Preface</h2>
-<div class="outline-text-2" id="text-org0bfaa70">
+<div id="outline-container-org1c15e94" class="outline-2">
+<h2 id="org1c15e94">Preface</h2>
+<div class="outline-text-2" id="text-org1c15e94">
 <p>
 This project developed out of an initial effort to build a working linear algebra system in ELisp called <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</code></a>
 </p>
@@ -56,9 +56,9 @@ Unlike <a href="http://geokon-gh.github.io/elinear/index.html"><code>elinear</co
 </p>
 </div>
 </div>
-<div id="outline-container-org25f314c" class="outline-2">
-<h2 id="org25f314c">Linear systems : Ax=b</h2>
-<div class="outline-text-2" id="text-org25f314c">
+<div id="outline-container-org7826799" class="outline-2">
+<h2 id="org7826799">Linear systems : Ax=b</h2>
+<div class="outline-text-2" id="text-org7826799">
 <blockquote>
 <p>
 <b>Note:</b> The LU and GramSchmidt have been implemented in ELisp if you'd like to see how it's done: <a href="http://geokon-gh.github.io/elinear/index.html">elinear</a>
@@ -97,18 +97,23 @@ We start off with the most straightforward square system <b>Ax=b</b>. We are giv
 </div>
 </div>
 
-<div id="outline-container-org5b6b776" class="outline-2">
-<h2 id="org5b6b776">Least Squares</h2>
-<div class="outline-text-2" id="text-org5b6b776">
+<div id="outline-container-org76055f5" class="outline-2">
+<h2 id="org76055f5">Least Squares</h2>
+<div class="outline-text-2" id="text-org76055f5">
 <p>
 The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the <a href="./leastsquares.html">Least Squares method</a> to find a nearby solution
 </p>
+
+<dl class="org-dl">
+<dt><a href="./vandermonde.html"><b>Vandermonder Matrices</b></a></dt><dd>Are used used to solve for a polynomials equation <i>f(x)</i> such that it fits a list of <code>x/y</code> coordinates. In combination with the Least Squares method we can fit polynomials to a list of points/measurements.</dd>
+</dl>
 </div>
 </div>
 
-<div id="outline-container-orga222133" class="outline-2">
-<h2 id="orga222133">Similarity transforms : R<sup>-1</sup>BRx=b</h2>
-<div class="outline-text-2" id="text-orga222133">
+
+<div id="outline-container-org6b2f899" class="outline-2">
+<h2 id="org6b2f899">Similarity transforms : R<sup>-1</sup>BRx=b</h2>
+<div class="outline-text-2" id="text-org6b2f899">
 <p>
 Exploring the posibilities of transforming our system <b>A</b> into a different basis where it has a more convenient form <b>B</b>. We take out inputs <b>x</b> from the standard basis into this new more convenient basis, then pass we them through the simpler system <b>B</b> and finally take the output and transform it back to the standard basis to get the output <b>b</b>.
 </p>
@@ -119,27 +124,26 @@ Exploring the posibilities of transforming our system <b>A</b> into a different 
 </div>
 </div>
 
-<div id="outline-container-org284fd03" class="outline-2">
-<h2 id="org284fd03">Other tools..</h2>
-<div class="outline-text-2" id="text-org284fd03">
+<div id="outline-container-org7c797d9" class="outline-2">
+<h2 id="org7c797d9">Other tools..</h2>
+<div class="outline-text-2" id="text-org7c797d9">
 <dl class="org-dl">
 <dt><b>Cholesky Decomposition</b></dt><dd>Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get <b>A=LDU</b> (where <b>L</b> and <b>U</b> have <b>1</b>'s on the diagonal and <b>D</b> is unit diagonal. Since <b>A</b> is symmetric then <b>A=A<sup>T</sup></b> and therefore <b>LDU=(LDU)<sup>T</sup>=U<sup>T</sup>D<sup>T</sup>L<sup>T</sup></b>. Since <b>D==D<sup>T</sup></b> and the <b>LU</b> factorization is unique then <b>L</b> must equal <b>U<sup>T</sup></b> and <b>U</b> is equal to <b>L<sup>T</sup></b> - so we can write <b>A=LDL<sup>T</sup></b>. Then we can split <b>D</b> but taking the square root of the diagonal elements (that's why they need to be positive!) and get <b>A=LD<sup>1/2</sup>D<sup>1/2</sup>L<sup>T</sup></b>. set <b>R=LD<sup>1/2</sup></b> and you can write <b>A=RR<sup>T</sup></b></dd>
-
-<dt><a href="./vandermonde.html"><b>Vandermonder Matrices</b></a></dt><dd>These matrices are used to solve for a polynomials equation <i>f(x)</i> such that it fits a list of <code>x/y</code> coordinates. This is especially useful in combination with the Least Squares method to fit approximate polynomials</dd>
 </dl>
 </div>
 </div>
-<div id="outline-container-orgf2cb0a7" class="outline-2">
-<h2 id="orgf2cb0a7">Notes on Clojure</h2>
-<div class="outline-text-2" id="text-orgf2cb0a7">
+
+<div id="outline-container-org78e6a0a" class="outline-2">
+<h2 id="org78e6a0a">Notes on Clojure</h2>
+<div class="outline-text-2" id="text-org78e6a0a">
 <p>
 This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
 </p>
 </div>
 
-<div id="outline-container-orgf501497" class="outline-3">
-<h3 id="orgf501497"><code>core.matrix</code></h3>
-<div class="outline-text-3" id="text-orgf501497">
+<div id="outline-container-org7521783" class="outline-3">
+<h3 id="org7521783"><code>core.matrix</code></h3>
+<div class="outline-text-3" id="text-org7521783">
 <p>
 In an effort to mitigate the issue I had in ELisp, I'm using the <code>core.matrix</code> library which acts as a "front end" API for many different backends - some on the JVM others in JS. It provides lots of helper functions so I can quickly write what I want. The library is generally very flexible and full features and uses a very generic N-dimensional array system.
 </p>
@@ -174,9 +178,9 @@ It's an interesting work flow and really forces you to think a lot harder about 
 </div>
 </div>
 
-<div id="outline-container-org58b7ce2" class="outline-3">
-<h3 id="org58b7ce2">Project managment</h3>
-<div class="outline-text-3" id="text-org58b7ce2">
+<div id="outline-container-org473984e" class="outline-3">
+<h3 id="org473984e">Project managment</h3>
+<div class="outline-text-3" id="text-org473984e">
 <p>
 Project management in Clojure is done through a top level <code>deps.edn</code> file which specifies project dependencies . In our case it's <code>core.matrix</code> and the <code>vectorz</code> backend (without which some functionality is broken).
 </p>
@@ -190,12 +194,10 @@ Project management in Clojure is done through a top level <code>deps.edn</code> 
 </div>
 </div>
 
-<div id="outline-container-org8288a26" class="outline-2">
-<h2 id="org8288a26"><span class="todo TODO">TODO</span> s</h2>
-<div class="outline-text-2" id="text-org8288a26">
+<div id="outline-container-org7acaa77" class="outline-2">
+<h2 id="org7acaa77"><span class="todo TODO">TODO</span> s</h2>
+<div class="outline-text-2" id="text-org7acaa77">
 <ul class="org-ul">
-<li>Is a lower triangular matrix orthogonal? Is L and orthogonal basis for <b>U</b> in <b>LU</b>?</li>
-<li>Why does the jumbo matrix for the <b>LU</b> matrix work? (see least squares)</li>
 <li>Schur decomposition/compliment</li>
 <li>Implement the Sherman-Morrison update formula</li>
 <li>Sensitivity/Condition numbers needs to be revisited and expanded on (page 126-128)</li>
@@ -207,9 +209,9 @@ Project management in Clojure is done through a top level <code>deps.edn</code> 
 </ul>
 </div>
 </div>
-<div id="outline-container-org6cdbb74" class="outline-2">
-<h2 id="org6cdbb74">End</h2>
-<div class="outline-text-2" id="text-org6cdbb74">
+<div id="outline-container-org36e394c" class="outline-2">
+<h2 id="org36e394c">End</h2>
+<div class="outline-text-2" id="text-org36e394c">
 <blockquote>
 <p>
 This webpage is generated from an org-document (at <code>./index.org</code>) that also generates all the files described. 

@@ -45,6 +45,9 @@ We start off with the most straightforward square system *Ax=b*. We are give a k
 * Least Squares
 The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the [[./leastsquares.html][Least Squares method]] to find a nearby solution
 
+- [[./vandermonde.html][*Vandermonder Matrices*]] :: Are used used to solve for a polynomials equation /f(x)/ such that it fits a list of =x/y= coordinates. In combination with the Least Squares method we can fit polynomials to a list of points/measurements.
+
+
 * Similarity transforms : R^{-1}BRx=b
 Exploring the posibilities of transforming our system *A* into a different basis where it has a more convenient form *B*. We take out inputs *x* from the standard basis into this new more convenient basis, then pass we them through the simpler system *B* and finally take the output and transform it back to the standard basis to get the output *b*.
 
@@ -53,7 +56,6 @@ Exploring the posibilities of transforming our system *A* into a different basis
 * Other tools..
 - *Cholesky Decomposition* :: Given a positive definite matrix (one that is symmetrix and has positive values on the diagonal) after we do Gaussian reduction we get *A=LDU* (where *L* and *U* have *1*'s on the diagonal and *D* is unit diagonal. Since *A* is symmetric then *A=A^{T}* and therefore *LDU=(LDU)^{T}=U^{T}D^{T}L^{T}*. Since *D==D^{T}* and the *LU* factorization is unique then *L* must equal *U^{T}* and *U* is equal to *L^{T}* - so we can write *A=LDL^{T}*. Then we can split *D* but taking the square root of the diagonal elements (that's why they need to be positive!) and get *A=LD^{1/2}D^{1/2}L^{T}*. set *R=LD^{1/2}* and you can write *A=RR^{T}*
 
-- [[./vandermonde.html][*Vandermonder Matrices*]] :: These matrices are used to solve for a polynomials equation /f(x)/ such that it fits a list of =x/y= coordinates. This is especially useful in combination with the Least Squares method to fit approximate polynomials
 * Notes on Clojure
 This new linear algebra project is written in Clojure - a language that runs on both the JVM and in Javascript (I'm only really testing things on the JVM at the moment). There should be no language specific funny buisness and though everything is written in Clojure's "functional style" it shouldn't be difficult to translate to a different language and library
 
@@ -86,8 +88,6 @@ Project management in Clojure is done through a top level ~deps.edn~ file which 
 #+END_SRC
 
 * TODOs
-- Is a lower triangular matrix orthogonal? Is L and orthogonal basis for *U* in *LU*?
-- Why does the jumbo matrix for the *LU* matrix work? (see least squares)
 - Schur decomposition/compliment
 - Implement the Sherman-Morrison update formula
 - Sensitivity/Condition numbers needs to be revisited and expanded on (page 126-128)

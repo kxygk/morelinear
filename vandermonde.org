@@ -19,18 +19,19 @@ Polynomials are equations of the form:
 \begin{equation}
 y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
 \end{equation}
-It's a typicaly non-linear function of the form *y=f(x)* that takes inputs =x= and returns outputs =y=. Given a polynomial (ie. given it's *a_{n}* factors) and given a value for =y= there can be multiple solutions for =x=. At first blush this doesn't seem related to the problems we're tackling with matrices. 
+It's a typicaly non-linear function of the form *y=f(x)* that takes inputs =x= and returns outputs =y=. Given a polynomial (ie. given its *a_{n}* factors) and given a value for =y= there can be multiple solutions for =x=. At first blush this doesn't seem related to the problems we've been tackling with matrices. 
 
-The critical insight that we need to understand how to use Vandermonde matrices is that it's linear in terms of it's own polynomial factors. We are ultimately interested in finding a polynomial /that fits/, so what we want to do is actually solve for the =a_{n}= polynomial factors. In other words we aren't taking *y=f(x)* and solving for *x*. We are taking a corresponding *y=f(a)* and solving for the polynomial factors *a_{n}*. The *x*'s are baked into the *f()*.
+The Vandermonde matrix does a clever inversion of our typical problem. While we typically are looking for =x= given =y= here because we are ultimately interested in finding a polynomial /that fits/ what we do instead is set up the problem to solve for the =a_{n}= polynomial factors. Instead of taking *y=f(x)* and solving for *x* we are taking a corresponding *y=f(a)* and solving for the polynomial factors *a_{n}*. We will see that the *x*'s are baked into the *f()*.
 
-To see how this is built up we simply take the polynomial function and a series of points/measurements =[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]= and write out the polynomial equations out.
+To see how this is built up we simply take the polynomial function and a series of points/measurements =[ (x_1,y_1) (x_2,y_2) (x_3,y_3) ... ]= and write out the equations.
 \begin{equation}
 y_1=a_{1}+a_{2}x_1+a_{3}x_{1}^{2}+a_{4}x_{1}^{3}+...\\
 y_2=a_{1}+a_{2}x_2+a_{3}x_{2}^{2}+a_{4}x_{2}^{3}+...\\
 y_3=a_{1}+a_{2}x_3+a_{3}x_{3}^{2}+a_{4}x_{3}^{3}+...\\
 ...
 \end{equation}
-This is now a standard matrix problem with the =a='s being the unknown. The =x='s look nonlinear, but they're actually known values and not something we are solving for. Writen out in matrix form we get
+
+No we we want to pull out the *a*'s to make this look like an *Ax=b* type of equation. While the =x='s in the equations look nonlinear they're actually known values coordinates of our =x,y= points so they're fixed scalar values and they not something we are solving for. Writen out in matrix form we get
 
 \begin{equation}
 \begin{bmatrix}
@@ -55,27 +56,18 @@ y_3\\
 \end{bmatrix}
 \end{equation}
 
-Where all the values of the x-matrix are known. (the x-matrix is the actual /Vandermonde matrix/ - *V*)
-
-Th next trick is that we can adjust he number of terms in the polynomial (the number of exponents of x and the the number of *a_{n}*'s) so that the matrix is always square - and in the general case non-singular. Now since we know how to solve *Ax=b* using the *LU decomposition* we can solve for all the polynomial factors *a_{n}* in this equivalent system *Va=y* - where the *V* is the matrix of exponents of =x=.
-
-Once we solve for the *a_{n}*'s we can then reconstruct the non-linear polynomial equation we started looking at in the beginning
-
-\begin{equation}
-y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
-\end{equation}
-
-It will not only hold true for all our =(x,y)= points but also for all other values of =x= we want to test - so we will have in the end fit a polynomial curve through all our points.
+Again, all the values of the x-matrix are known. (the x-matrix is the actual /Vandermonde matrix/ - *V*)
 
 
 * Vandermonde matrices
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
   (ns morelinear.vandermonde
-    (:require [clojure.core.matrix :refer :all]
+    (:require [morelinear.leastsquares :as leastsquares]
+	      [clojure.core.matrix :refer :all]
 	      [clojure.core.matrix.linear :as linear]))
   (set-current-implementation :vectorz) 
 #+END_SRC
-
+So given a series of =x='s we can build up this matrix directly.
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
   (defn polynomial-matrix
@@ -98,4 +90,93 @@ It will not only hold true for all our =(x,y)= points but also for all other val
 
 #+END_SRC
 
-As explained, in the full matrix case we can solve for the polynomial coefficients *a* with either *Va=y* where *V* is the Vandermonde matrix of ~x~'s and *y* is a vector of their corresponding ~y~ values. But we can also fit lower degree polynomials in a "best fit" kind of way. In this non-singular case we want to use a least squares method. See [[./leastsquares.html][the Least Squares Method]] for the finishing steps
+The number of polynomials terms (ie. the *degree* /n/ in the last x^{n}) is variable. 
+
+* Full rank case
+If we have as many polynomial terms as we have points then we are left with a square x-matrix which we can solve using Gaussian elimination (excluding singular/degenerate cases). In other words we can use the *LU decomposition* to solve for all the polynomial factors *a_{n}* in this equivalent system *Va=y* - where the *V* is the matrix of exponents of =x=.
+
+Once we solve for the *a_{n}*'s we can then stick them back into non-linear polynomial equation we started looking at in the beginning and get a solution.
+
+\begin{equation}
+y=a_{1}+a_{2}x+a_{3}x^{2}+a_{4}x^{3}+...
+\end{equation}
+
+It will not only hold true for all our =(x,y)= points but also for all other values of =x= we want to test - so we will have in the end fit a polynomial curve through all our points.
+
+* Least Squares
+
+However with our least squares method we now have an alternate solution. We can choose a *degree* that is /lower/ than the number of points/values we have and then solve for approximate solutions. This is often the preferrable solution. In general when we fit a polynomial we have a decent idea of the degree of the function that drives whatever we are measuring. We also know that the input values are not perfect, so if we overfit the points with a high-degree polynomial the results will also be very noisy. So typically we preselect the degree of the polynomial and then try to give the function as many data points as we can to get the best approximation of the underlying function as we can.
+
+#+BEGIN_QUOTE
+*Note*: That this doesn't always hold. If you have some non-linear function that you are approximating with a Taylor series, then cut off the number of polynomials serves no purpose
+#+END_QUOTE
+
+As before the Least Squares solutions come in a few flavors and it also works on the square case (even when the matrix is singular) - so we can skip writing a function for the square case and just have one polynomial solver for all square and skinny matrices
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/vandermonde.clj
+  (defn split-into-x-y
+    [points]
+    (let [vector-of-xs-and-ys (apply mapv vector points)]
+      {:x (mutable (first vector-of-xs-and-ys))
+       :y (mutable (second vector-of-xs-and-ys))}))
+
+
+  (defmulti polynomial-factors
+    "Solve for a polynomial equation of DEGREE that fits the given POINTS
+    and return the list of polynomial factors.
+    the underlying least squares METHOD used can be:
+    :lu
+    :lu-jumbo
+    :householder"
+    (fn [degree
+	 points
+	 method]
+      method))
+
+  (defmethod polynomial-factors :lu
+    [degree
+     points
+     method]
+    (let [xy (split-into-x-y points)]
+      (leastsquares/lu-direct (polynomial-matrix (:x xy)
+						 degree)
+			      (:y xy))))
+
+  (defmethod polynomial-factors :lu-jumbo
+    [degree
+     points
+     method]
+    (let [xy (split-into-x-y points)]
+      (leastsquares/lu-jumbo (polynomial-matrix (:x xy)
+						degree)
+			     (:y xy))))
+
+  (defmethod polynomial-factors :householder
+    [degree
+     points
+     method]
+    (let [xy (split-into-x-y points)
+	  vandermonde-matrix (mutable (polynomial-matrix (:x xy)
+							 degree))]
+      (leastsquares/householder-qr vandermonde-matrix
+				   (:y xy))))
+#+END_SRC
+
+
+#+BEGIN_SRC clojure
+  (polynomial-factors 3
+		      [[138.0 165.0]
+		       [275.0 197.0]
+		       [277.0 262.0]
+		       [186.0 277.0]
+		       [154.0 240.0]
+		       [236.0 141.0]
+		       [322.0 123.0]
+		       [358.0 122.0]
+		       [182.0 289.0]
+		       [118.0 294.0]
+		       [108.0 292.0]
+		       [54.0  259.0]]
+		      :householder)
+  ;;(251.1770462843548 0.3111353706549809 -0.001904254283169026)
+#+END_SRC
