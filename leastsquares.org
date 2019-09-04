@@ -81,7 +81,7 @@ We take the product *A^{T}A* and the product *A^{T}b* and solve *A^{T}Ax=A^{T}b*
 	(gauss/solve-with-lu ATA ATb)))
 #+END_SRC
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both :results output verbatim
   ;; missile problem from page 232
   (let [A [[1.0 0.0 0.0]
 	   [1.0 0.25 0.0625]
@@ -90,16 +90,22 @@ We take the product *A^{T}A* and the product *A^{T}b* and solve *A^{T}Ax=A^{T}b*
 	   [1.0 1.00 1.0]]
 	b [0.000 0.008 0.015 0.019 0.02]
 	x (lu-direct A b)]
-     (pm x)
-     (mmul A x))
+    (pm x)
+    (pm (mmul A x)))
+#+END_SRC
+
+#+RESULTS:
+: [-0.000 0.040 -0.019]
+: [-0.000 0.009 0.015 0.019 0.020]
+
+** The numerically stable solution
   ;; [-0.000 0.040 -0.019]
   ;; [-2.2857142857142797E-4
   ;;  0.008514285714285717
   ;;  0.01482857142857143
   ;;  0.018714285714285718
   ;;  0.020171428571428573]
-#+END_SRC
-** The numerically stable solution
+
 Unfortunately while the previous solutions is very simple, it does involve a matrix multiplication and therefore has some numerical issues. A nice trick is presented in *Exercise 4.6.9* with the equations
 
 \begin{equation}
@@ -195,7 +201,7 @@ So we can use any method that works on solving square matrices, use it on our ju
 	       (column-count input-matrix)))
 #+END_SRC
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both :results output verbatim
   ;; missile problem from page 232 but redone with the big matrix method
   (let [A [[1.0 0.0 0.0]
 	   [1.0 0.25 0.0625]
@@ -205,14 +211,30 @@ So we can use any method that works on solving square matrices, use it on our ju
 	b [0.000 0.008 0.015 0.019 0.02]
 	x (lu-jumbo A b)]
     (pm x)
-    (mmul A x))
-  ;; [-0.000 0.040 -0.019]
-  ;; [-2.2857142857142797E-4
-  ;;  0.008514285714285717
-  ;;  0.01482857142857143
-  ;;  0.018714285714285718
-  ;;  0.020171428571428573]
+    (pm (mmul A x)))
 #+END_SRC
+
+#+RESULTS:
+: [-0.000 0.040 -0.019]
+
+#+BEGIN_SRC clojure :exports both :results output verbatim
+  (let [A [[1.000    0.000       0.000]
+	   [1.000  250.000   62500.000]
+	   [1.000  500.000  250000.000]
+	   [1.000  750.000  562500.000]
+	   [1.000 1000.000 1000000.000]]
+	b [0.0 8.0 15.0 19.0 20.0]
+	x (lu-jumbo A b)]
+    (pm x)
+    (pm (mmul A x)))
+#+END_SRC
+
+#+RESULTS:
+: [-7.456 0.048 -0.000]
+: [-7.456 2.643 9.071 11.828 10.914]
+
+*TODO* This should be numerically stable but it's not. Need to double check everything again.. Maybe compare results to =elinear=
+
 
 * The QR case
 With the *QR* decomposition we similarly get to avoid computing the *A^{T}A* product. Since *A=QR* we can write rewrite *A^{T}Ax=A^{T}b*:
@@ -243,7 +265,7 @@ The *R* matrix is upper triangular so the left side solves directly through back
 #+END_SRC
 
 However when we test the result...
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both :results output verbatim
     ;; missile problem from page 232
   (let [A [[1.0 0.0 0.0]
 	   [1.0 0.25 0.0625]
@@ -253,14 +275,13 @@ However when we test the result...
 	b [0.000 0.008 0.015 0.019 0.02]
 	x (householder-qr-long A b)]
     (pm x)
-    (mmul A x))
-  ;; [0.003 0.016 0.005]
-  ;; [0.0027999653563131775
-  ;;  0.007000017321843412
-  ;;  0.011800034643686824
-  ;;  0.017200017321843415
-  ;;  0.023199965356313183]
+    (pm (mmul A x)))
 #+END_SRC
+
+#+RESULTS:
+: [0.003 0.016 0.005]
+: [0.003 0.007 0.012 0.017 0.023]
+
 The values are .. in the right direction but clearly much more off the mark than in the previous solutions. The trick, as mentioned in the Householder transform section, is to reduce *A* and *b* simultaneously with reflectors and skip forming *Q* entirely.
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
@@ -271,7 +292,7 @@ The values are .. in the right direction but clearly much more off the mark than
     (gauss/backward-substitution A b))
 #+END_SRC
 
-#+BEGIN_SRC clojure
+#+BEGIN_SRC clojure :exports both :results output verbatim
   ;; missile problem from page 232
   (let [A [[1.0 0.0 0.0]
 	   [1.0 0.25 0.0625]
@@ -282,12 +303,11 @@ The values are .. in the right direction but clearly much more off the mark than
 	b (mutable [0.000 0.008 0.015 0.019 0.02])
 	x (householder-qr R b)]
     (pm x)
-    (mmul A x))
-  ;; [-0.000 0.040 -0.019]
-  ;; [-2.2857142857143017E-4
-  ;;  0.008514285714285716
-  ;;  0.014828571428571434
-  ;;  0.01871428571428572
-  ;;  0.020171428571428573]
+    (pm (mmul A x)))
 #+END_SRC
+
+#+RESULTS:
+: [-0.000 0.040 -0.019]
+: [-0.000 0.009 0.015 0.019 0.020]
+
 And now the results match closely to what we got before
