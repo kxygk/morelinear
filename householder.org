@@ -1,17 +1,7 @@
 #+TITLE: Householder decomposition
 #+DESCRIPTION: The Householder QR decomposition
 
-
-#+HTML_DOCTYPE: html5
-#+HTML_LINK_UP: index.html
-#+HTML_LINK_HOME: ..
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
-#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
-#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
-#+OPTIONS: html-style:nil
-#+OPTIONS: num:nil
-#+OPTIONS: html-postamble:nil
-#+OPTIONS: html-scripts:nil
+#+INCLUDE: "../web/config.org"
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/householder.clj
   (ns morelinear.householder

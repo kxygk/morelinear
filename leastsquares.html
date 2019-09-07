@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-09-04 Wed 19:41 -->
+<!-- 2019-09-07 Sat 15:56 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Least Squares</title>
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div id="org-div-home-and-up">
- <a accesskey="h" href=".."> UP </a>
+ <a accesskey="h" href="./index.html"> UP </a>
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
@@ -45,14 +45,14 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgd9bf8a5">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
-<li><a href="#org6f17779">The LU case</a>
+<li><a href="#orgb4cf742">The A<sup>T</sup>Ax=A<sup>T</sup>b form</a></li>
+<li><a href="#org3b1e7d8">The LU case</a>
 <ul>
-<li><a href="#orgf5b47d3">Direct method</a></li>
-<li><a href="#org65166e3">The numerically stable solution</a></li>
+<li><a href="#orgaa9d4f0">Direct method</a></li>
+<li><a href="#org1459ce6">The numerically stable solution</a></li>
 </ul>
 </li>
-<li><a href="#org9e3eb07">The QR case</a></li>
+<li><a href="#org320709c">The QR case</a></li>
 </ul>
 </div>
 </div>
@@ -66,9 +66,9 @@
 </pre>
 </div>
 
-<div id="outline-container-orgd9bf8a5" class="outline-2">
-<h2 id="orgd9bf8a5">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
-<div class="outline-text-2" id="text-orgd9bf8a5">
+<div id="outline-container-orgb4cf742" class="outline-2">
+<h2 id="orgb4cf742">The A<sup>T</sup>Ax=A<sup>T</sup>b form</h2>
+<div class="outline-text-2" id="text-orgb4cf742">
 <p>
 Now that we have many ways to solve square linear systems we need to extend <b>Ax=b</b> to the overdefined case where we have more linear equations than parameters. This situation will come up constantly, generally in situations where you only have a few inputs you want to solve for, but you have a lot of redundant measurements. 
 </p>
@@ -127,13 +127,13 @@ As we learn in calculus, minimizing a function is done by take its derivative wi
 </div>
 </div>
 
-<div id="outline-container-org6f17779" class="outline-2">
-<h2 id="org6f17779">The LU case</h2>
-<div class="outline-text-2" id="text-org6f17779">
+<div id="outline-container-org3b1e7d8" class="outline-2">
+<h2 id="org3b1e7d8">The LU case</h2>
+<div class="outline-text-2" id="text-org3b1e7d8">
 </div>
-<div id="outline-container-orgf5b47d3" class="outline-3">
-<h3 id="orgf5b47d3">Direct method</h3>
-<div class="outline-text-3" id="text-orgf5b47d3">
+<div id="outline-container-orgaa9d4f0" class="outline-3">
+<h3 id="orgaa9d4f0">Direct method</h3>
+<div class="outline-text-3" id="text-orgaa9d4f0">
 <p>
 We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> and solve <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b> just like we solve an <b>Ax=b</b> system
 </p>
@@ -170,9 +170,9 @@ We take the product <b>A<sup>T</sup>A</b> and the product <b>A<sup>T</sup>b</b> 
 </div>
 </div>
 
-<div id="outline-container-org65166e3" class="outline-3">
-<h3 id="org65166e3">The numerically stable solution</h3>
-<div class="outline-text-3" id="text-org65166e3">
+<div id="outline-container-org1459ce6" class="outline-3">
+<h3 id="org1459ce6">The numerically stable solution</h3>
+<div class="outline-text-3" id="text-org1459ce6">
 <p>
 ;; [-0.000 0.040 -0.019]
 ;; [-2.2857142857142797E-4
@@ -337,9 +337,9 @@ So we can use any method that works on solving square matrices, use it on our ju
 </div>
 
 
-<div id="outline-container-org9e3eb07" class="outline-2">
-<h2 id="org9e3eb07">The QR case</h2>
-<div class="outline-text-2" id="text-org9e3eb07">
+<div id="outline-container-org320709c" class="outline-2">
+<h2 id="org320709c">The QR case</h2>
+<div class="outline-text-2" id="text-org320709c">
 <p>
 With the <b>QR</b> decomposition we similarly get to avoid computing the <b>A<sup>T</sup>A</b> product. Since <b>A=QR</b> we can write rewrite <b>A<sup>T</sup>Ax=A<sup>T</sup>b</b>:
 </p>

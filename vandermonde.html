@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-21 Wed 21:20 -->
+<!-- 2019-09-07 Sat 15:56 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vandermonde matrices</title>
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div id="org-div-home-and-up">
- <a accesskey="h" href=".."> UP </a>
+ <a accesskey="h" href="./index.html"> UP </a>
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
@@ -45,17 +45,17 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org0613c50">Solving polynomials</a></li>
-<li><a href="#org65e3fb3">Vandermonde matrices</a></li>
-<li><a href="#org714b83f">Full rank case</a></li>
-<li><a href="#org23fc910">Least Squares</a></li>
+<li><a href="#org9bdda0d">Solving polynomials</a></li>
+<li><a href="#org54c0e08">Vandermonde matrices</a></li>
+<li><a href="#org0d0c5da">Full rank case</a></li>
+<li><a href="#org5d3367f">Least Squares</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org0613c50" class="outline-2">
-<h2 id="org0613c50">Solving polynomials</h2>
-<div class="outline-text-2" id="text-org0613c50">
+<div id="outline-container-org9bdda0d" class="outline-2">
+<h2 id="org9bdda0d">Solving polynomials</h2>
+<div class="outline-text-2" id="text-org9bdda0d">
 <p>
 <code>pages 185-186</code> introduces the Vandermonde matix which provides us with a way to solve for polynomials that fit a set of given points. 
 </p>
@@ -118,9 +118,9 @@ Again, all the values of the x-matrix are known. (the x-matrix is the actual <i>
 </div>
 
 
-<div id="outline-container-org65e3fb3" class="outline-2">
-<h2 id="org65e3fb3">Vandermonde matrices</h2>
-<div class="outline-text-2" id="text-org65e3fb3">
+<div id="outline-container-org54c0e08" class="outline-2">
+<h2 id="org54c0e08">Vandermonde matrices</h2>
+<div class="outline-text-2" id="text-org54c0e08">
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.vandermonde</span>
   (<span style="color: #D0372D;">:require</span> [morelinear.leastsquares <span style="color: #D0372D;">:as</span> leastsquares<span style="color: #999999;">]</span>
@@ -161,9 +161,9 @@ The number of polynomials terms (ie. the <b>degree</b> <i>n</i> in the last x<su
 </div>
 </div>
 
-<div id="outline-container-org714b83f" class="outline-2">
-<h2 id="org714b83f">Full rank case</h2>
-<div class="outline-text-2" id="text-org714b83f">
+<div id="outline-container-org0d0c5da" class="outline-2">
+<h2 id="org0d0c5da">Full rank case</h2>
+<div class="outline-text-2" id="text-org0d0c5da">
 <p>
 If we have as many polynomial terms as we have points then we are left with a square x-matrix which we can solve using Gaussian elimination (excluding singular/degenerate cases). In other words we can use the <b>LU decomposition</b> to solve for all the polynomial factors <b>a<sub>n</sub></b> in this equivalent system <b>Va=y</b> - where the <b>V</b> is the matrix of exponents of <code>x</code>.
 </p>
@@ -182,9 +182,9 @@ It will not only hold true for all our <code>(x,y)</code> points but also for al
 </div>
 </div>
 
-<div id="outline-container-org23fc910" class="outline-2">
-<h2 id="org23fc910">Least Squares</h2>
-<div class="outline-text-2" id="text-org23fc910">
+<div id="outline-container-org5d3367f" class="outline-2">
+<h2 id="org5d3367f">Least Squares</h2>
+<div class="outline-text-2" id="text-org5d3367f">
 <p>
 However with our least squares method we now have an alternate solution. We can choose a <b>degree</b> that is <i>lower</i> than the number of points/values we have and then solve for approximate solutions. This is often the preferrable solution. In general when we fit a polynomial we have a decent idea of the degree of the function that drives whatever we are measuring. We also know that the input values are not perfect, so if we overfit the points with a high-degree polynomial the results will also be very noisy. So typically we preselect the degree of the polynomial and then try to give the function as many data points as we can to get the best approximation of the underlying function as we can.
 </p>

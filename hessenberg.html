@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-03 Sat 21:45 -->
+<!-- 2019-09-07 Sat 15:57 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear: Hessenberg form</title>
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div id="org-div-home-and-up">
- <a accesskey="h" href="index.html"> UP </a>
+ <a accesskey="h" href="./index.html"> UP </a>
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
@@ -45,22 +45,31 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org8da6447">Reduction to Hessenberg Form</a></li>
+<li><a href="#org4f74dec">Preface</a></li>
+<li><a href="#orgae5ae70">Reduction with reflectors Form</a></li>
 </ul>
 </div>
 </div>
-
-<div id="outline-container-org8da6447" class="outline-2">
-<h2 id="org8da6447">Reduction to Hessenberg Form</h2>
-<div class="outline-text-2" id="text-org8da6447">
 <div class="org-src-container">
 <pre class="src src-clojure">(<span style="color: #0000FF;">ns</span> <span style="color: #6434A3;">morelinear.hessenberg</span>
   (<span style="color: #D0372D;">:require</span> [clojure.core.matrix <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span>
              morelinear.householder <span style="color: #D0372D;">:refer</span> <span style="color: #D0372D;">:all</span><span style="color: #999999;">]))</span>
 </pre>
 </div>
+
+<div id="outline-container-org4f74dec" class="outline-2">
+<h2 id="org4f74dec">Preface</h2>
+<div class="outline-text-2" id="text-org4f74dec">
 <p>
-The <b>QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is our new basis and <b>R</b> are the coordinates of <b>A</b> in this basis. However if we got back to thinking about a linear system and we rewrite <b>Ax=b</b> in terms of the <b>QR</b> we get something nonsensical. In the equation <b>QRx=b</b> the <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
+For context on how to produce this decompositon, see the <a href="./householder.html">Householder QR decomposition</a>. There are a lot of parallels and overlap between the two
+</p>
+</div>
+</div>
+<div id="outline-container-orgae5ae70" class="outline-2">
+<h2 id="orgae5ae70">Reduction with reflectors Form</h2>
+<div class="outline-text-2" id="text-orgae5ae70">
+<p>
+The <b>Householder QR</b> decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The <b>Q</b> is our new basis and <b>R</b> are the coordinates of <b>A</b> in this basis. However if we got back to thinking about a linear system and we rewrite <b>Ax=b</b> in terms of the <b>QR</b> we get something nonsensical. In the equation <b>QRx=b</b> the <b>Rx</b> is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 </p>
 
 <p>

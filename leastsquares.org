@@ -1,17 +1,7 @@
 #+TITLE: Least Squares
 #+DESCRIPTION: Some linear algebra in Clojure
 
-
-#+HTML_DOCTYPE: html5
-#+HTML_LINK_UP: ..
-#+HTML_LINK_HOME: ..
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
-#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
-#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
-#+OPTIONS: html-style:nil
-#+OPTIONS: num:nil
-#+OPTIONS: html-postamble:nil
-#+OPTIONS: html-scripts:nil
+#+INCLUDE: "../web/config.org"
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
   (ns morelinear.leastsquares
@@ -216,6 +206,7 @@ So we can use any method that works on solving square matrices, use it on our ju
 
 #+RESULTS:
 : [-0.000 0.040 -0.019]
+: [-0.000 0.009 0.015 0.019 0.020]
 
 #+BEGIN_SRC clojure :exports both :results output verbatim
   (let [A [[1.000    0.000       0.000]

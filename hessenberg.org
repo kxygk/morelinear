@@ -1,17 +1,7 @@
 #+TITLE: MoreLinear: Hessenberg form
 #+DESCRIPTION: The Hessenberg
 
-
-#+HTML_DOCTYPE: html5
-#+HTML_LINK_UP: index.html
-#+HTML_LINK_HOME: ..
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../web/worg.css" />
-#+HTML_HEAD_EXTRA: <link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
-#+HTML_MATHJAX: path: "../MathJax/MathJax.js?config=TeX-AMS_CHTML"
-#+OPTIONS: html-style:nil
-#+OPTIONS: num:nil
-#+OPTIONS: html-postamble:nil
-#+OPTIONS: html-scripts:nil
+#+INCLUDE: "../web/config.org"
 
 #+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/hessenberg.clj
   (ns morelinear.hessenberg
@@ -20,7 +10,7 @@
 #+END_SRC
 
 * Preface
-For context on how to produce this decompositon, see the [[householder.html][Householder QR decomposition]]. There are a lot of parallels and overlap between the two
+For context on how to produce this decompositon, see the [[./householder.html][Householder QR decomposition]]. There are a lot of parallels and overlap between the two
 * Reduction with reflectors Form
 The *Householder QR* decomposition has given us a great tool for expressing a linear system in a convenient orthogonal basis. The *Q* is our new basis and *R* are the coordinates of *A* in this basis. However if we got back to thinking about a linear system and we rewrite *Ax=b* in terms of the *QR* we get something nonsensical. In the equation *QRx=b* the *Rx* is not particularly meaningful on it's own b/c it's multiplying coordinates in one basis with a vector in the standard basis.
 

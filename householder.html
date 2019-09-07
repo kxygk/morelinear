@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-08-17 Sat 20:01 -->
+<!-- 2019-09-07 Sat 15:56 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Householder decomposition</title>
@@ -36,7 +36,7 @@
 </head>
 <body>
 <div id="org-div-home-and-up">
- <a accesskey="h" href="index.html"> UP </a>
+ <a accesskey="h" href="./index.html"> UP </a>
  |
  <a accesskey="H" href=".."> HOME </a>
 </div><div id="content">
@@ -45,11 +45,12 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgf9881d5">elementary reflector</a></li>
-<li><a href="#org57b64bb">elementary coordinate reflector</a></li>
-<li><a href="#org6207122">Zeroing the first column</a></li>
-<li><a href="#org91e39af">Zeroing out the second column and so on..</a></li>
-<li><a href="#org61e6e81">Getting the reflectors</a></li>
+<li><a href="#org5fbef0f">elementary reflector</a></li>
+<li><a href="#orgaa7a93a">elementary coordinate reflector</a></li>
+<li><a href="#org65ff25a">Zeroing the first column</a></li>
+<li><a href="#orgcfed76a">Zeroing out the second column and so on..</a></li>
+<li><a href="#orgeb6ad2b">Getting the reflectors</a></li>
+<li><a href="#orgc59417b">Extended reduction</a></li>
 </ul>
 </div>
 </div>
@@ -63,9 +64,9 @@
 The Householder decomposition is an alternate method to the Gram-Schmidt decomposition for build a <b>QR</b> matrix pair. instead of building an orthonormal basis it takes a more direct approach similar to the Gaussian <b>LU</b> procedure by just zeroing out columns to get the desired shape. The difference from the <b>LU</b> is that now instead of using elementary matrices to do row operations to get zeroes we will restrict ourselves to using <b>elementary reflectors</b>.
 </p>
 
-<div id="outline-container-orgf9881d5" class="outline-2">
-<h2 id="orgf9881d5">elementary reflector</h2>
-<div class="outline-text-2" id="text-orgf9881d5">
+<div id="outline-container-org5fbef0f" class="outline-2">
+<h2 id="org5fbef0f">elementary reflector</h2>
+<div class="outline-text-2" id="text-org5fbef0f">
 <p>
 An <i>elementary reflector</i> does what's written on the label, it's a matrix/linear-system which when given a vector produces its reflection across a <i>N-1</i> dimensional hyperplane (in 2D it's a line and in 3D it's a plane). In the next section we will deal with selecting the correct hyperplane, but for the time being we will just focus on building such a matrix. 
 </p>
@@ -137,9 +138,9 @@ For example:
 </div>
 </div>
 
-<div id="outline-container-org57b64bb" class="outline-2">
-<h2 id="org57b64bb">elementary coordinate reflector</h2>
-<div class="outline-text-2" id="text-org57b64bb">
+<div id="outline-container-orgaa7a93a" class="outline-2">
+<h2 id="orgaa7a93a">elementary coordinate reflector</h2>
+<div class="outline-text-2" id="text-orgaa7a93a">
 <p>
 Circling back to our original intent, we were trying to use reflectors to clear rows and build an upper triangular matrix (the <b>R</b> in the <b>QR</b>)
 </p>
@@ -216,9 +217,9 @@ We got some seemingly random matrix out. If we then multiply it times our random
 </div>
 
 
-<div id="outline-container-org6207122" class="outline-2">
-<h2 id="org6207122">Zeroing the first column</h2>
-<div class="outline-text-2" id="text-org6207122">
+<div id="outline-container-org65ff25a" class="outline-2">
+<h2 id="org65ff25a">Zeroing the first column</h2>
+<div class="outline-text-2" id="text-org65ff25a">
 <p>
 Now putting all the pieces together, given some matrix <b>A</b> we can get back a reflector to zero out its first column
 </p>
@@ -264,9 +265,9 @@ This is really just a wrapper for the previous function. Now we can test it by w
 </div>
 </div>
 
-<div id="outline-container-org91e39af" class="outline-2">
-<h2 id="org91e39af">Zeroing out the second column and so on..</h2>
-<div class="outline-text-2" id="text-org91e39af">
+<div id="outline-container-orgcfed76a" class="outline-2">
+<h2 id="orgcfed76a">Zeroing out the second column and so on..</h2>
+<div class="outline-text-2" id="text-orgcfed76a">
 <p>
 Now we hit a bit of a problem. You can use the same method to make some matrix <b>Q<sub>2</sub></b> that will zero out the second column, but when you combine the two and try doing <b>Q<sub>2</sub>Q<sub>1</sub>A</b> you will see that <b>Q<sub>2</sub></b> is messing up the first column - so we lose the progress we'd made in the first step. We may have gotten the first column to lie on the coordinate vector after <b>Q<sub>1</sub>A</b>, but when you reflect it again it moves away from the coordinate vector b/c all columns are reflected at each step.
 </p>
@@ -404,9 +405,9 @@ It's also important to note that everything we'd discussed also works on overdef
 </div>
 </div>
 </div>
-<div id="outline-container-org61e6e81" class="outline-2">
-<h2 id="org61e6e81">Getting the reflectors</h2>
-<div class="outline-text-2" id="text-org61e6e81">
+<div id="outline-container-orgeb6ad2b" class="outline-2">
+<h2 id="orgeb6ad2b">Getting the reflectors</h2>
+<div class="outline-text-2" id="text-orgeb6ad2b">
 <p>
 The last section managed to get the <b>R</b> in the <b>QR</b>. The next step is combining all these intermediary relfectors (those <b>S</b> matrices) into a matrix <b>Q</b>
 </p>
@@ -566,6 +567,74 @@ Note that this all works perfectly well for fat (underdefined) and skinny (overd
 <p>
 In a more sophisticated linear algebra system you may want to keep the resulting <b>R</b> matrix as two separate submatrices b/c upper diagonal matrices can have more performant code associated with them
 </p>
+<blockquote>
+<p>
+<b>Note</b>: In the little testing I've done, my solution is not giving very accurate results
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-orgc59417b" class="outline-2">
+<h2 id="orgc59417b">Extended reduction</h2>
+<div class="outline-text-2" id="text-orgc59417b">
+<p>
+While the last section is the more flexible, we will see in <a href="./leastsquares.html">Least Squares</a> problem that it can actually make sense to just reduce both the linear systems <b>A</b> and the output-vector <b>b</b> with the same reflectors at the same time - and in so doing avoid making <b>Q</b> entirely. This is computationally favorable as well. So we just need to expend <code>reduce-to-r</code> to handle reducing an output vector in parallel.
+</p>
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">defn</span> <span style="color: #006699;">reduction</span>
+  <span style="color: #036A07;">"Reduce an INPUT-MATRIX to a /lower triangular/ or /upper trapeziodal/ orthonormal matrix </span>
+<span style="color: #036A07;">  and apply the reduction to the OUTPUT-VECTOR as well"</span>
+  [input-matrix output-vector<span style="color: #999999;">]</span>
+  (<span style="color: #0000FF;">let</span> [reflector (first-column-reflector input-matrix<span style="color: #999999;">)]</span>
+    (assign! input-matrix
+             (mmul reflector
+                   input-matrix<span style="color: #999999;">))</span>
+    (assign! output-vector
+             (mmul reflector
+                   output-vector<span style="color: #999999;">))</span>
+    (<span style="color: #0000FF;">if</span> (<span style="color: #0000FF;">or</span> (= 1 (row-count input-matrix<span style="color: #999999;">))</span>
+            (= 1 (column-count input-matrix<span style="color: #999999;">)))</span>
+      input-matrix <span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">base case</span>
+      (<span style="color: #0000FF;">recur</span> (submatrix input-matrix
+                        1
+                        (dec (row-count input-matrix<span style="color: #999999;">))</span>
+                        1
+                        (dec (column-count input-matrix<span style="color: #999999;">)))</span>
+             (subvector output-vector
+                        1
+                        (dec (ecount output-vector<span style="color: #999999;">)))))))</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-clojure">(<span style="color: #0000FF;">let</span> [A (mutable [[43.0 36.0 38.0 <span style="color: #999999;">]</span>
+                  [21.0 98.0 55.0 <span style="color: #999999;">]</span>
+                  [72.0 13.0 98.0 <span style="color: #999999;">]</span>
+                  [28.0 38.0 73.0 <span style="color: #999999;">]])</span>
+      b (mutable [ 11.0 22.0 33.0 44.0 <span style="color: #999999;">])]</span>
+  (reduction A b<span style="color: #999999;">)</span>
+  (pm A<span style="color: #999999;">)</span>
+  (pm b<span style="color: #999999;">))</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[[90.874 61.690 130.830]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 93.313  29.311]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[-0.000  0.000  37.767]</span>
+<span style="color: #8D8D84;">;;  </span><span style="color: #8D8D84; font-style: italic;">[ 0.000 -0.000   0.000]]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">[49.993 16.814 27.554 -9.424]</span>
+<span style="color: #8D8D84;">;; </span><span style="color: #8D8D84; font-style: italic;">nil</span>
+
+
+
+(<span style="color: #0000FF;">let</span> [A (mutable [[1.0 0.0 0.0<span style="color: #999999;">]</span>
+         [1.0 0.25 0.0625<span style="color: #999999;">]</span>
+         [1.0 0.50 0.25<span style="color: #999999;">]</span>
+         [1.0 0.75 0.5625<span style="color: #999999;">]</span>
+         [1.0 1.00 1.0<span style="color: #999999;">]])</span>
+      b (mutable [0.000 0.008 0.015 0.019 0.02<span style="color: #999999;">])]</span>
+  (reduction A b<span style="color: #999999;">)</span>
+  (pm A) (pm b<span style="color: #999999;">))</span>
+</pre>
+</div>
 </div>
 </div>
 </div>
