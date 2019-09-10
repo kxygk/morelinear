@@ -172,7 +172,29 @@ So we can use any method that works on solving square matrices, use it on our ju
 		  (join-along 1
 			      AT
 			      zeroes))))
+#+END_SRC
+#+BEGIN_SRC clojure :exports both :results output verbatim
+  (let [A [[1.0 0.0 0.0]
+	   [1.0 0.25 0.0625]
+	   [1.0 0.50 0.25]
+	   [1.0 0.75 0.5625]
+	   [1.0 1.00 1.0]]]
+    (-> A
+	jumbo-matrix
+	pm))
+#+END_SRC
 
+#+RESULTS:
+: [[1.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000]
+:  [0.000 1.000 0.000 0.000 0.000 1.000 0.250 0.063]
+:  [0.000 0.000 1.000 0.000 0.000 1.000 0.500 0.250]
+:  [0.000 0.000 0.000 1.000 0.000 1.000 0.750 0.563]
+:  [0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000]
+:  [1.000 1.000 1.000 1.000 1.000 0.000 0.000 0.000]
+:  [0.000 0.250 0.500 0.750 1.000 0.000 0.000 0.000]
+:  [0.000 0.063 0.250 0.563 1.000 0.000 0.000 0.000]]
+
+#+BEGIN_SRC clojure :results output silent :session :tangle src/morelinear/leastsquares.clj
   (defn- pad-with-zeroes
     "Takes the INPUT-VECTOR and make it longer with some zeroes padded on the end"
     [input-vector number-of-zeroes]
@@ -221,8 +243,8 @@ So we can use any method that works on solving square matrices, use it on our ju
 #+END_SRC
 
 #+RESULTS:
-: [-7.456 0.048 -0.000]
-: [-7.456 2.643 9.071 11.828 10.914]
+: [-0.229 0.040 -0.000]
+: [-0.229 8.514 14.829 18.714 20.171]
 
 *TODO* This should be numerically stable but it's not. Need to double check everything again.. Maybe compare results to =elinear=
 
