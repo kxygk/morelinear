@@ -91,36 +91,61 @@ Putting it all together to solve the square *Ax=b* system
     (let [{:keys [L
 		  U
 		  P]} (linear/lu A)
-	  Pb (mmul P b)
-	  y (forward-substitution L Pb)]
+	  PTb (mmul (transpose P)
+		    b)
+	  y (forward-substitution L PTb)]
       (backward-substitution U y)))
 #+END_SRC
 Test example:
-#+BEGIN_SRC clojure
-  (let [skinny-A [[ 1.0 2.0 ]
-		  [ 0.0 3.0 ]
-		  [ 0.0 0.0 ]]
-	long-b [ 5.0 6.0 999.0 ]]
-    (pm (backward-substitution skinny-A
-			       long-b)))
-  ;;[1.000 2.000]
-
-  (let [A [[0.4 0.6 0.8 0.9]
-	   [0.4 0.6 0.6 0.8]
-	   [0.2 0.2 0.4 0.2]
-	   [0.5 0.3 0.3 0.8]]
-	{L :L
-	 U :U
-	 P :P} (linear/lu A)
-	b [2.0 5.0 8.0 1.0]]
-    (pm (mmul L
-	      (forward-substitution L
-				    b)))
-    ;;[2.000 5.000 8.000 1.000]
-    (pm (mmul U
-	      (backward-substitution U
-				     b)))
-    ;;[2.000 5.000 8.000 1.000]
-    (pm (mmul A (solve-with-lu A (mmul P b)))))
-    ;;[2.000 5.000 8.000 1.000]
+#+BEGIN_SRC clojure :exports both :results output verbatim
+    (let [skinny-A [[ 1.0 2.0 ]
+		    [ 0.0 3.0 ]
+		    [ 0.0 0.0 ]]
+	  long-b [ 5.0 6.0 999.0 ]]
+      (pm (backward-substitution skinny-A
+				 long-b)))
 #+END_SRC
+
+#+RESULTS:
+: [1.000 2.000]
+
+    ;;[1.000 2.000]
+#+BEGIN_SRC clojure :exports both :results output verbatim
+    (let [A [[0.4 0.6 0.8 0.9]
+	     [0.4 0.6 0.6 0.8]
+	     [0.2 0.2 0.4 0.2]
+	     [0.5 0.3 0.3 0.8]]
+	  {L :L
+	   U :U
+	   P :P} (linear/lu A)
+	  b [2.0 5.0 8.0 1.0]]
+      (pm (mmul L
+		(forward-substitution L
+				      b)))
+      (pm (mmul U
+		(backward-substitution U
+				       b)))
+      (pm (mmul A (solve-with-lu A b))))
+#+END_SRC
+
+#+RESULTS:
+: [2.000 5.000 8.000 1.000]
+: [2.000 5.000 8.000 1.000]
+: [2.000 5.000 8.000 1.000]
+
+#+BEGIN_SRC clojure :exports both :results output verbatim
+  (let [huge-A [[1.000     0.000      0.000      0.000       0.000 1.000    0.000       0.000]
+		[0.000     1.000      0.000      0.000       0.000 1.000  250.000   62500.000]
+		[0.000     0.000      1.000      0.000       0.000 1.000  500.000  250000.000]
+		[0.000     0.000      0.000      1.000       0.000 1.000  750.000  562500.000]
+		[0.000     0.000      0.000      0.000       1.000 1.000 1000.000 1000000.000]
+		[1.000     1.000      1.000      1.000       1.000 0.000    0.000       0.000]
+		[0.000   250.000    500.000    750.000    1000.000 0.000    0.000       0.000]
+		[0.000 62500.000 250000.000 562500.000 1000000.000 0.000    0.000       0.000]]
+	b [0.000 8.000 15.000 19.000 20.000 0.000 0.000 0.000]
+	x (solve-with-lu huge-A b)]
+    (pm (mmul huge-A x)))
+#+END_SRC
+
+#+RESULTS:
+: [0.000 8.000 15.000 19.000 20.000 0.000 0.000 0.000]

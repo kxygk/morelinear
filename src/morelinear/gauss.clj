@@ -73,6 +73,7 @@
   (let [{:keys [L
 		U
 		P]} (linear/lu A)
-	Pb (mmul P b)
-	y (forward-substitution L Pb)]
+	PTb (mmul (transpose P)
+		  b)
+	y (forward-substitution L PTb)]
     (backward-substitution U y)))
