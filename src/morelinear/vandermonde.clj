@@ -58,7 +58,6 @@
   (let [xy (split-into-x-y points)
 	vandermonde-matrix (mutable (polynomial-matrix (:x xy)
 						       degree))]
-    (pm vandermonde-matrix)
     (leastsquares/lu-jumbo vandermonde-matrix
 			   (:y xy))))
 
