@@ -23,40 +23,43 @@
 		      (ecount polynomial-input-values))))
 
 (defn split-into-x-y
-  [points]
-  (let [vector-of-xs-and-ys (apply mapv vector points)]
-    {:x (mutable (first vector-of-xs-and-ys))
-     :y (mutable (second vector-of-xs-and-ys))}))
+    [points]
+    (let [vector-of-xs-and-ys (apply mapv vector points)]
+      {:x (mutable (first vector-of-xs-and-ys))
+       :y (mutable (second vector-of-xs-and-ys))}))
 
 
-(defmulti polynomial-factors
-  "Solve for a polynomial equation of DEGREE that fits the given POINTS
-  and return the list of polynomial factors.
-  the underlying least squares METHOD used can be:
-  :lu
-  :lu-jumbo
-  :householder"
-  (fn [degree
-       points
-       method]
-    method))
+  (defmulti polynomial-factors
+    "Solve for a polynomial equation of DEGREE that fits the given POINTS
+    and return the list of polynomial factors.
+    the underlying least squares METHOD used can be:
+    :lu
+    :lu-jumbo
+    :householder"
+    (fn [degree
+	 points
+	 method]
+      method))
 
 (defmethod polynomial-factors :lu
   [degree
    points
    method]
-  (let [xy (split-into-x-y points)]
-    (leastsquares/lu-direct (polynomial-matrix (:x xy)
-					       degree)
+  (let [xy (split-into-x-y points)
+	vandermonde-matrix (mutable (polynomial-matrix (:x xy)
+						       degree))]
+    (leastsquares/lu-direct vandermonde-matrix
 			    (:y xy))))
 
 (defmethod polynomial-factors :lu-jumbo
   [degree
    points
    method]
-  (let [xy (split-into-x-y points)]
-    (leastsquares/lu-jumbo (polynomial-matrix (:x xy)
-					      degree)
+  (let [xy (split-into-x-y points)
+	vandermonde-matrix (mutable (polynomial-matrix (:x xy)
+						       degree))]
+    (pm vandermonde-matrix)
+    (leastsquares/lu-jumbo vandermonde-matrix
 			   (:y xy))))
 
 (defmethod polynomial-factors :householder
