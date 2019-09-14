@@ -11,6 +11,14 @@ As before I am following the textbook /Matrix Analysis and Applied Linear Algebr
 
 Unlike [[http://geokon-gh.github.io/elinear/index.html][~elinear~]] this project doesn't explain Clojure nor the details of how to represent matrices on the computer. For more details, see the notes at the end.
 * Linear systems : Ax=b
+We start off with the most straightforward square system *Ax=b*. We are give a know square system *A* and a known output *b* and we are tasked with finding the corresponding input *x* if it exists. We so far have the following methods:
+
+- [[./gauss.html][*The LU decompositon*]] :: Also known as Gaussian reduction. Reduces our system *A* to two systems/matrices *L* and *U*. One lower triangular and the other upper triangular
+- *The LU decompositon with partial pivoting* :: Similar to the previous method but we swap rows so that the pivot is always that largest column value.
+- *The LU decompositon  with complete pivoting* :: Again similar to the previous method but the columns are switched as well.
+- *The Gram Schmidt QR decomposition* :: Reduces the matrix *A* to an orthogonal basis *Q* and a upper triangular matrix *R*
+- [[./householder.html][*The Householder QR decomposition*]] :: An alternate method to get a *QR* matrix pair through /Householder reflectors/
+- *The Given QR decomposition* :: An alternate method to get a *QR* pair through rotation matrices
 #+BEGIN_QUOTE
 *Note:* The LU and GramSchmidt have been implemented in ELisp if you'd like to see how it's done: [[http://geokon-gh.github.io/elinear/index.html][elinear]]
 #+END_QUOTE
@@ -24,15 +32,6 @@ Unlike [[http://geokon-gh.github.io/elinear/index.html][~elinear~]] this project
 
 The topic of /residuals/, /sensitivity/ and /coditioning/ will be revisited later
 #+END_QUOTE
-We start off with the most straightforward square system *Ax=b*. We are give a know square system *A* and a known output *B* and we are tasked with finding the corresponding input if it exists. We so far have the following methods:
-
-- [[./gauss.html][*The LU decompositon*]] :: Also known as Gaussian reduction. Reduces our system *A* to two systems/matrices *L* and *U*. One lower triangular and the other upper triangular
-- *The LU decompositon with partial pivoting* :: Similar to the previous method but we swap rows so that the pivot is always that largest column value.
-- *The LU decompositon  with complete pivoting* :: Again similar to the previous method but the columns are switched as well.
-- *The Gram Schmidt QR decomposition* :: Reduces the matrix *A* to an orthogonal basis *Q* and a upper triangular matrix *R*
-- [[./householder.html][*The Householder QR decomposition*]] :: An alternate method to get a *QR* matrix pair through /Householder reflectors/
-- *The Given QR decomposition* :: An alternate method to get a *QR* pair through rotation matrices
-
 * Least Squares
 The next step is extending the previous method to non-square systems and systems with no solution. In these cases applying the previous method directly will sometimes not work as a precise solution will not exist. We will need to use the [[./leastsquares.html][Least Squares method]] to find a nearby solution
 
@@ -40,7 +39,7 @@ The next step is extending the previous method to non-square systems and systems
 
 
 * Similarity transforms : R^{-1}BRx=b
-Exploring the posibilities of transforming our system *A* into a different basis where it has a more convenient form *B*. We take out inputs *x* from the standard basis into this new more convenient basis, then pass we them through the simpler system *B* and finally take the output and transform it back to the standard basis to get the output *b*.
+Exploring the posibilities of transforming our system *A* into a different basis where it has a more convenient form *S*. We take out inputs *x* from the standard basis (*e_{1}*, *e_{2}* .. *e_{n}*) into this new more convenient basis, then pass we them through the simpler system *S* and finally take the output and transform it back to the standard basis to get the output *b*.
 
 - [[./hessenberg.html][*Hessenberg Form*]] :: Using /Householder reflectors/ we transform our matrix *A* into a form that is /almost/ upper triangular
 
