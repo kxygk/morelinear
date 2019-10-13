@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-09-17 Tue 17:17 -->
+<!-- 2019-10-13 Sun 18:49 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear \\ Fourier</title>
@@ -23,39 +23,40 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org17668c9">Goal</a></li>
-<li><a href="#org549be8c">Complex numbers</a></li>
-<li><a href="#org2246bf4">The Unit Circle</a></li>
-<li><a href="#org771ca7d">Euler's Formula</a></li>
-<li><a href="#orgf727f16">The roots of unity</a></li>
-<li><a href="#org71b6a76">Fourier series</a></li>
-<li><a href="#org9d1441c">Inner products of complex numbers</a></li>
-<li><a href="#org0b03674">Fourier Vectors</a></li>
-<li><a href="#org2ee7ddf">Fourier Matrix</a></li>
-<li><a href="#org1ac9dc1">Frequency Space?</a>
+<li><a href="#org38d04ed">Goal</a></li>
+<li><a href="#org83d372f">Complex numbers</a></li>
+<li><a href="#orgea842ef">The Unit Circle</a></li>
+<li><a href="#orgd85ac2f">Euler's Formula</a></li>
+<li><a href="#org0d9c3b2">The roots of unity</a></li>
+<li><a href="#orgc11849a">Fourier series</a></li>
+<li><a href="#org7f287d5">Inner products of complex numbers</a></li>
+<li><a href="#org8c69c8d">Fourier Vectors</a></li>
+<li><a href="#orgd91bc90">Fourier Matrix</a></li>
+<li><a href="#orgf4121b8">Frequency Space?</a>
 <ul>
-<li><a href="#org8180662">How does a sinusoidal look in this basis?</a></li>
-<li><a href="#org04db625">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</a></li>
+<li><a href="#orgaf2d678">How does a sinusoidal look in this basis?</a></li>
+<li><a href="#org6e18e17">How does a phase shift look in this basis?</a></li>
+<li><a href="#org48a6b11">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org17668c9" class="outline-2">
-<h2 id="org17668c9">Goal</h2>
-<div class="outline-text-2" id="text-org17668c9">
+<div id="outline-container-org38d04ed" class="outline-2">
+<h2 id="org38d04ed">Goal</h2>
+<div class="outline-text-2" id="text-org38d04ed">
 <p>
 Using the multiplicative properties of complex numbers we find a way to construct an convenient, easily-invertible orthogonal basis. This basis allows us to represent a series of input samples (ie. in an input vector) as the sum of a carefully constructed, independent set of sinusoidals. This basis allows us to carry out a class of operations that are numerically intensive in the standard basis but much quicker in the frequency-basis.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org549be8c" class="outline-2">
-<h2 id="org549be8c">Complex numbers</h2>
-<div class="outline-text-2" id="text-org549be8c">
+<div id="outline-container-org83d372f" class="outline-2">
+<h2 id="org83d372f">Complex numbers</h2>
+<div class="outline-text-2" id="text-org83d372f">
 <p>
-Complex numbers are of the form <b>a+ib</b> where <b>i=(-1)<sup>1/2</sup></b> and the factor <b>b</b> is known as the imaginary component of the complex number. The pair (a,b) are often referred to as a point on the complex plane.
+Complex numbers are of the form <b>a+ib</b> where <b>i= &radic;(-1)</b> and the factor <b>b</b> is known as the imaginary component of the complex number. The pair (a,b) are often referred to as a point on the complex plane.
 </p>
 
 <p>
@@ -79,9 +80,9 @@ In the [x,y] case multiplication is simply no defined (though you can do dot pro
 </div>
 </div>
 
-<div id="outline-container-org2246bf4" class="outline-2">
-<h2 id="org2246bf4">The Unit Circle</h2>
-<div class="outline-text-2" id="text-org2246bf4">
+<div id="outline-container-orgea842ef" class="outline-2">
+<h2 id="orgea842ef">The Unit Circle</h2>
+<div class="outline-text-2" id="text-orgea842ef">
 <p>
 Given two points on the unit circle (ie. all points who's lenght is equal to 1) we can safely write:
 </p>
@@ -108,9 +109,9 @@ So while the general case is hard to think about, we can at least say that the p
 </div>
 </div>
 
-<div id="outline-container-org771ca7d" class="outline-2">
-<h2 id="org771ca7d">Euler's Formula</h2>
-<div class="outline-text-2" id="text-org771ca7d">
+<div id="outline-container-orgd85ac2f" class="outline-2">
+<h2 id="orgd85ac2f">Euler's Formula</h2>
+<div class="outline-text-2" id="text-orgd85ac2f">
 <p>
 Combining the definition of <i>sine</i> and <i>cosine</i> with pythagoras' theorem (for the case where the hypotenous is equal to one) gives us the trigonometric identity:
 </p>
@@ -156,7 +157,7 @@ is
 <li>cos(&theta;)-isin(&theta;)</li>
 </ul>
 <p>
-Using the trigonometric properties
+Using the trigonometric properties (which are self evident if you think of the graph and even/odd functions)
 </p>
 <ul class="org-ul">
 <li>sin(-&theta;)=-sin(&theta;)</li>
@@ -171,9 +172,9 @@ We can rewrite the conjugate as
 </div>
 </div>
 
-<div id="outline-container-orgf727f16" class="outline-2">
-<h2 id="orgf727f16">The roots of unity</h2>
-<div class="outline-text-2" id="text-orgf727f16">
+<div id="outline-container-org0d9c3b2" class="outline-2">
+<h2 id="org0d9c3b2">The roots of unity</h2>
+<div class="outline-text-2" id="text-org0d9c3b2">
 <p>
 Furthermore if <i>&alpha;=2&pi;/n</i> then:
 </p>
@@ -203,9 +204,9 @@ Then by extension we can also get that:
 </div>
 </div>
 
-<div id="outline-container-org71b6a76" class="outline-2">
-<h2 id="org71b6a76">Fourier series</h2>
-<div class="outline-text-2" id="text-org71b6a76">
+<div id="outline-container-orgc11849a" class="outline-2">
+<h2 id="orgc11849a">Fourier series</h2>
+<div class="outline-text-2" id="text-orgc11849a">
 <p>
 for any integer value of <i>k</i> we can write this special sum:
 </p>
@@ -223,6 +224,11 @@ So we can write
 </p>
 <ul class="org-ul">
 <li>&xi;<sup>k</sup> * <i>fourier-series</i> = <i>fourier-series</i></li>
+</ul>
+<p>
+Therefore
+</p>
+<ul class="org-ul">
 <li>&xi;<sup>k</sup> * <i>fourier-series</i> - <i>fourier-series</i> = 0</li>
 <li><i>fourier-series</i> * (&xi;<sup>k</sup> - 1) = 0</li>
 </ul>
@@ -233,7 +239,7 @@ And therefore..
 <li><i>fourier-series</i>  = 0</li>
 </ul>
 <p>
-or (for all values of <i>k</i>)
+.. or to write it out again in full form - for all values of <i>k</i>
 </p>
 <ul class="org-ul">
 <li>1+&xi;<sup>k</sup>+&xi;<sup>2k</sup>+&#x2026;+&xi;<sup>(n-2)k</sup>+&xi;<sup>(n-1)k</sup> = 0</li>
@@ -251,36 +257,21 @@ But to form an orthogonal basis we need a set of vectors who's inner product is 
 </div>
 </div>
 
-<div id="outline-container-org9d1441c" class="outline-2">
-<h2 id="org9d1441c">Inner products of complex numbers</h2>
-<div class="outline-text-2" id="text-org9d1441c">
+<div id="outline-container-org7f287d5" class="outline-2">
+<h2 id="org7f287d5">Inner products of complex numbers</h2>
+<div class="outline-text-2" id="text-org7f287d5">
 <p>
-The problem is that we don't know how to do inner product with complex numbers yet. Some issues arise when we try our normal inner product.In general given a constant <i>a</i> and the vectors <i>v</i> and <i>w</i> we could write
+The problem is that we don't know how to do inner products with complex numbers yet. Inner products are closely tied to norms and lengths, and the inner product of a vector with itself should give its lengths squared. Using transposition to do an inner product will give us strange results b/c it relies of squaring values to get their positive lengths. However squaring a number like <code>i</code> gives you a <i>negative</i> length which doesn't make too much sense and introduces inconsistencies
 </p>
-<ul class="org-ul">
-<li>[av][w]<sup>T</sup> = a [v][w]<sup>T</sup></li>
-</ul>
-<p>
-But with complex values if you try to do the same you get an inconsistent result. Divide by <i>i</i> and things blow up. Here is an example with of an inner product of <i>v</i> with itself (to for example calculate a 2-norm):
-</p>
-<ul class="org-ul">
-<li>0 &lt; [iv][iv]<sup>T</sup>=i[v][iv]<sup>T</sup>= i<sup>2</sup>[v][v]<sup>T</sup> = - [v][v]<sup>T</sup> &lt; 0</li>
-</ul>
 
 <p>
-Sticking with the norm for now, to do norms of vectors with complex values and to have the whole thing keep working we need to introduce <i>complex conjugates</i> and the idea of a <i>Hermitian transpose</i>. If you have a value <i>a+ib</i> then its complex conjugate is <i>a-ib</i> and it's denoted with a<sup>*</sup>. This value turns out to be useful b/c the product of a comlex number and its complex conjugate gives you a real number:
+To do norms of vectors with complex values and to have the whole thing keep working we need to introduce <i>complex conjugates</i> and the idea of a <i>Hermitian transpose</i>. If you have a value <i>a+ib</i> then its complex conjugate is <i>a-ib</i> and it's denoted with a<sup>*</sup>. This value turns out to be useful b/c the product of a complex number and its complex conjugate gives you a real positive number:
 </p>
 <ul class="org-ul">
 <li>(a+ib)(a-ib) = a<sup>2</sup>-i<sup>2b</sup><sup>2</sup> = a<sup>2</sup>+b<sup>2</sup></li>
 </ul>
 <p>
-Notice how when we want to get the "length" of a real number (ie. its absolute value) we can do [a<sup>2</sup>]<sup>1/2</sup> - and the positive root gives us the length. Well when do it with our complex number
-</p>
-<ul class="org-ul">
-<li>[(a+ib)(a+ib)<sup>*</sup>]<sup>1/2</sup> = [a<sup>2</sup>+b<sup>2</sup>]<sup>1/2</sup></li>
-</ul>
-<p>
-we get pythagoras and its equal to the length on the complex value on the complex plane. So the answer matches our intuition and when we use complex numbers for instance the roots of unity will always have "length" of 1.
+If we think in terms of coordinates then it's like we're doing pythagoras and getting the length on the complex value on the complex plane. So the answer matches our intuition and when we use these complex conjugates to get the lengths of our roots of unity we will always get back "lengths"/norms of 1.
 </p>
 
 <p>
@@ -290,13 +281,13 @@ When we deal with vectors we are doing something similar when calculating their 
 <li>[ v<sub>1</sub> v<sub>2</sub> v<sub>3</sub> .. v<sub>n</sub> ]<sup>*</sup> = [ v<sub>1</sub><sup>*</sup> v<sub>2</sub><sup>*</sup> v<sub>3</sub><sup>*</sup> .. v<sub>n</sub><sup>*</sup> ]<sup>T</sup></li>
 </ul>
 <p>
-Now the inner product sum looks like this
+Now we can unroll the inner product sum of <i>vv<sup>*</sup></i>
 </p>
 <ul class="org-ul">
-<li>v<sub>1</sub>v<sub>1</sub><sup>*</sup> + v<sub>2</sub>v<sub>2</sub><sup>*</sup> + v<sub>3</sub>v<sub>3</sub><sup>*</sup> .. v<sub>n</sub>v<sub>n</sub><sup>*</sup></li>
+<li>vv<sup>*</sup>=v<sub>1</sub>v<sub>1</sub><sup>*</sup> + v<sub>2</sub>v<sub>2</sub><sup>*</sup> + v<sub>3</sub>v<sub>3</sub><sup>*</sup> .. v<sub>n</sub>v<sub>n</sub><sup>*</sup></li>
 </ul>
 <p>
-Each product term is giving you a real value and the sum ends up giving you a real value - so the 2-norm is always real. Furthermore the Hermetian transpose of a real vector is equal to the normal transpose - so this new extension is all "backwards compatible" and works with our purely real systems as well
+And we see that each product term is giving you a real positive value and the sum is also real and positive - so the 2-norm is always real and positive. Furthermore the Hermetian transpose of a real vector is equal to the normal transpose - so this new extension is "backwards compatible" and works with our purely real systems as well
 </p>
 
 <p>
@@ -317,9 +308,9 @@ Given a series of euler exponents we just take the transpose and flip the sign o
 </div>
 </div>
 
-<div id="outline-container-org0b03674" class="outline-2">
-<h2 id="org0b03674">Fourier Vectors</h2>
-<div class="outline-text-2" id="text-org0b03674">
+<div id="outline-container-org8c69c8d" class="outline-2">
+<h2 id="org8c69c8d">Fourier Vectors</h2>
+<div class="outline-text-2" id="text-org8c69c8d">
 <p>
 We saw previously that
 </p>
@@ -344,26 +335,30 @@ We can factor out the (r-s) exponent
 <li>(1 + &xi;<sup>1</sup> + &xi;<sup>2</sup> + &#x2026; + &xi;<sup>n-2</sup> + &xi;<sup>n-1</sup>)<sup>r-s</sup></li>
 </ul>
 <p>
-And notice that the inner sum is the fourier series and therefore equal to <i>0</i>. So the inner product of two Fourier series is also equal to zero  except when <i>r=s</i>. <i>r=s</i> is the case we need for the 2-norm:
+And notice that the inner sum is the fourier series and therefore equal to <i>0</i>. So the inner product of two Fourier series is also equal to zero <b>except</b> when <i>r=s</i> b/c <i>r=s</i> is the case we need for the 2-norm!
 </p>
 <ul class="org-ul">
 <li>[ 1 &xi;<sup>k</sup> &xi;<sup>2k</sup> &#x2026; &xi;<sup>(n-1)k</sup> ]  [ 1 &xi;<sup>k</sup> &xi;<sup>2k</sup> &#x2026; &xi;<sup>(n-1)k</sup> ]<sup>*</sup></li>
+<li>1*1 + &xi;<sup>k</sup>&xi;<sup>-k</sup> + &xi;<sup>2k</sup>&xi;<sup>-2k</sup> + &#x2026; + &xi;<sup>(n-1)k</sup> &xi;<sup>-(n-1)k</sup></li>
+<li>1*1 + &xi;<sup>0</sup> + &xi;<sup>0</sup> + &#x2026; + &xi;<sup>0</sup></li>
+<li>1 + 1 + 1 + &#x2026; + 1</li>
 </ul>
 <p>
-You can write it out and get zero exponents, but you can also just observe that this is the sum of the 2-norms of the roots of unity. There are <i>n</i> terms and each one is necessarily of length <i>1</i>, so the answer will always be <i>n</i> no matter what <i>k</i> you choose
+You could also skip the math and observe that this is the sum of the 2-norms of the roots of unity. There are <i>n</i> terms and each one is necessarily of length <i>1</i>. Either way, the answer will always be <i>n</i> no matter what <i>k</i> you choose
+and therefore the 2-norm/length all all fourier vectors is <i>n<sup>1/2</sup></i>
 </p>
 
 <p>
-Which is an intuitive answer since the fourier series is a sum of points on the complex unit circle and we have <i>n</i> points. Notice that this conveniently holds true for any exponents. Since the "self" inner product is the square of the 2-norm all fourier vectors have length <i>n<sup>1/2</sup></i>
+It's important to note that if you drop all the complex terms none of this works! You can't construct mutually orthogonal vectors out of purely real sine/cosine waves
 </p>
 </div>
 </div>
 
-<div id="outline-container-org2ee7ddf" class="outline-2">
-<h2 id="org2ee7ddf">Fourier Matrix</h2>
-<div class="outline-text-2" id="text-org2ee7ddf">
+<div id="outline-container-orgd91bc90" class="outline-2">
+<h2 id="orgd91bc90">Fourier Matrix</h2>
+<div class="outline-text-2" id="text-orgd91bc90">
 <p>
-We've jsut shown that the fourier vectors are othogonal as long as the <i>k</i>'s are different. So we just choose <i>k</i>'s 1 through <i>n</i> and slap them together into a fourier matrix <b>F</b>:
+We've just shown that the fourier vectors are orthogonal as long as the <i>k</i>'s are different. So the next step is self evident. We just choose <i>k</i>'s 1 through <i>n</i> and slap them together into a fourier matrix <b>F</b> and get ourselves an orthogonal basis:
 </p>
 <table>
 
@@ -435,11 +430,7 @@ We've jsut shown that the fourier vectors are othogonal as long as the <i>k</i>'
 </p>
 
 <p>
-2 - Looking at the real components of the columns - there is one constant component (the first column) and then <i>n</i> samples of the <i>cosine</i> function over one oscillation for the second column, <i>n</i> samples over 2 periods for the 3rd column, <i>n</i> samples over 3 periods.. etc.  If your input is over 1 second then this maps to a cosine function of 1Hz, 2Hz, 3Hz, etc.
-</p>
-
-<p>
-The complex component will look similar, but with the <i>sine</i> function
+2 - Looking at the real components of the columns - there is one constant component (the first column) and then <i>n</i> samples of the <i>cosine</i> function over one oscillation for the second column, <i>n</i> samples over 2 periods for the 3rd column, <i>n</i> samples over 3 periods.. etc.  If your input is over 1 second then this maps to a cosine function of 1Hz, 2Hz, 3Hz, etc.. The complex component will look similar, but with the <i>sine</i> function <b>Note</b>: that the real components alone are no orthogonal. You can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products
 </p>
 
 <p>
@@ -456,17 +447,17 @@ Looking at <i>F*F<sup>-1</sup></i>, the diagonal elements will be the normalized
 </div>
 </div>
 
-<div id="outline-container-org1ac9dc1" class="outline-2">
-<h2 id="org1ac9dc1">Frequency Space?</h2>
-<div class="outline-text-2" id="text-org1ac9dc1">
+<div id="outline-container-orgf4121b8" class="outline-2">
+<h2 id="orgf4121b8">Frequency Space?</h2>
+<div class="outline-text-2" id="text-orgf4121b8">
 <p>
 We constructed a very convenient basis that's easily invertible and independent of the input and we can now easily move to the basis and back but it's not exactly what one would imagine as "frequency space" and a few things are unresolved
 </p>
 </div>
 
-<div id="outline-container-org8180662" class="outline-3">
-<h3 id="org8180662">How does a sinusoidal look in this basis?</h3>
-<div class="outline-text-3" id="text-org8180662">
+<div id="outline-container-orgaf2d678" class="outline-3">
+<h3 id="orgaf2d678">How does a sinusoidal look in this basis?</h3>
+<div class="outline-text-3" id="text-orgaf2d678">
 <p>
 Reusing the trigonometric identities: 
 </p>
@@ -479,16 +470,16 @@ We can carefully pair Euler functions to get back sinusoids
 </p>
 <ul class="org-ul">
 <li><b>[e<sup>i&theta;</sup> + e<sup>-i&theta;</sup>]/2</b> = [cos(&theta;) + isin(&theta;) + cos(-&theta;) + isin(-&theta;)]/2 = <b>cos(&theta;)</b></li>
-<li><b>[e<sup>i&theta;</sup> - e<sup>-i&theta;</sup>]/2</b> = [cos(&theta;) + isin(&theta;) - cos(-&theta;) - isin(-&theta;)]/2 = <b>sin(&theta;)</b></li>
+<li><b>[e<sup>i&theta;</sup> - e<sup>-i&theta;</sup>]/2i</b> = [cos(&theta;) + isin(&theta;) - cos(-&theta;) - isin(-&theta;)]/2i = <b>sin(&theta;)</b></li>
 </ul>
 <p>
-replacing <i>&theta;</i> with <i>-2&pi;&phi;/n</i> we can turn this into fourier vector terms:
+If we put in <i>-2&pi;&phi;/n</i> for <i>&theta;</i>  we back our familiar exponents:
 </p>
 <ul class="org-ul">
 <li>cos(2&pi;&phi;/n) = [&xi;<sup>-&phi;</sup> + &xi;<sup>&phi;</sup>]/2</li>
 <li>cos(2&pi;&phi;) = n*[&xi;<sup>-&phi;</sup> + &xi;<sup>&phi;</sup>]/2</li>
-<li>sin(2&pi;&phi;/n) = [&xi;<sup>-&phi;</sup> - &xi;<sup>&phi;</sup>]/2</li>
-<li>sin(2&pi;&phi;) = n*[&xi;<sup>-&phi;</sup> - &xi;<sup>&phi;</sup>]/2</li>
+<li>sin(2&pi;&phi;/n) = [&xi;<sup>-&phi;</sup> - &xi;<sup>&phi;</sup>]/2i</li>
+<li>sin(2&pi;&phi;) = n*[&xi;<sup>-&phi;</sup> - &xi;<sup>&phi;</sup>]/2i</li>
 </ul>
 <p>
 This is a bit goofy b/c we haven't have negative <i>k</i> values. Fortunately b/c these are cyclical functions:
@@ -504,10 +495,10 @@ So we can rewrite is as:
 </p>
 <ul class="org-ul">
 <li>cos(2&pi;&phi;) = n*[&xi;<sup>n-&phi;</sup> + &xi;<sup>&phi;</sup>]/2</li>
-<li>sin(2&pi;&phi;) = n*[&xi;<sup>n-&phi;</sup> - &xi;<sup>&phi;</sup>]/2</li>
+<li>sin(2&pi;&phi;) = n*[&xi;<sup>n-&phi;</sup> - &xi;<sup>&phi;</sup>]/2i</li>
 </ul>
 <p>
-If <i>&phi;</i> is equal to a <i>k</i> value, then this will be equal to a basis vector in our fourier matrix.
+If <i>&phi;</i> is equal to a <i>k</i> value, then this will be equal to basis vectors in our fourier matrix.
 </p>
 
 <p>
@@ -527,7 +518,7 @@ So that:
 Similarly with the sine function, except:
 </p>
 <ul class="org-ul">
-<li>y = [ 0 0 -n/2 0 0 .. 0 0 n/2 0 0]<sub>1,n</sub></li>
+<li>y = [ 0 0 -n/2i 0 0 .. 0 0 n/2i 0 0]<sub>1,n</sub></li>
 </ul>
 <p>
 So that:
@@ -537,13 +528,47 @@ So that:
 </ul>
 
 <p>
-Now obviously these &xi;<sup>n-&phi;</sup> and &xi;<sup>&phi;</sup> terms are symmetric. So when looking in our fourier basis (at vectors like the <i>x</i> and <i>y</i> above), we can just look at the first n/2 terms to see the oscillating components of our input. If the input had, in the standard basis, <i>n</i> real values, then in the fourier basis we effectively describe the same input using <i>n/2</i> coordinates of complex vectors (which have real and imaginary components).
+Note two things about these Fourier coordinate vectors:
+</p>
+<ul class="org-ul">
+<li>the real components are generating <i>cosine</i> functions</li>
+<li>the <i>n<sup>th</sup></i> and <i>n-&phi;</i> components are equal</li>
+<li>the imaginary components are generating <i>sine</i> function</li>
+<li>the <i>n<sup>th</sup></i> and <i>n-&phi;</i> components are negatives of each other</li>
+</ul>
+
+<p>
+Because of this symmetry the first n/2 terms tell us everything about oscillating components of our input. 
+</p>
+
+<blockquote>
+<p>
+<b>Note</b> This doesn't represent a loss of information. The input had <b>n</b> real values the output has <b>n/2</b> complex coordinates (each made of 2 values)
+</p>
+</blockquote>
+</div>
+</div>
+
+<div id="outline-container-org6e18e17" class="outline-3">
+<h3 id="org6e18e17">How does a phase shift look in this basis?</h3>
+<div class="outline-text-3" id="text-org6e18e17">
+<p>
+Thanks to <b>harmonic addition</b> we can add sines and cosines of the same frequency to make phase shifted sinusoids
+</p>
+<ul class="org-ul">
+<li>&alpha; sin(x) + &beta; cos(x) = &gamma; sin(x+&theta;)</li>
+<li>&gamma; = &radic;[a<sup>2</sup>+b<sup>2</sup>]</li>
+<li>&theta; = atan(&beta;/&alpha;)</li>
+</ul>
+
+<p>
+The &beta; values are encoded in the real part of the fourier coordinates and our &alpha; values are in the imaginary part. So look at just the first <i>n/2</i> coordinates' complex values we can reinterpret these values as a phase shifted sine waves
 </p>
 </div>
 </div>
-<div id="outline-container-org04db625" class="outline-3">
-<h3 id="org04db625">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</h3>
-<div class="outline-text-3" id="text-org04db625">
+<div id="outline-container-org48a6b11" class="outline-3">
+<h3 id="org48a6b11">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</h3>
+<div class="outline-text-3" id="text-org48a6b11">
 <p>
 How about if <i>&phi;</i> is not equal to a <i>k</i> value?
 </p>
