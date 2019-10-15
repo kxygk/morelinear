@@ -4,45 +4,74 @@
 #+INCLUDE: "../web/config.org"
 
 * Goal
-Using the multiplicative properties of complex numbers we find a way to construct an convenient, easily-invertible orthogonal basis. This basis allows us to represent a series of input samples (ie. in an input vector) as the sum of a carefully constructed, independent set of sinusoidals. This basis allows us to carry out a class of operations that are numerically intensive in the standard basis but much quicker in the frequency-basis.
+Using the multiplicative properties of complex numbers we construct an easily-invertible orthogonal basis in which periodic components of our input become apparant. This basis allows us to carry out a class of operations that are numerically intensive in the standard basis but much quicker in the frequency-basis.
 
 * Complex numbers
-Complex numbers are of the form *a+ib* where *i= \radic(-1)* and the factor *b* is known as the imaginary component of the complex number. The pair (a,b) are often referred to as a point on the complex plane.
+Complex numbers are of the form *a+ib* where *i= \radic(-1)* and *a* and *b* are known as the real and imaginary components of the complex number. The pair (a,b) are often referred to as a point on the complex plane. However the implicit analogy to 2D coordinates is a bit probematic
 
-They have some properties which make they act like 2D coordinates with the /real/ component *a* acting as the /x/ and the /imaginary/ component *b* acting as the /y/:
+To envision a complex plane we treat the /real/ component *a* acting as the /x/ and the /imaginary/ component *b* acting as the /y/.
+Like 2D coordinates, we can add/translate them and they can be scaled
  - (a+ib) + (c+id) = (a+c) + i(bd)
  - c * (a+ib) = ca +icb 
 
 However unlike 2D [x,y] coordinates, complex numbers can be multiplied:
  - (a+ib) * (c+id) = (ac-bd) + i(ad+bc)
 
-In the [x,y] case multiplication is simply no defined (though you can do dot products and cross products). So points in the complex plane have this extra "feature". As far as I can tell there is no easy way to visualize what the result is for the general case
+Normally if we are given 2 coordinates [x_{0},y_{0}] and [x_{1},y_{1}] we never ask ourselves to multiple them because multiplication between two points is simply no a defined operation. However in the complex-number case this operation comes naturally and it generates a new complex number
+
+#+BEGIN_QUOTE
+Note: You can do a dot and cross product between two [x,y] coordinates but:
+ - [x_{0},y_{0}] \bullet [x_{1},y_{1}] \to /scalar/
+ - [x_{0},y_{0}] \times [x_{1},y_{1}] \to /requires an extra =z= dimension/
+#+END_QUOTE
+ 
+So points in the complex plane have this extra "feature" so it's important to not stretch the 2D coordinate interpretation too far. As far as I can tell there is no easy way to visualize what the result of a multiplication looks like in the general case.
+
+* Complex Conjugates
+Just like points and vectors, complex numbers have a "length" or magnitude
+ - ||a+ib|| = \radic(a^{2}+b^{2}}
+And just like for points and vectors, this norm is a real scalar value
+
+The square of the norm is ofcourse just /a^{2}+b^{2}/ and this often comes up in things like the inner product.  For instance given a vector [x y] we can take its inner product with itself [x y][x y]^{T} to get its norm-squared. In the trivial =1x1= case this will be [z][z]^{T} which is z^{2}.
+
+In the complex case where /z/ is a complex number /a+ib/ then we'd get /z*z^{T}=z^{2}=(a+ib)^{2}=a^{2}+i2ab-b^{2}/ which is non-real and doesn't match our magnitude-squared. So using the transpose no longer works. But this norm-squared is still easy to express as a product
+ - a^{2}+b^{2} = (a+ib)(a-ib)
+With /a-ib/ known as the /complex conjugate/ of /a+ib/
+
+And what's convenient is that this actually still works for real values. Since a real value /a/ can be written as the complex number a+i*0 we can write its complex conjugate as a-i*0 and see that it's norm is
+ - a^2+0^2 = (a+i0)(a-i0) = a^2
+Which is just the absolute value of /a/ squared
+
+So instead of doing a transpose we need to introduce a new transposition called the Hermitian transpose
+ - [a+ib c+id]^{*} = [a-ib c-d]^{T}
+The Hermitian transpose is denoted with a star. It simply take a normal transpose and replaces the terms with their complex conjugates.
+
+ When the vector values are all real it will behave exactly like a transpose and when the values are complex, it will take their conjugates and give us scalar/real values of each complex values' magnitude
 
 * The Unit Circle
-Given two points on the unit circle (ie. all points who's lenght is equal to 1) we can safely write:
+Notice that when the /norm-squared/ is equal to /1/ the magnitude is also equal to /1/. All these special points who's length is equal to /1/ lie on what's called the /unit cirle/. If we start with two complex numbers /a+ib/ and /c+id/ then
  - (a^2+b^2)^{1/2} = 1 /and therefore/ a^2+b^2 = 1
  - (c^2+d^2)^{1/2} = 1 /and therefore/ c^2+d^2 = 1
-As we saw, their product is the point /(ac-bd) + i(ad+bc)/ and its length is:
+As we saw, their product is the point /(ac-bd) + i(ad+bc)/ and its length is also equal to 1. Proof:
  - [ (ac-bd)^{2} + (ad+bc)^{2} ]^(1/2)
  - [ a^{2}c^{2}-2acbd+b^{2}d^{2}+a^{2}d^{2}+2adbc+b^{2}c^{2} ]^{1/2}
  - [ a^{2}c^{2}+b^{2}b^{2}+a^{2}d^{d}+b^{2}c^{2} ]^{1/2}
  - [ c^2(a^2+b^2) + d^2(a^2+b^2) ]^(1/2)
-Here we can substitute in our equations for the 2 points to see that the length of the product is also equal to 1.
+Through some subsitution we see that the length of the product is also equal to /1/
 
-So while the general case is hard to think about, we can at least say that the product of any two points on the unit circle gives us a new point on the unit circle
+This tells us that while the general complex product is hard to think about, we know that least the product of any two points on the unit circle gives us a new point on the unit circle
 
 * Euler's Formula
 
 Combining the definition of /sine/ and /cosine/ with pythagoras' theorem (for the case where the hypotenous is equal to one) gives us the trigonometric identity:
  - cos^{2}(\theta)+sin^{2}(\theta) = 1
 
-Euler's formula tells us that: *(TODO: Exapand on this)*
+And then Euler's formula tells us that: *(TODO: Exapand on this)*
  - e^{i\theta}=cos(\theta)+isin(\theta)
 
-Which allows us to safely say that the length of /e^{i\theta}/ in the "complex plane" is always equal to /1/. And in fact all points on the unit cirlce can be described with Euler's formula. 
-As was shown in the previous section, this means:
+Combining these two statements allows us to safely say that the magnitude of the complex value /e^{i\theta}/ is always equal to /1/. In fact, every point on the complex-plane unit circle corresponds to a euler exponent. Now using what we know of the product of points on the unit circle we can say that
  -  || e^{i\theta} * e^{i\omega} || = 1
- You can see this either by substituing in the sine/cosine and viewing it as the product of two complex numbers, or you can add the exponent  /e^{i(\theta+\omega)}/ and reusing the trigonometric identity.
+You can also just add the exponents  /e^{i(\theta+\omega)}/ and reusing the trigonometric identity.
 
 Now notice that if /\omega=2\pi-\theta/ that:
  - e^{i(\theta+\omega)} = e^{i2\pi} = cos(2\pi) + isin(2\pi) = 1 + i0 = 1
@@ -66,15 +95,16 @@ This tells us that taking the n^{th} root of /1/ has a complex numbers solution!
 The typical notation here is to say 
  - \xi = e^{-i2\pi/n}
  - \xi^{n}=1
-Then by extension we can also get that:
+This \xi is called the *n^{th} root of unity*
+By extension we can also see that:
  - \xi^{n+j} = \xi^{n}\xi^{j} = \xi^{j}
  - \xi^{nk} = [\xi^{n}]^{k} = [e^{-i2\pi}]^k = 1^k = 1
 
 * Fourier series
 
-for any integer value of /k/ we can write this special sum:
+The Fourier series is a very special sum of the exponents of an n^{th} root of unity *\xi*
  -  1 + \xi^k + \xi^{2k} + ... + \xi^{(n-2)k} + \xi^{(n-1)k}
-It has the special property that if it's multiplied by /\xi^k/ we get the same sequence back b/c the last term goes to /\xi^{nk} = 1/ and the remaining terms in effect shift places
+Here the /k/ can be any integer value, but the sum will always maintain the property that if it's multiplied by /\xi^k/ we get the same sequence back. The last term goes to /\xi^{nk} = 1/ and the remaining terms in effect shift places giving us:
  -  \xi^k + \xi^{2k} + \xi^{3k} + ... + \xi^{(n-1)k} + 1
 So we can write
  - \xi^k * /fourier-series/ = /fourier-series/
@@ -83,41 +113,12 @@ Therefore
  - /fourier-series/ * (\xi^k - 1) = 0
 And therefore.. 
  - /fourier-series/  = 0
-.. or to write it out again in full form - for all values of /k/
+.. or to write it out again in full form - for all integer values of /k/
  -  1+\xi^k+\xi^{2k}+...+\xi^{(n-2)k}+\xi^{(n-1)k} = 0
-
-While this is an interesting property, we need to leverage this somehow in constructing an orthogonal basis. The sum can be written out in the form:
- -  [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ] [ 1 1 1 ... 1]^{T}= 0
-But to form an orthogonal basis we need a set of vectors who's inner product is zero
-
-* Inner products of complex numbers
-
-The problem is that we don't know how to do inner products with complex numbers yet. Inner products are closely tied to norms and lengths, and the inner product of a vector with itself should give its lengths squared. Using transposition to do an inner product will give us strange results b/c it relies of squaring values to get their positive lengths. However squaring a number like =i= gives you a /negative/ length which doesn't make too much sense and introduces inconsistencies
-
-To do norms of vectors with complex values and to have the whole thing keep working we need to introduce /complex conjugates/ and the idea of a /Hermitian transpose/. If you have a value /a+ib/ then its complex conjugate is /a-ib/ and it's denoted with a^{*}. This value turns out to be useful b/c the product of a complex number and its complex conjugate gives you a real positive number:
-- (a+ib)(a-ib) = a^2-i^2b^2 = a^2+b^2
-If we think in terms of coordinates then it's like we're doing pythagoras and getting the length on the complex value on the complex plane. So the answer matches our intuition and when we use these complex conjugates to get the lengths of our roots of unity we will always get back "lengths"/norms of 1.
-
-When we deal with vectors we are doing something similar when calculating their 2-norm. Instead of /vv^T/ we now do /vv^{*}/ where v^{*} is the /Hermitian transpose/. It's like the the normal transpose, but all the vector values are replaced with their complex conjugates:
-- [ v_1 v_2 v_3 .. v_n ]^{*} = [ v_1^{*} v_2^{*} v_3^{*} .. v_n^{*} ]^{T}
-Now we can unroll the inner product sum of /vv^{*}/
- - vv^{*}=v_{1}v_{1}^{*} + v_{2}v_{2}^{*} + v_{3}v_{3}^{*} .. v_{n}v_{n}^{*}
-And we see that each product term is giving you a real positive value and the sum is also real and positive - so the 2-norm is always real and positive. Furthermore the Hermetian transpose of a real vector is equal to the normal transpose - so this new extension is "backwards compatible" and works with our purely real systems as well
-
-Coming back to our Eurler's forumla, given a \xi, its complex conjugate is easy to derive using the our trigonometric identities:
- - \xi^{*} = [cos(\theta)+isin(\theta)]^{*} = cos(\theta)-isin(\theta) = cos(-\theta)+isin(-\theta) = \xi^{-1}
-
-Given a series of euler exponents we just take the transpose and flip the sign of the exponent;
-
- - [ \xi_{1}^{a} \xi_{2}^{b} .. \xi_{n}^{z} ] [ \xi_{1}^{a} \xi_{2}^{b} .. \xi_{n}^{z} ]^{*}
- - [ \xi_{1}^{a} \xi_{2}^{b} .. \xi_{n}^{z} ] [ \xi_{1}^{-a} \xi_{2}^{-b} .. \xi_{n}^{-z} ]^{T}
 
 * Fourier Vectors
 
-We saw previously that
- -  [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ] [ 1 1 1 ... 1]^{T}= 0
-But now that we can take inner products of complex vectors we can go a few steps further. Given different values of /k/ - here I choose /r/ and /s/
-
+It turns out that Fourier series, when places in a vector with different values of /k/, form mutually orthogonal vectors - here I choose /r/ and /s/ for /k/ and carry out the Hermitian inner product:
  - [ 1 \xi^r \xi^{2r} ... \xi^{(n-1)r} ] [ 1 \xi^s \xi^{2s} ... \xi^{(n-1)s} ]^{*}
  - [ 1 \xi^r \xi^{2r} ... \xi^{(n-1)r} ] [ 1 \xi^{-s} \xi^{-2s} ... \xi^{-(n-1)s} ]^{T}
  - 1*1 + \xi^r*\xi^-s + \xi^{2r}*\xi^{-2s} + ... + \xi^{(n-2)r}\xi^{-(n-2)s}} + \xi^{(n-1)r}\xi^{-(n-1)s}
@@ -125,19 +126,19 @@ But now that we can take inner products of complex vectors we can go a few steps
 We can factor out the (r-s) exponent
  - (1^{1/(r-s)} + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
  - (1 + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
-And notice that the inner sum is the fourier series and therefore equal to /0/. So the inner product of two Fourier series is also equal to zero *except* when /r=s/ b/c /r=s/ is the case we need for the 2-norm!
+And notice that the sum under the exponent is the just fourier series with /k=1/ and therefore equal to /0/. So the inner product of two Fourier series is always equal to zero *except* when /r=s/:
  - [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ]  [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ]^{*}
  - 1*1 + \xi^{k}\xi^{-k} + \xi^{2k}\xi^{-2k} + ... + \xi^{(n-1)k} \xi^{-(n-1)k}
  - 1*1 + \xi^{0} + \xi^{0} + ... + \xi^{0}
- - 1 + 1 + 1 + ... + 1
-You could also skip the math and observe that this is the sum of the 2-norms of the roots of unity. There are /n/ terms and each one is necessarily of length /1/. Either way, the answer will always be /n/ no matter what /k/ you choose
+ - 1 + 1 + 1 + ... + 1 = n
+You could also just view the /r=s/ case as the sum of the 2-norms of the roots of unity. There are /n/ terms and each one is necessarily of length /1/. Either way, the answer will always be /n/ no matter what /k/ you choose
 and therefore the 2-norm/length all all fourier vectors is /n^{1/2}/
 
 It's important to note that if you drop all the complex terms none of this works! You can't construct mutually orthogonal vectors out of purely real sine/cosine waves
 
 * Fourier Matrix
 
-We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. So the next step is self evident. We just choose /k/'s 1 through /n/ and slap them together into a fourier matrix *F* and get ourselves an orthogonal basis:
+We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. So the next step is self evident. We just choose /k/ to equal to 1 through /n/ and slap them together into a fourier matrix *F* and get ourselves an orthogonal basis:
 | 1 | 1         | 1         | 1     | ..  |
 | 1 | \xi       | \xi^2     | \xi^3 | ..  |
 | 1 | \xi^2     | \xi^4     | \xi^6 | ..  |
@@ -145,11 +146,9 @@ We've just shown that the fourier vectors are orthogonal as long as the /k/'s ar
 | 1 | ...       | ...       | ...   | ..  |
 | 1 | \xi^{n-1} | \xi^{n-2} | ...   | \xi |
 
-1 - Each column represents different exponents of this starting *n^{th} root of unity* that we called \xi. The second column makes one full rotation, the third makes 2 rotations (hence there will be a /1/ in the middle), the fourth will make 3 rotations and have 2 /1/'s, etc.
+Looking at the real components of the columns - there is one constant component (the first column) and then /n/ samples of the /cosine/ function over one oscillation for the second column, /n/ samples over 2 periods for the 3rd column, /n/ samples over 3 periods.. etc.  If your input is over 1 second then this maps to a cosine function of 1Hz, 2Hz, 3Hz, etc.. The complex component will look similar, but with the /sine/ function *Note*: that the real components alone are no orthogonal. You can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products
 
-2 - Looking at the real components of the columns - there is one constant component (the first column) and then /n/ samples of the /cosine/ function over one oscillation for the second column, /n/ samples over 2 periods for the 3rd column, /n/ samples over 3 periods.. etc.  If your input is over 1 second then this maps to a cosine function of 1Hz, 2Hz, 3Hz, etc.. The complex component will look similar, but with the /sine/ function *Note*: that the real components alone are no orthogonal. You can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products
-
-3 - Since each series (irrespective of the /k/ exponent) has length /n^{1/2}/, all the columns of *F* can be normalized in one go by dividing the matrix by /n^{1/2}/. The resulting matrix *(1/n^{1/2})F* is now ever better b/c it's orthonormal/unitary. Therefore its inverse is just its Hermitian transpose.
+Since each series (irrespective of the /k/ exponent) has length /n^{1/2}/ (remember that the self-inner norms equal /n/), all the columns of *F* can be normalized in one go by dividing the matrix by /n^{1/2}/. The resulting matrix *(1/n^{1/2})F* is now ever better b/c it's orthonormal/unitary. Therefore its inverse is just its Hermitian transpose.
 
  - [(1/n^{1/2})F]^{-1} = [(1/n^{1/2})F]^{*}
  - F^{-1} = (1/n)F^{*}
@@ -166,12 +165,12 @@ Reusing the trigonometric identities:
 We can carefully pair Euler functions to get back sinusoids
  - *[e^{i\theta} + e^{-i\theta}]/2* = [cos(\theta) + isin(\theta) + cos(-\theta) + isin(-\theta)]/2 = *cos(\theta)*
  - *[e^{i\theta} - e^{-i\theta}]/2i* = [cos(\theta) + isin(\theta) - cos(-\theta) - isin(-\theta)]/2i = *sin(\theta)*
-If we put in /-2\pi\phi/n/ for /\theta/  we back our familiar exponents:
+If we put in /-2\pi\phi/n/ for /\theta/  we back our familiar roots of unity:
  - cos(2\pi\phi/n) = [\xi^{-\phi} + \xi^{\phi}]/2
  - cos(2\pi\phi) = n*[\xi^{-\phi} + \xi^{\phi}]/2
  - sin(2\pi\phi/n) = [\xi^{-\phi} - \xi^{\phi}]/2i
  - sin(2\pi\phi) = n*[\xi^{-\phi} - \xi^{\phi}]/2i
-This is a bit goofy b/c we haven't have negative /k/ values. Fortunately b/c these are cyclical functions:
+This is a bit goofy b/c we haven't had negative /k/ values so far. Fortunately b/c these are cyclical functions:
  - sin(-\theta) = sin(2\pi - \theta)
  - cos(-\theta) = cos(2\pi - \theta)
  - e^{-i\theta} = e^{i(2\pi-\theta)}
@@ -205,11 +204,15 @@ Because of this symmetry the first n/2 terms tell us everything about oscillatin
 
 ** How does a phase shift look in this basis?
 Thanks to *harmonic addition* we can add sines and cosines of the same frequency to make phase shifted sinusoids
-- \alpha sin(x) + \beta cos(x) = \gamma sin(x+\theta)
-- \gamma = \radic[a^{2}+b^{2}]
+- \alpha sin(f*t) + \beta cos(f*t) = \gamma sin(f*t+\theta)
+- \gamma = \radic[\alpha^{2}+\beta^{2}]
 - \theta = atan(\beta/\alpha)
 
-The \beta values are encoded in the real part of the fourier coordinates and our \alpha values are in the imaginary part. So look at just the first /n/2/ coordinates' complex values we can reinterpret these values as a phase shifted sine waves
+Since each fourier coordinate corresponds to one frequency in effect the real part of the coordinate is the \beta and our the imaginary part is the \alpha in the above formula. So look at just the first /n/2/ coordinates' complex values we can reinterpret these values as a phase shifted sine waves
+
+Furthermore, given a phase shifted sine wave this tells us that the length/norm of the complex value will remain constant b/c  \radic[\alpha^{2}+\beta^{2}] will always be equal to the sine wave's amplitude irrespective of phase shift.
+
+So if you take your whole input and shift it by some any angle \theta all the fourier coordinates' real and imaginary values (the /alpha and /beta) will change a bit but their norms will remain the same. So it you do vv^{*} on a Fourier coordinate vector you will get the magnitude of each frequency component of the input (though in so doing you will lose all phase information)
 ** How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?
 
 How about if /\phi/ is not equal to a /k/ value?
