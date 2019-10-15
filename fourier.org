@@ -93,7 +93,7 @@ Furthermore if /\alpha=2\pi/n/ then:
 This tells us that taking the n^{th} root of /1/ has a complex numbers solution! (in addition to the trivial solution of /1/)
  - 1^{1/n} = e^{i2\pi/n}
 The typical notation here is to say 
- - \xi = e^{-i2\pi/n}
+ - \xi = e^{-i2\pi/n} = \cos(2\pi/n)+i\sin(2\pi/n)
  - \xi^{n}=1
 This \xi is called the *n^{th} root of unity*
 By extension we can also see that:
@@ -123,7 +123,7 @@ It turns out that Fourier series, when places in a vector with different values 
  - [ 1 \xi^r \xi^{2r} ... \xi^{(n-1)r} ] [ 1 \xi^{-s} \xi^{-2s} ... \xi^{-(n-1)s} ]^{T}
  - 1*1 + \xi^r*\xi^-s + \xi^{2r}*\xi^{-2s} + ... + \xi^{(n-2)r}\xi^{-(n-2)s}} + \xi^{(n-1)r}\xi^{-(n-1)s}
  - 1 + \xi^{r-s} + \xi^{2(r-s)} + ... + \xi^{(n-2)(r-s)} + \xi^{(n-1)(r-s)}
-We can factor out the (r-s) exponent
+We can factor out the (r-s) exponent *TODO*. FIX. THIS ISN"T CORRECT
  - (1^{1/(r-s)} + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
  - (1 + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
 And notice that the sum under the exponent is the just fourier series with /k=1/ and therefore equal to /0/. So the inner product of two Fourier series is always equal to zero *except* when /r=s/:
@@ -138,82 +138,92 @@ It's important to note that if you drop all the complex terms none of this works
 
 * Fourier Matrix
 
-We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. So the next step is self evident. We just choose /k/ to equal to 1 through /n/ and slap them together into a fourier matrix *F* and get ourselves an orthogonal basis:
-| 1 | 1         | 1         | 1     | ..  |
-| 1 | \xi       | \xi^2     | \xi^3 | ..  |
-| 1 | \xi^2     | \xi^4     | \xi^6 | ..  |
-| 1 | \xi^3     | \xi^6     | \xi^9 | ..  |
-| 1 | ...       | ...       | ...   | ..  |
-| 1 | \xi^{n-1} | \xi^{n-2} | ...   | \xi |
+We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. So the next step is self evident. We just choose /k/ to equal to 1 through /n/ and slap them together into a fourier matrix *F* and get ourselves an orthogonal basis:\\
+*F* =
+| 1 | 1         | 1         | 1     | .. |
+| 1 | \xi       | \xi^2     | \xi^3 | .. |
+| 1 | \xi^2     | \xi^4     | \xi^6 | .. |
+| 1 | \xi^3     | \xi^6     | \xi^9 | .. |
+| 1 | ...       | ...       | ...   | .. |
+| 1 | \xi^{n-1} | \xi^{n-2} | ...   | .. |
 
-Looking at the real components of the columns - there is one constant component (the first column) and then /n/ samples of the /cosine/ function over one oscillation for the second column, /n/ samples over 2 periods for the 3rd column, /n/ samples over 3 periods.. etc.  If your input is over 1 second then this maps to a cosine function of 1Hz, 2Hz, 3Hz, etc.. The complex component will look similar, but with the /sine/ function *Note*: that the real components alone are no orthogonal. You can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products
+Looking at the real components of the columns - there is one constant component (the first column) and then /n/ samples of the /cosine/ function over one oscillation for the second column, /n/ samples over 2 periods for the 3rd column, /n/ samples over 3 periods.. etc. \\
+\real(*F*) =
+| 1 | cos(0*2\pi/n)     | cos(0*2\pi/n)     | 1                  | ..  |
+| 1 | cos(1*2\pi/n)     | cos(2*2\pi/n)     | cos(3*2\pi/n\)     | ..  |
+| 1 | cos(2*2\pi/n)     | cos(4*2\pi/n)     | cos(6*2\pi/n)      | ..  |
+| 1 | cos(3*2\pi/n)     | cos(6*2\pi/n)     | cos(9*2\pi/n)      | ..  |
+| 1 | ...               | ...               | ...                | ..  |
+| 1 | cos([n-1]*2\pi/n) | cos(2[n-1]2\pi/n) | cos(3[n-1]*2\pi/n) | ..  |
 
-Since each series (irrespective of the /k/ exponent) has length /n^{1/2}/ (remember that the self-inner norms equal /n/), all the columns of *F* can be normalized in one go by dividing the matrix by /n^{1/2}/. The resulting matrix *(1/n^{1/2})F* is now ever better b/c it's orthonormal/unitary. Therefore its inverse is just its Hermitian transpose.
+If your input is over 1 second then this maps to a sampled cosine function of 1Hz, 2Hz, 3Hz, etc.. *Note*: that these real components alone are no orthogonal. If you take the inner product of two of these columns you will not get /0/.The complex component will look similar, but with the /sine/ functions insteads and you can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products (you need that sin(..)^{2}+cos(..)^{2}=1 on the diagonal
+
+Since each series (irrespective of the /k/ exponent) has length /n^{1/2}/ (remember that the self-inner norms equal /n/), all the columns of *F* can be normalized in one go by dividing the matrix by /n^{1/2}/. The resulting matrix *(1/n^{1/2})F* is now even better b/c it's orthonormal/unitary. Therefore its inverse is just its Hermitian transpose.
 
  - [(1/n^{1/2})F]^{-1} = [(1/n^{1/2})F]^{*}
  - F^{-1} = (1/n)F^{*}
-Looking at /F*F^{-1}/, the diagonal elements will be the normalized vector norms of the fourier vectors (/1/'s), and the off-diagonal elements are all inner products of orthogonal fourier vectors (/0/'s)
+ In *F^{-1}F* the diagonal elements will be the column magnitudes, which have been normalized to /1/, and the off diagonal elements will be inner products of orthogonal vectors and therefore /0/ - so the product will give us the identity matrix *I*
 
 * Frequency Space?
-
 We constructed a very convenient basis that's easily invertible and independent of the input and we can now easily move to the basis and back but it's not exactly what one would imagine as "frequency space" and a few things are unresolved
 
 ** How does a sinusoidal look in this basis?
+Since each column is a mixture of real and imaginary samples of sine/cosine functions we at first glance don't have a straight correspondance between frequencies and the column number.\\
 Reusing the trigonometric identities: 
  - sin(-\theta) = -sin(\theta)
  - cos(-\theta) = cos(\theta)
-We can carefully pair Euler functions to get back sinusoids
- - *[e^{i\theta} + e^{-i\theta}]/2* = [cos(\theta) + isin(\theta) + cos(-\theta) + isin(-\theta)]/2 = *cos(\theta)*
- - *[e^{i\theta} - e^{-i\theta}]/2i* = [cos(\theta) + isin(\theta) - cos(-\theta) - isin(-\theta)]/2i = *sin(\theta)*
+We can carefully pair Euler functions to get back bare sine/cosine functions with no imaginary parts
+ - [e^{i\theta} + e^{-i\theta}]/2 = [cos(\theta) + isin(\theta) + cos(-\theta) + isin(-\theta)]/2 = *cos(\theta)*
+ - [e^{i\theta} - e^{-i\theta}]/2i = [cos(\theta) + isin(\theta) - cos(-\theta) - isin(-\theta)]/2i = *sin(\theta)*
 If we put in /-2\pi\phi/n/ for /\theta/  we back our familiar roots of unity:
- - cos(2\pi\phi/n) = [\xi^{-\phi} + \xi^{\phi}]/2
- - cos(2\pi\phi) = n*[\xi^{-\phi} + \xi^{\phi}]/2
- - sin(2\pi\phi/n) = [\xi^{-\phi} - \xi^{\phi}]/2i
- - sin(2\pi\phi) = n*[\xi^{-\phi} - \xi^{\phi}]/2i
-This is a bit goofy b/c we haven't had negative /k/ values so far. Fortunately b/c these are cyclical functions:
+ - [\xi^{-\phi} + \xi^{\phi}]/2 = cos(2\pi\phi/n)
+ - n*[\xi^{-\phi} + \xi^{\phi}]/2 = cos(2\pi\phi)
+ - [\xi^{-\phi} - \xi^{\phi}]/2i = sin(2\pi\phi/n)
+ - n*[\xi^{-\phi} - \xi^{\phi}]/2i = sin(2\pi\phi)
+#+BEGIN_QUOTE
+*Note*: b/c these are cyclical functions:
  - sin(-\theta) = sin(2\pi - \theta)
  - cos(-\theta) = cos(2\pi - \theta)
  - e^{-i\theta} = e^{i(2\pi-\theta)}
  - \xi^-k = \xi^{n-k}
-So we can rewrite is as:
+#+END_QUOTE
+With some rearranging we can rewrite these as:
  - cos(2\pi\phi) = n*[\xi^{n-\phi} + \xi^{\phi}]/2
  - sin(2\pi\phi) = n*[\xi^{n-\phi} - \xi^{\phi}]/2i
-If /\phi/ is equal to a /k/ value, then this will be equal to basis vectors in our fourier matrix.
+and if /\phi/ is equal to a /k/ value, then this will be equal to basis vectors in our fourier matrix.
 
-For instance if \phi = 3 we can pick an /x/
+For instance if /\phi/ = 3 we can pick an /x/
 - x = [ 0 0 n/2 0 0 .. 0 0 n/2 0 0]_{1,n}
 So that:
 - cos(2\pi * 3) = F^{*}x^{T}
 
-Similarly with the sine function, except:
+Similarly with the sine function, except with an extra minus sign:
 - y = [ 0 0 -n/2i 0 0 .. 0 0 n/2i 0 0]_{1,n}
 So that:
 - sin(2\pi * 3) = F^{*}y^{T}
 
-Note two things about these Fourier coordinate vectors:
-- the real components are generating /cosine/ functions
-- the /n^th/ and /n-\phi/ components are equal
-- the imaginary components are generating /sine/ function
-- the /n^th/ and /n-\phi/ components are negatives of each other
+Both of these matrix-vector products are always producing real values and complex coordinate value has a real and imaginary part, so it stands for both a have a sine and a cosine of it's corresponding basis vector frequency.
 
-Because of this symmetry the first n/2 terms tell us everything about oscillating components of our input. 
-
+Furthermore there is a consistent symmetry between the n^{th} and (n-\phi)^th coordinate. This symmetry in both real and imaginary terms the first n/2 terms tell us everything about the oscillating components of our input. You can completely disregard the second n/2 terms.
 #+BEGIN_QUOTE
-*Note* This doesn't represent a loss of information. The input had *n* real values the output has *n/2* complex coordinates (each made of 2 values)
+*Note* This doesn't represent a loss of information. The input had *n* real values the output has *n/2* complex coordinates (each made of 2 values).\\
+*Note* If the input is complex then this symmertry won't hold. But in most applications a complex input is not meaningful
 #+END_QUOTE
 
 ** How does a phase shift look in this basis?
-Thanks to *harmonic addition* we can add sines and cosines of the same frequency to make phase shifted sinusoids
+Notice how at each coordinate we had both real and imaginary values representing cosines and sines of the same frequency. Thanks to *harmonic addition* we can add sines and cosines of the same frequency to make phase shifted sinusoids
 - \alpha sin(f*t) + \beta cos(f*t) = \gamma sin(f*t+\theta)
 - \gamma = \radic[\alpha^{2}+\beta^{2}]
 - \theta = atan(\beta/\alpha)
 
-Since each fourier coordinate corresponds to one frequency in effect the real part of the coordinate is the \beta and our the imaginary part is the \alpha in the above formula. So look at just the first /n/2/ coordinates' complex values we can reinterpret these values as a phase shifted sine waves
+Since matrix products are linear, we can just take our coordinate vector /v/ and split it, feed it through our inverse fourier matrix/linear system, get the sine and cosine function samples, and then add them back:
+- v = \real(v) + \image(v)
+- vF^{*} = \real(v)F^{*} + \image(v)F^{*} = \alpha sin(...) + \beta cos(...)
+Now the form matches the harmonic addition formula and it should be very clear that the real/imaginary parts of the coordinate not only correspond to sine/cosine functions of the same frequency but that they in conjuction represent a phase shifted sine function.
 
-Furthermore, given a phase shifted sine wave this tells us that the length/norm of the complex value will remain constant b/c  \radic[\alpha^{2}+\beta^{2}] will always be equal to the sine wave's amplitude irrespective of phase shift.
+Furthermore, no matter what \theta phase shift you give on the input, the corresponding coordinate will maintain a constant norm/length b/c  \radic[\alpha^{2}+\beta^{2}] will always be equal to the sine wave's amplitude \gamma. If you take the norm of *Fx* (or more simply just do *Fx(Fx)^{*}*) you will get the amplitude at each frequency component (at the expense of loosing all phase information) and you can then draw a spectrogram
 
-So if you take your whole input and shift it by some any angle \theta all the fourier coordinates' real and imaginary values (the /alpha and /beta) will change a bit but their norms will remain the same. So it you do vv^{*} on a Fourier coordinate vector you will get the magnitude of each frequency component of the input (though in so doing you will lose all phase information)
 ** How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?
 
-How about if /\phi/ is not equal to a /k/ value?
+All the previous math had assumed for simplicity that the input was at a frequency that matches one of the basis vectors - that it in effect produced one coordinate point. But how about if /\phi/ is not equal to a /k/ value?
 
