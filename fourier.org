@@ -123,10 +123,7 @@ It turns out that Fourier series, when places in a vector with different values 
  - [ 1 \xi^r \xi^{2r} ... \xi^{(n-1)r} ] [ 1 \xi^{-s} \xi^{-2s} ... \xi^{-(n-1)s} ]^{T}
  - 1*1 + \xi^r*\xi^-s + \xi^{2r}*\xi^{-2s} + ... + \xi^{(n-2)r}\xi^{-(n-2)s}} + \xi^{(n-1)r}\xi^{-(n-1)s}
  - 1 + \xi^{r-s} + \xi^{2(r-s)} + ... + \xi^{(n-2)(r-s)} + \xi^{(n-1)(r-s)}
-We can factor out the (r-s) exponent *TODO*. FIX. THIS ISN"T CORRECT
- - (1^{1/(r-s)} + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
- - (1 + \xi^{1} + \xi^{2} + ... + \xi^{n-2} + \xi^{n-1})^{r-s}
-And notice that the sum under the exponent is the just fourier series with /k=1/ and therefore equal to /0/. So the inner product of two Fourier series is always equal to zero *except* when /r=s/:
+Now /r-s/ is just another /k/ value from our Fourier series and so the sum will go to /0/ *except* when /r=s/:
  - [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ]  [ 1 \xi^k \xi^{2k} ... \xi^{(n-1)k} ]^{*}
  - 1*1 + \xi^{k}\xi^{-k} + \xi^{2k}\xi^{-2k} + ... + \xi^{(n-1)k} \xi^{-(n-1)k}
  - 1*1 + \xi^{0} + \xi^{0} + ... + \xi^{0}
