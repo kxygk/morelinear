@@ -146,14 +146,15 @@ We've just shown that the fourier vectors are orthogonal as long as the /k/'s ar
 
 Looking at the real components of the columns - there is one constant component (the first column) and then /n/ samples of the /cosine/ function over one oscillation for the second column, /n/ samples over 2 periods for the 3rd column, /n/ samples over 3 periods.. etc. \\
 \real(*F*) =
-| 1 | cos(0*2\pi/n)     | cos(0*2\pi/n)     | 1                  | ..  |
-| 1 | cos(1*2\pi/n)     | cos(2*2\pi/n)     | cos(3*2\pi/n\)     | ..  |
-| 1 | cos(2*2\pi/n)     | cos(4*2\pi/n)     | cos(6*2\pi/n)      | ..  |
-| 1 | cos(3*2\pi/n)     | cos(6*2\pi/n)     | cos(9*2\pi/n)      | ..  |
-| 1 | ...               | ...               | ...                | ..  |
-| 1 | cos([n-1]*2\pi/n) | cos(2[n-1]2\pi/n) | cos(3[n-1]*2\pi/n) | ..  |
+| 1 | 1                 | 1                 | 1                  | .. |
+| 1 | cos(1*2\pi/n)     | cos(2*2\pi/n)     | cos(3*2\pi/n\)     | .. |
+| 1 | cos(2*2\pi/n)     | cos(4*2\pi/n)     | cos(6*2\pi/n)      | .. |
+| 1 | cos(3*2\pi/n)     | cos(6*2\pi/n)     | cos(9*2\pi/n)      | .. |
+| 1 | ...               | ...               | ...                | .. |
+| 1 | cos([n-1]*2\pi/n) | cos(2[n-1]2\pi/n) | cos(3[n-1]*2\pi/n) | .. |
 
-If your input is over 1 second then this maps to a sampled cosine function of 1Hz, 2Hz, 3Hz, etc.. *Note*: that these real components alone are no orthogonal. If you take the inner product of two of these columns you will not get /0/.The complex component will look similar, but with the /sine/ functions insteads and you can't drop the imaginary parts b/c of how they come in in the complex conjugate products of the inner products (you need that sin(..)^{2}+cos(..)^{2}=1 on the diagonal
+If your input is over 1 second then this maps to a sampled cosine function of 1Hz, 2Hz, 3Hz, etc..\\
+*TODO*: Add a proof that these don't form an orthogonal basis
 
 Since each series (irrespective of the /k/ exponent) has length /n^{1/2}/ (remember that the self-inner norms equal /n/), all the columns of *F* can be normalized in one go by dividing the matrix by /n^{1/2}/. The resulting matrix *(1/n^{1/2})F* is now even better b/c it's orthonormal/unitary. Therefore its inverse is just its Hermitian transpose.
 
