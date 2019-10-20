@@ -135,7 +135,7 @@ It's important to note that if you drop all the complex terms none of this works
 
 * Fourier Matrix
 
-We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. So the next step is self evident. We just choose /k/ to equal to 1 through /n/ and slap them together into a fourier matrix *F* and get ourselves an orthogonal basis:\\
+We've just shown that the fourier vectors are orthogonal as long as the /k/'s are different. The only caveat is that when /k=n/ then the result is identical to /k=0/ and when /k=n+1/ it's identical to /k=1/ .. etc. So there are actually only /n/ distinct fourier vectors. The next step is self evident. We just choose take the /n/ distinct vectors and slap them together into a fourier matrix *F* and end up withh an orthogonal basis:\\
 *F* =
 | 1 | 1         | 1         | 1     | .. |
 | 1 | \xi       | \xi^2     | \xi^3 | .. |
