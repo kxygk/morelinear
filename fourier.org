@@ -209,17 +209,26 @@ Furthermore there is a consistent symmetry between the n^{th} and (n-\phi)^th co
 #+END_QUOTE
 
 ** How does a phase shift look in this basis?
-Notice how at each coordinate we had both real and imaginary values representing cosines and sines of the same frequency. Thanks to *harmonic addition* we can add sines and cosines of the same frequency to make phase shifted sinusoids
-- \alpha sin(f*t) + \beta cos(f*t) = \gamma sin(f*t+\theta)
-- \gamma = \radic[\alpha^{2}+\beta^{2}]
-- \theta = atan(\beta/\alpha)
-
-Since matrix products are linear, we can just take our coordinate vector /v/ and split it, feed it through our inverse fourier matrix/linear system, get the sine and cosine function samples, and then add them back:
+Notice how each the real part of the coordinate is making /cosine/ waves and the /imaginary/ is making sine waves. Both are present in the final complex coordinate value and an arbitrary coordinate value will generate one of both.
 - v = \real(v) + \image(v)
 - vF^{*} = \real(v)F^{*} + \image(v)F^{*} = \alpha sin(...) + \beta cos(...)
-Now the form matches the harmonic addition formula and it should be very clear that the real/imaginary parts of the coordinate not only correspond to sine/cosine functions of the same frequency but that they in conjuction represent a phase shifted sine function.
+Sinusoidals have an amazing property, that if you add sinusoidals that have the same frequency but different amplitudes and/or phase you always get back just one sinusoidal of that frequency. 
 
-Furthermore, no matter what \theta phase shift you give on the input, the corresponding coordinate will maintain a constant norm/length b/c  \radic[\alpha^{2}+\beta^{2}] will always be equal to the sine wave's amplitude \gamma. If you take the norm of *Fx* (or more simply just do *Fx(Fx)^{*}*) you will get the amplitude at each frequency component (at the expense of loosing all phase information) and you can then draw a spectrogram
+In our case we are simply adding a /sine/ and /cosine/ and this additive property as the consequency of the trig identity:
+- sin(A+B) = sin(A)cos(B)+cos(A)sin(B)
+Now given any /sine/ wave with a phase shift we can decompose it into the sum of a /sine/ and /cosine/
+- A\sin(\omega t + \phi)
+- = A\sin(\phi)cos(\omega{}t)+Acos(\phi)sin(\omega{} t)
+- = A_{1}cos(\omega t) + A_{2}sin(\omega t)  /.. bc \phi is a constant/
+Working back we get the general rules for *harmonic addition*
+- \alpha sin(\omega{}t) + \beta cos(\omega{}t) = \gamma sin(\omega{}t+\theta)
+- \gamma = \radic[\alpha^{2}+\beta^{2}]
+- \theta = atan(\beta/\alpha)
+So these sine/cosine functions of the same frequency in conjuction represent a phase shifted sine function.
+
+It also means that if your phase shifts (say your input is delayed) then the real and imaginary coordiante components will fluctuate, but the norm/length will remain constant b/c  \radic[\alpha^{2}+\beta^{2}] will always be equal to the sine wave's amplitude \gamma. 
+
+If you take the norm of *Fx* (or more simply just do *Fx(Fx)^{*}*) you will get the amplitude at each frequency component (at the expense of loosing all phase information) and you can then draw a spectrogram
 
 ** How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?
 
