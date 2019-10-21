@@ -62,29 +62,39 @@ Through some subsitution we see that the length of the product is also equal to 
 This tells us that while the general complex product is hard to think about, we know that least the product of any two points on the unit circle gives us a new point on the unit circle
 
 * Euler's Formula
+To make the multiplicative rotations more natural we would like to start describing the points in terms of polar coordinates. The initial conversion is straightforward:
+- radius = r = (a^2+b^2)^{1/2}
+- angle = \theta = atan(b/a)
+Going back is also easy
+- a = r\cos(\theta)
+- b = r\sin(\theta)
+So the complex number /z=a+ib/ can now be defined in terms of /r/ and /theta/:
+- z = r\cos(\theta) + ir\sin(\theta)
 
-Combining the definition of /sine/ and /cosine/ with pythagoras' theorem (for the case where the hypotenous is equal to one) gives us the trigonometric identity:
- - cos^{2}(\theta)+sin^{2}(\theta) = 1
+A more compact representation of this is given by *Euler's formula*:
+ - re^{i\theta}=r\cos(\theta)+ir\sin(\theta)
+A complete proof of this identity is a bit long, but the steps are:
+- Show that the derivative of e^x is e^x (it's the only equation of the form a^x that have this "stable" property)
+- Using the chain rule we see that the /n^{th}/ derivative of e^{ix} will be equal to i^{n}e^{ix}
+- i^{n} is a cyclic function with half it's terms imaginary and half real
+- We then describe e^{i\theta} around /0/ in terms of the Taylor/Maclaurin Series
+- Half the terms of the Taylor/Maclaurin Series will be imaginary and half real. 
+- The real terms will match the Maclaurin Series of a cosine function and the imaginary will match those of the sine function
 
-And then Euler's formula tells us that: *(TODO: Exapand on this)*
- - e^{i\theta}=cos(\theta)+isin(\theta)
-
-Combining these two statements allows us to safely say that the magnitude of the complex value /e^{i\theta}/ is always equal to /1/. In fact, every point on the complex-plane unit circle corresponds to a euler exponent. Now using what we know of the product of points on the unit circle we can say that
- -  || e^{i\theta} * e^{i\omega} || = 1
-You can also just add the exponents  /e^{i(\theta+\omega)}/ and reusing the trigonometric identity.
-
-Now notice that if /\omega=2\pi-\theta/ that:
- - e^{i(\theta+\omega)} = e^{i2\pi} = cos(2\pi) + isin(2\pi) = 1 + i0 = 1
-
-Also note that complex conjugate of 
- - e^{i\theta}=cos(\theta)+isin(\theta)
-is
- - cos(\theta)-isin(\theta)
 Using the trigonometric properties (which are self evident if you think of the graph and even/odd functions)
  - sin(-\theta)=-sin(\theta)
  - cos(-\theta)= cos(\theta)
-We can rewrite the conjugate as
- - cos(-\theta) + isin{-\theta) = e^{-\theta}
+We can rewrite the complex conjugate as
+ - a - ib
+ - r \cos(\theta) - /i/ r \sin(\theta)
+ - r \cos(-\theta) + /i/ r \sin{-\theta) = *re^{-\theta}*
+
+As we just saw in the previous section, the radius in the products of points on the unit cirle is always equal to one. so a polar coordinate system will bring the problem down from 2 variables, /a/ and /b/, to just one constant /radius/ of size /1/ and one variable /angle/ \theta. The points on the unit circle can all be written down as:
+- e^{i\theta}
+And we can say the magnitude of the product of two of these is always equal to /1/
+ -  || e^{/i/\theta} * e^{/i/\omega} || = 1
+Now notice that if /\omega=2\pi-\theta/ that:
+ - e^{ /i/ (\theta+\omega)} = e^{ /i/ 2\pi} = cos(2\pi) + /i/ sin(2\pi) = 1 + /i/ 0 = 1
 
 * The roots of unity
 

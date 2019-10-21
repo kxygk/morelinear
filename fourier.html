@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- 2019-10-20 Sun 23:52 -->
+<!-- 2019-10-21 一 15:06 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MoreLinear \\ Fourier</title>
@@ -23,38 +23,38 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org26e03e6">Goal</a></li>
-<li><a href="#org74d89d5">Complex numbers</a></li>
-<li><a href="#org59630e2">Complex Conjugates</a></li>
-<li><a href="#org5a16efb">The Unit Circle</a></li>
-<li><a href="#orgb6831bb">Euler's Formula</a></li>
-<li><a href="#org2ff4841">The roots of unity</a></li>
-<li><a href="#orgfccd8c9">Fourier series</a></li>
-<li><a href="#orgdf360fe">Fourier Vectors</a></li>
-<li><a href="#org831ddf8">Fourier Matrix</a></li>
-<li><a href="#org4be5f84">Frequency Space?</a>
+<li><a href="#orgd779ea3">Goal</a></li>
+<li><a href="#org2fa013f">Complex numbers</a></li>
+<li><a href="#org5263d29">Complex Conjugates</a></li>
+<li><a href="#orga82574e">The Unit Circle</a></li>
+<li><a href="#org0547d9d">Euler's Formula</a></li>
+<li><a href="#org291313c">The roots of unity</a></li>
+<li><a href="#orgfb0daba">Fourier series</a></li>
+<li><a href="#org0bf804d">Fourier Vectors</a></li>
+<li><a href="#org70d3188">Fourier Matrix</a></li>
+<li><a href="#org6f6fd8a">Frequency Space?</a>
 <ul>
-<li><a href="#orge51b29e">How does a sinusoidal look in this basis?</a></li>
-<li><a href="#orgaecb0f2">How does a phase shift look in this basis?</a></li>
-<li><a href="#org925b2f5">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</a></li>
+<li><a href="#org3c8cfb6">How does a sinusoidal look in this basis?</a></li>
+<li><a href="#orgf8efeb3">How does a phase shift look in this basis?</a></li>
+<li><a href="#orgaa487e5">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org26e03e6" class="outline-2">
-<h2 id="org26e03e6">Goal</h2>
-<div class="outline-text-2" id="text-org26e03e6">
+<div id="outline-container-orgd779ea3" class="outline-2">
+<h2 id="orgd779ea3">Goal</h2>
+<div class="outline-text-2" id="text-orgd779ea3">
 <p>
 Using the multiplicative properties of complex numbers we construct an easily-invertible orthogonal basis in which periodic components of our input become apparant. This basis allows us to carry out a class of operations that are numerically intensive in the standard basis but much quicker in the frequency-basis.
 </p>
 </div>
 </div>
 
-<div id="outline-container-org74d89d5" class="outline-2">
-<h2 id="org74d89d5">Complex numbers</h2>
-<div class="outline-text-2" id="text-org74d89d5">
+<div id="outline-container-org2fa013f" class="outline-2">
+<h2 id="org2fa013f">Complex numbers</h2>
+<div class="outline-text-2" id="text-org2fa013f">
 <p>
 Complex numbers are of the form <b>a+ib</b> where <b>i= &radic;(-1)</b> and <b>a</b> and <b>b</b> are known as the real and imaginary components of the complex number. The pair (a,b) are often referred to as a point on the complex plane. However the implicit analogy to 2D coordinates is a bit probematic
 </p>
@@ -95,9 +95,9 @@ So points in the complex plane have this extra "feature" so it's important to no
 </div>
 </div>
 
-<div id="outline-container-org59630e2" class="outline-2">
-<h2 id="org59630e2">Complex Conjugates</h2>
-<div class="outline-text-2" id="text-org59630e2">
+<div id="outline-container-org5263d29" class="outline-2">
+<h2 id="org5263d29">Complex Conjugates</h2>
+<div class="outline-text-2" id="text-org5263d29">
 <p>
 Just like points and vectors, complex numbers have a "length" or magnitude
 </p>
@@ -148,9 +148,9 @@ When the vector values are all real it will behave exactly like a transpose and 
 </div>
 </div>
 
-<div id="outline-container-org5a16efb" class="outline-2">
-<h2 id="org5a16efb">The Unit Circle</h2>
-<div class="outline-text-2" id="text-org5a16efb">
+<div id="outline-container-orga82574e" class="outline-2">
+<h2 id="orga82574e">The Unit Circle</h2>
+<div class="outline-text-2" id="text-orga82574e">
 <p>
 Notice that when the <i>norm-squared</i> is equal to <i>1</i> the magnitude is also equal to <i>1</i>. All these special points who's length is equal to <i>1</i> lie on what's called the <i>unit cirle</i>. If we start with two complex numbers <i>a+ib</i> and <i>c+id</i> then
 </p>
@@ -177,52 +177,48 @@ This tells us that while the general complex product is hard to think about, we 
 </div>
 </div>
 
-<div id="outline-container-orgb6831bb" class="outline-2">
-<h2 id="orgb6831bb">Euler's Formula</h2>
-<div class="outline-text-2" id="text-orgb6831bb">
+<div id="outline-container-org0547d9d" class="outline-2">
+<h2 id="org0547d9d">Euler's Formula</h2>
+<div class="outline-text-2" id="text-org0547d9d">
 <p>
-Combining the definition of <i>sine</i> and <i>cosine</i> with pythagoras' theorem (for the case where the hypotenous is equal to one) gives us the trigonometric identity:
+To make the multiplicative rotations more natural we would like to start describing the points in terms of polar coordinates. The initial conversion is straightforward:
 </p>
 <ul class="org-ul">
-<li>cos<sup>2</sup>(&theta;)+sin<sup>2</sup>(&theta;) = 1</li>
+<li>radius = r = (a<sup>2</sup>+b<sup>2</sup>)<sup>1/2</sup></li>
+<li>angle = &theta; = atan(b/a)</li>
+</ul>
+<p>
+Going back is also easy
+</p>
+<ul class="org-ul">
+<li>a = rcos(&theta;)</li>
+<li>b = rsin(&theta;)</li>
+</ul>
+<p>
+So the complex number <i>z=a+ib</i> can now be defined in terms of <i>r</i> and <i>theta</i>:
+</p>
+<ul class="org-ul">
+<li>z = rcos(&theta;) + irsin(&theta;)</li>
 </ul>
 
 <p>
-And then Euler's formula tells us that: <b>(TODO: Exapand on this)</b>
+A more compact representation of this is given by <b>Euler's formula</b>:
 </p>
 <ul class="org-ul">
-<li>e<sup>i&theta;</sup>=cos(&theta;)+isin(&theta;)</li>
+<li>re<sup>i&theta;</sup>=rcos(&theta;)+irsin(&theta;)</li>
+</ul>
+<p>
+A complete proof of this identity is a bit long, but the steps are:
+</p>
+<ul class="org-ul">
+<li>Show that the derivative of e<sup>x</sup> is e<sup>x</sup> (it's the only equation of the form a<sup>x</sup> that have this "stable" property)</li>
+<li>Using the chain rule we see that the <i>n<sup>th</sup></i> derivative of e<sup>ix</sup> will be equal to i<sup>n</sup>e<sup>ix</sup></li>
+<li>i<sup>n</sup> is a cyclic function with half it's terms imaginary and half real</li>
+<li>We then describe e<sup>i&theta;</sup> around <i>0</i> in terms of the Taylor/Maclaurin Series</li>
+<li>Half the terms of the Taylor/Maclaurin Series will be imaginary and half real.</li>
+<li>The real terms will match the Maclaurin Series of a cosine function and the imaginary will match those of the sine function</li>
 </ul>
 
-<p>
-Combining these two statements allows us to safely say that the magnitude of the complex value <i>e<sup>i&theta;</sup></i> is always equal to <i>1</i>. In fact, every point on the complex-plane unit circle corresponds to a euler exponent. Now using what we know of the product of points on the unit circle we can say that
-</p>
-<ul class="org-ul">
-<li>|| e<sup>i&theta;</sup> * e<sup>i&omega;</sup> || = 1</li>
-</ul>
-<p>
-You can also just add the exponents  <i>e<sup>i(&theta;+&omega;)</sup></i> and reusing the trigonometric identity.
-</p>
-
-<p>
-Now notice that if <i>&omega;=2&pi;-&theta;</i> that:
-</p>
-<ul class="org-ul">
-<li>e<sup>i(&theta;+&omega;)</sup> = e<sup>i2&pi;</sup> = cos(2&pi;) + isin(2&pi;) = 1 + i0 = 1</li>
-</ul>
-
-<p>
-Also note that complex conjugate of 
-</p>
-<ul class="org-ul">
-<li>e<sup>i&theta;</sup>=cos(&theta;)+isin(&theta;)</li>
-</ul>
-<p>
-is
-</p>
-<ul class="org-ul">
-<li>cos(&theta;)-isin(&theta;)</li>
-</ul>
 <p>
 Using the trigonometric properties (which are self evident if you think of the graph and even/odd functions)
 </p>
@@ -231,17 +227,38 @@ Using the trigonometric properties (which are self evident if you think of the g
 <li>cos(-&theta;)= cos(&theta;)</li>
 </ul>
 <p>
-We can rewrite the conjugate as
+We can rewrite the complex conjugate as
 </p>
 <ul class="org-ul">
-<li>cos(-&theta;) + isin{-&theta;) = e<sup>-&theta;</sup></li>
+<li>a - ib</li>
+<li>r cos(&theta;) - <i>i</i> r sin(&theta;)</li>
+<li>r cos(-&theta;) + <i>i</i> r sin{-&theta;) = <b>re<sup>-&theta;</sup></b></li>
+</ul>
+
+<p>
+As we just saw in the previous section, the radius in the products of points on the unit cirle is always equal to one. so a polar coordinate system will bring the problem down from 2 variables, <i>a</i> and <i>b</i>, to just one constant <i>radius</i> of size <i>1</i> and one variable <i>angle</i> &theta;. The points on the unit circle can all be written down as:
+</p>
+<ul class="org-ul">
+<li>e<sup>i&theta;</sup></li>
+</ul>
+<p>
+And we can say the magnitude of the product of two of these is always equal to <i>1</i>
+</p>
+<ul class="org-ul">
+<li>|| e<sup><i>i</i>&theta;</sup> * e<sup><i>i</i>&omega;</sup> || = 1</li>
+</ul>
+<p>
+Now notice that if <i>&omega;=2&pi;-&theta;</i> that:
+</p>
+<ul class="org-ul">
+<li>e<sup> <i>i</i> (&theta;+&omega;)</sup> = e<sup> <i>i</i> 2&pi;</sup> = cos(2&pi;) + <i>i</i> sin(2&pi;) = 1 + <i>i</i> 0 = 1</li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org2ff4841" class="outline-2">
-<h2 id="org2ff4841">The roots of unity</h2>
-<div class="outline-text-2" id="text-org2ff4841">
+<div id="outline-container-org291313c" class="outline-2">
+<h2 id="org291313c">The roots of unity</h2>
+<div class="outline-text-2" id="text-org291313c">
 <p>
 Furthermore if <i>&alpha;=2&pi;/n</i> then:
 </p>
@@ -272,9 +289,9 @@ By extension we can also see that:
 </div>
 </div>
 
-<div id="outline-container-orgfccd8c9" class="outline-2">
-<h2 id="orgfccd8c9">Fourier series</h2>
-<div class="outline-text-2" id="text-orgfccd8c9">
+<div id="outline-container-orgfb0daba" class="outline-2">
+<h2 id="orgfb0daba">Fourier series</h2>
+<div class="outline-text-2" id="text-orgfb0daba">
 <p>
 The Fourier series is a very special sum of the exponents of an n<sup>th</sup> root of unity <b>&xi;</b>
 </p>
@@ -315,9 +332,9 @@ And therefore..
 </div>
 </div>
 
-<div id="outline-container-orgdf360fe" class="outline-2">
-<h2 id="orgdf360fe">Fourier Vectors</h2>
-<div class="outline-text-2" id="text-orgdf360fe">
+<div id="outline-container-org0bf804d" class="outline-2">
+<h2 id="org0bf804d">Fourier Vectors</h2>
+<div class="outline-text-2" id="text-org0bf804d">
 <p>
 It turns out that Fourier series, when places in a vector with different values of <i>k</i>, form mutually orthogonal vectors - here I choose <i>r</i> and <i>s</i> for <i>k</i> and carry out the Hermitian inner product:
 </p>
@@ -347,9 +364,9 @@ It's important to note that if you drop all the complex terms none of this works
 </div>
 </div>
 
-<div id="outline-container-org831ddf8" class="outline-2">
-<h2 id="org831ddf8">Fourier Matrix</h2>
-<div class="outline-text-2" id="text-org831ddf8">
+<div id="outline-container-org70d3188" class="outline-2">
+<h2 id="org70d3188">Fourier Matrix</h2>
+<div class="outline-text-2" id="text-org70d3188">
 <p>
 We've just shown that the fourier vectors are orthogonal as long as the <i>k</i>'s are different. The only caveat is that when <i>k=n</i> then the result is identical to <i>k=0</i> and when <i>k=n+1</i> it's identical to <i>k=1</i> .. etc. So there are actually only <i>n</i> distinct fourier vectors. The next step is self evident. We just choose take the <i>n</i> distinct vectors and slap them together into a fourier matrix <b>F</b> and end up withh an orthogonal basis:<br>
 <b>F</b> =
@@ -507,17 +524,17 @@ In <b>F<sup>-1</sup>F</b> the diagonal elements will be the column magnitudes, w
 </div>
 </div>
 
-<div id="outline-container-org4be5f84" class="outline-2">
-<h2 id="org4be5f84">Frequency Space?</h2>
-<div class="outline-text-2" id="text-org4be5f84">
+<div id="outline-container-org6f6fd8a" class="outline-2">
+<h2 id="org6f6fd8a">Frequency Space?</h2>
+<div class="outline-text-2" id="text-org6f6fd8a">
 <p>
 We constructed a very convenient basis that's easily invertible and independent of the input and we can now easily move to the basis and back but it's not exactly what one would imagine as "frequency space" and a few things are unresolved
 </p>
 </div>
 
-<div id="outline-container-orge51b29e" class="outline-3">
-<h3 id="orge51b29e">How does a sinusoidal look in this basis?</h3>
-<div class="outline-text-3" id="text-orge51b29e">
+<div id="outline-container-org3c8cfb6" class="outline-3">
+<h3 id="org3c8cfb6">How does a sinusoidal look in this basis?</h3>
+<div class="outline-text-3" id="text-org3c8cfb6">
 <p>
 Since each column is a mixture of real and imaginary samples of sine/cosine functions we at first glance don't have a straight correspondance between frequencies and the column number.<br>
 Reusing the trigonometric identities: 
@@ -606,9 +623,9 @@ Furthermore there is a consistent symmetry between the n<sup>th</sup> and (n-&ph
 </div>
 </div>
 
-<div id="outline-container-orgaecb0f2" class="outline-3">
-<h3 id="orgaecb0f2">How does a phase shift look in this basis?</h3>
-<div class="outline-text-3" id="text-orgaecb0f2">
+<div id="outline-container-orgf8efeb3" class="outline-3">
+<h3 id="orgf8efeb3">How does a phase shift look in this basis?</h3>
+<div class="outline-text-3" id="text-orgf8efeb3">
 <p>
 Notice how each the real part of the coordinate is making <i>cosine</i> waves and the <i>imaginary</i> is making sine waves. Both are present in the final complex coordinate value and an arbitrary coordinate value will generate one of both.
 </p>
@@ -656,9 +673,9 @@ If you take the norm of <b>Fx</b> (or more simply just do <b>Fx(Fx)^{</b>}*) you
 </div>
 </div>
 
-<div id="outline-container-org925b2f5" class="outline-3">
-<h3 id="org925b2f5">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</h3>
-<div class="outline-text-3" id="text-org925b2f5">
+<div id="outline-container-orgaa487e5" class="outline-3">
+<h3 id="orgaa487e5">How does a frequency who's period isn't a whole fraction of the sample rate come out in this basis?</h3>
+<div class="outline-text-3" id="text-orgaa487e5">
 <p>
 All the previous math had assumed for simplicity that the input was at a frequency that matches one of the basis vectors - that it in effect produced one coordinate point. But how about if <i>&phi;</i> is not equal to a <i>k</i> value?
 </p>
