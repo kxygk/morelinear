@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoreLinear: Projectors</title>
+<meta name="generator" content="Org mode">
+<meta name="author" content="George Kontsevich">
+<meta name="description" content="Projectors"
+>
+<link rel="stylesheet" type="text/css" href="../web/worg.css" />
+<link rel="shortcut icon" href="../web/panda.svg" type="image/x-icon">
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="../MathJax/MathJax.js?config=TeX-AMS_CHTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">MoreLinear: Projectors</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org01ddb47">Complementary Subspaces</a></li>
+<li><a href="#orge3c52a7">Projection matrix</a></li>
+<li><a href="#orgdb85ce9">Orthogonal Complementary Subspaces</a></li>
+<li><a href="#org8472ba4">Orthogonal Decomposition Theorem</a></li>
+<li><a href="#org9cdbf15">URV factorization</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org01ddb47" class="outline-2">
+<h2 id="org01ddb47">Complementary Subspaces</h2>
+<div class="outline-text-2" id="text-org01ddb47">
+<p>
+When you have two subspaces of a space V are complimentary when they don't overlap but in combination they cover the whole space
+</p>
+
+<blockquote>
+<p>
+V = X + Y <i>(V is the <b>direct sum</b> of X and Y)</i>
+<i>while</i> X &cap; Y = 0
+</p>
+</blockquote>
+
+<p>
+Every vector <b>v</b> in V will have a corresponding <b>x</b> and <b>y</b> vector in each subspace of the two subspaces X Y. These vectors are unique
+</p>
+
+<p>
+If there where two sets of vectors <b>x<sub>1</sub></b> <b>y<sub>1</sub></b> and <b>x<sub>2</sub></b> <b>y<sub>2</sub></b> then<br>
+</p>
+<blockquote>
+<p>
+v = x<sub>1</sub> + y<sub>1</sub> <br>
+v = x<sub>2</sub> + y<sub>2</sub> <br>
+y<sub>2</sub> - y<sub>1</sub> = x<sub>1</sub> + x<sub>2</sub>
+</p>
+</blockquote>
+<p>
+But since <i>X &cap; Y = 0</i> this is impossible. So there must be only one x,y pair
+</p>
+
+<p>
+The basis vectors of the two subspaces <b>B<sub>x</sub></b> <b>B<sub>y</sub></b> together span all of <b>V</b>. In matrix form we can just smash the columns together
+</p>
+
+<blockquote>
+<p>
+B<sub>y</sub> = [ B<sub>x</sub> | B<sub>y</sub> ]
+</p>
+</blockquote>
+</div>
+</div>
+
+
+<div id="outline-container-orge3c52a7" class="outline-2">
+<h2 id="orge3c52a7">Projection matrix</h2>
+<div class="outline-text-2" id="text-orge3c52a7">
+<p>
+Because each vector <b>v</b> in V has a unique <b>x</b> and <b>y</b> vectors in the X and Y subspaces we need a simple way to get an <b>x</b> and <b>y</b> given a <b>v</b>. This is what a <b>projection matrix</b> does.
+</p>
+
+<p>
+Note that is <b>v</b> lies wholly in subspace <b>y</b> then the <b>x</b> component is <b>[0]</b>. All basis vectors of Y for instance will have no component in subspace X. Conversely, all vectors in <b>x</b> projectored onto the space X just give you back <b>x</b>
+</p>
+
+<p>
+So we just write a projection matrix <b>P</b> as if it exists and solve 
+</p>
+<blockquote>
+<p>
+P<sub>X</sub>B<sub>v</sub> = P<sub>X</sub>[ B<sub>X</sub> | B<sub>Y</sub> ] = [ P<sub>X</sub>B<sub>X</sub> | P<sub>X</sub>B<sub>Y</sub> ] = [ B<sub>X</sub> | 0 ]<br>
+P<sub>X</sub>= [ B<sub>X</sub> | 0 ]B<sub>V</sub><sup>-1</sup> <br>
+P<sub>X</sub>= <br>
+B<sub>V</sub> <br>
+[ <br>
+I<sub>r</sub> 0<br>
+0   0<br>
+]<br>
+B<sub>V</sub><sup>-1</sup> <br>
+</p>
+</blockquote>
+
+<blockquote>
+<p>
+<b>Note:</b>
+</p>
+<ul class="org-ul">
+<li>P<sup>2</sup> = P  <i>.. you project twice onto a subspace you get the same thing are projecting once</i></li>
+<li>P<sub>Y</sub> = I - P<sub>X</sub> /.. v = x + y = Pv + y .. therefore y = v - Pv = (I - P)v</li>
+<li>P<sub>X</sub> spans all of X <i>.. b/c obviously it needs to be able to project onto the whole subspace from V</i></li>
+</ul>
+</blockquote>
+
+<p>
+In fact you can go further and say any matrix that is idempotent (ie. A<sup>2</sup> = A) is a projector with complementary subspaces R(A) and N(A.)
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgdb85ce9" class="outline-2">
+<h2 id="orgdb85ce9">Orthogonal Complementary Subspaces</h2>
+<div class="outline-text-2" id="text-orgdb85ce9">
+<p>
+The subspaces X Y can be chosen arbitrarily as long as they satify the condition of spanning all of V and having not overlap. Interesting pairs to consider are <b>orthogonal complementary</b> pairs. You choose one basis M and then the other is the space orthogonal to it - M<sup>&perp;</sup>
+</p>
+
+<p>
+In other words all vectors in M<sup>&perp;</sup> are orthogonal to all vectors in M.
+</p>
+
+<p>
+For instance.. If V = <b>R<sup>2</sup></b> M can be a line and M<sup>&perp;</sup> can be another line.<br>
+Or if V = <b>R<sup>3</sup></b> M<sup>&perp;</sup> can be a line and M can be a plane - or vice versa.
+</p>
+
+<blockquote>
+<p>
+dim( M<sup>&perp;</sup> ) = n - dim( M )<br>
+[M<sup>&perp;</sup>]<sup>&perp;</sup> = M
+</p>
+</blockquote>
+
+<p>
+<b>Note</b> that if <b>A</b> is a nonsingular matrix then that means <i>R(A)</i> and <i>R(A)<sup>&perp;</sup></i> will span all of <i>R<sup>n</sup></i>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org8472ba4" class="outline-2">
+<h2 id="org8472ba4">Orthogonal Decomposition Theorem</h2>
+<div class="outline-text-2" id="text-org8472ba4">
+<p>
+A non-obvious decomposition emerges
+</p>
+
+<p>
+For all y &isin; R<sup>n</sup>
+</p>
+<blockquote>
+<p>
+x &isin; R(A)<sup>&perp;</sup> <br>
+&lt;Ay|x&gt; = 0 -&gt;  [Ay]<sup>T</sup>x = 0 <br>
+y<sup>T</sup>A<sup>T</sup>x = 0 <br>
+&lt;y|A<sup>T</sup>x&gt; = 0 <br>
+A<sup>T</sup>x = 0   <i>.. b/c y can be any value</i> <br>
+so.. <br>
+x &isin; N(A<sup>T</sup>)
+</p>
+</blockquote>
+
+<p>
+This is a very strange an unintuitive conclusion
+</p>
+
+<blockquote>
+<p>
+R(A)<sup>&perp;</sup> = N(A<sup>T</sup>)
+N(A)<sup>&perp;</sup> = R(A<sup>T</sup>)
+</p>
+</blockquote>
+
+<p>
+In combination with the previous orthogonal complementary subspaces this means that R(A) and R(A)<sup>&perp;</sup> span all of R<sup>n</sup> and therefore
+</p>
+
+<blockquote>
+<p>
+R<sup>n</sup> = R(A) R(A)<sup>&perp;</sup> = R(A) N(A<sup>T</sup>)
+R<sup>m</sup> = N(A) N(A)<sup>&perp;</sup> = N(A) R(A<sup>T</sup>)
+</p>
+</blockquote>
+
+<p>
+This final set of equations is truely bizarre as the columns of matrix A along with the nullspace of the rows of A cover all of R<sup>n</sup>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9cdbf15" class="outline-2">
+<h2 id="org9cdbf15">URV factorization</h2>
+<div class="outline-text-2" id="text-org9cdbf15">
+<p>
+If we express ranges and nullspaces with orthonormal bases then we can concatenate them to make an orthogonal basis for all of R<sup>n</sup>
+</p>
+
+<blockquote>
+<p>
+B<sub>R<sup>N</sup></sub> = U = [ B<sub>R(A)</sub> | B<sub>N(A<sup>T</sup>)</sub> ] <br>
+B<sub>R<sup>N</sup></sub> = V = [ B<sub>R(A<sup>T</sup>)</sub> | B<sub>N(A)</sub> ]
+</p>
+</blockquote>
+
+<p>
+Now notice that if we write <b>U<sup>T</sup>AV</b> the nullspace bases zero out terms and we end up with an upper left block matrix we call <b>R</b>
+</p>
+
+\begin{equation}
+U^{T}AV
+\\=
+\begin{bmatrix}
+B_{R(A)}\\
+B_{N(A^T)}
+\end{bmatrix}
+\begin{bmatrix}
+A_{1,1} & A_{1,2} \\
+A_{2,1} & A_{2,2}
+\end{bmatrix}
+\begin{bmatrix}
+B_{R(A^T)} & B_{N(A)}
+\end{bmatrix}
+\\=
+\begin{bmatrix}
+C & 0 \\
+0 & 0
+\end{bmatrix}
+= R
+\end{equation}
+
+<p>
+We can then flip the equation to make a factorization (reminder that for orthonormal matrices <b>A<sup>-1</sup> = A<sup>T</sup></b> )
+</p>
+
+
+\begin{equation}
+A = URV^{T}
+\\=
+\begin{bmatrix}
+B_{R(A)} & B_{N(A^T)}
+\end{bmatrix}
+\begin{bmatrix}
+C & 0 \\
+0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+B_{R(A^T)} \\
+B_{N(A)}
+\end{bmatrix}
+\end{equation}
+
+<p>
+The bases are not unique, so the factorization is not unique either.
+</p>
+</div>
+</div>
+</div>
+</body>
+</html>

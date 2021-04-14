@@ -1,0 +1,159 @@
+#+TITLE: MoreLinear: Projectors
+#+DESCRIPTION: Projectors
+
+#+INCLUDE: "../web/config.org"
+
+* Complementary Subspaces
+
+When you have two subspaces of a space V are complimentary when they don't overlap but in combination they cover the whole space
+
+#+BEGIN_QUOTE
+V = X + Y /(V is the *direct sum* of X and Y)/
+/while/ X \cap Y = 0
+#+END_QUOTE
+
+Every vector *v* in V will have a corresponding *x* and *y* vector in each subspace of the two subspaces X Y. These vectors are unique
+
+If there where two sets of vectors *x_1* *y_1* and *x_2* *y_2* then\\
+#+BEGIN_QUOTE
+v = x_1 + y_1 \\
+v = x_2 + y_2 \\
+y_2 - y_1 = x_1 + x_2
+#+END_QUOTE
+But since /X \cap Y = 0/ this is impossible. So there must be only one x,y pair
+
+The basis vectors of the two subspaces *B_x* *B_y* together span all of *V*. In matrix form we can just smash the columns together
+
+#+BEGIN_QUOTE
+B_y = [ B_x | B_y ]
+#+END_QUOTE
+
+
+* Projection matrix
+
+Because each vector *v* in V has a unique *x* and *y* vectors in the X and Y subspaces we need a simple way to get an *x* and *y* given a *v*. This is what a *projection matrix* does.
+
+Note that is *v* lies wholly in subspace *y* then the *x* component is *[0]*. All basis vectors of Y for instance will have no component in subspace X. Conversely, all vectors in *x* projectored onto the space X just give you back *x*
+
+So we just write a projection matrix *P* as if it exists and solve 
+#+BEGIN_QUOTE
+P_{X}B_v = P_{X}[ B_X | B_Y ] = [ P_{X}B_X | P_{X}B_Y ] = [ B_X | 0 ]\\
+P_{X}= [ B_X | 0 ]B_{V}^{-1} \\
+P_{X}= \\
+B_V \\
+[ \\
+I_r 0\\
+0   0\\ 
+]\\
+B_{V}^{-1} \\
+#+END_QUOTE
+
+#+BEGIN_QUOTE
+*Note:*
+- P^2 = P  /.. you project twice onto a subspace you get the same thing are projecting once/
+- P_{Y} = I - P_{X} /.. v = x + y = Pv + y .. therefore y = v - Pv = (I - P)v 
+- P_{X} spans all of X /.. b/c obviously it needs to be able to project onto the whole subspace from V/
+#+END_QUOTE
+
+In fact you can go further and say any matrix that is idempotent (ie. A^2 = A) is a projector with complementary subspaces R(A) and N(A.)
+
+* Orthogonal Complementary Subspaces
+
+The subspaces X Y can be chosen arbitrarily as long as they satify the condition of spanning all of V and having not overlap. Interesting pairs to consider are *orthogonal complementary* pairs. You choose one basis M and then the other is the space orthogonal to it - M^{\perp}
+
+In other words all vectors in M^{\perp} are orthogonal to all vectors in M.
+
+For instance.. If V = *R^2* M can be a line and M^{\perp} can be another line.\\
+Or if V = *R^3* M^{\perp} can be a line and M can be a plane - or vice versa.
+
+#+BEGIN_QUOTE
+dim( M^{\perp} ) = n - dim( M )\\
+[M^{\perp}]^{\perp} = M
+#+END_QUOTE
+
+*Note* that if *A* is a nonsingular matrix then that means /R(A)/ and /R(A)^{\perp}/ will span all of /R^n/
+
+* Orthogonal Decomposition Theorem
+
+A non-obvious decomposition emerges
+
+For all y \in{} R^n
+#+BEGIN_QUOTE
+x \in{} R(A)^{\perp} \\
+<Ay|x> = 0 ->  [Ay]^{T}x = 0 \\
+y^{T}A^{T}x = 0 \\
+<y|A^{T}x> = 0 \\
+A^{T}x = 0   /.. b/c y can be any value/ \\
+so.. \\
+x \in{} N(A^T)
+#+END_QUOTE
+
+This is a very strange an unintuitive conclusion
+
+#+BEGIN_QUOTE
+R(A)^{\perp} = N(A^T)
+N(A)^{\perp} = R(A^T)
+#+END_QUOTE
+
+In combination with the previous orthogonal complementary subspaces this means that R(A) and R(A)^{\perp} span all of R^{n} and therefore
+
+#+BEGIN_QUOTE
+R^{n} = R(A) R(A)^{\perp{}} = R(A) N(A^T)
+R^{m} = N(A) N(A)^{\perp{}} = N(A) R(A^T)
+#+END_QUOTE
+
+This final set of equations is truely bizarre as the columns of matrix A along with the nullspace of the rows of A cover all of R^{n}
+
+* URV factorization
+
+If we express ranges and nullspaces with orthonormal bases then we can concatenate them to make an orthogonal basis for all of R^n
+
+#+BEGIN_QUOTE
+B_{R^{N}} = U = [ B_{R(A)} | B_{N(A^T)} ] \\
+B_{R^{N}} = V = [ B_{R(A^T)} | B_{N(A)} ]
+#+END_QUOTE
+
+Now notice that if we write *U^{T}AV* the nullspace bases zero out terms and we end up with an upper left block matrix we call *R*
+
+\begin{equation}
+U^{T}AV
+\\=
+\begin{bmatrix}
+B_{R(A)}\\
+B_{N(A^T)}
+\end{bmatrix}
+\begin{bmatrix}
+A_{1,1} & A_{1,2} \\
+A_{2,1} & A_{2,2}
+\end{bmatrix}
+\begin{bmatrix}
+B_{R(A^T)} & B_{N(A)}
+\end{bmatrix}
+\\=
+\begin{bmatrix}
+C & 0 \\
+0 & 0
+\end{bmatrix}
+= R
+\end{equation}
+
+We can then flip the equation to make a factorization (reminder that for orthonormal matrices *A^{-1} = A^T* )
+
+
+\begin{equation}
+A = URV^{T}
+\\=
+\begin{bmatrix}
+B_{R(A)} & B_{N(A^T)}
+\end{bmatrix}
+\begin{bmatrix}
+C & 0 \\
+0 & 0
+\end{bmatrix}
+\begin{bmatrix}
+B_{R(A^T)} \\
+B_{N(A)}
+\end{bmatrix}
+\end{equation}
+
+The bases are not unique, so the factorization is not unique either.
