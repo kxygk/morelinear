@@ -63,7 +63,7 @@ The subspaces X Y can be chosen arbitrarily as long as they satify the condition
 
 In other words all vectors in M^{\perp} are orthogonal to all vectors in M.
 
-For instance.. If V = *R^2* M can be a line and M^{\perp} can be another line.\\
+For instance.. If V = *R^2* M can be a line and M^{\perp} can be another line. (Note that *M* doesn't strictly need to be a subspace..)\\
 Or if V = *R^3* M^{\perp} can be a line and M can be a plane - or vice versa.
 
 #+BEGIN_QUOTE
@@ -77,13 +77,14 @@ dim( M^{\perp} ) = n - dim( M )\\
 
 A non-obvious decomposition emerges
 
-For all y \in{} R^n
+We construct an *x* which is orthogonal to the range of *A*. So for all values of *Ay* (where *y* \in *R^{n}*) the *x* is orthogonal (here the book uses bracket notation which I translate to matrix products
 #+BEGIN_QUOTE
 x \in{} R(A)^{\perp} \\
-<Ay|x> = 0 ->  [Ay]^{T}x = 0 \\
-y^{T}A^{T}x = 0 \\
+/we define the x such that <Ay|x> = 0 ->  [Ay]^{T}x = 0/ \\
+y^{T}A^{T}x = 0 /(distribution of the transposition operator)/\\
 <y|A^{T}x> = 0 \\
-A^{T}x = 0   /.. b/c y can be any value/ \\
+/This means that ../
+A^{T}x = 0   /.. b/c the only way this product is zero is if *Ax* is zero/ \\
 so.. \\
 x \in{} N(A^T)
 #+END_QUOTE
@@ -91,29 +92,29 @@ x \in{} N(A^T)
 This is a very strange an unintuitive conclusion
 
 #+BEGIN_QUOTE
-R(A)^{\perp} = N(A^T)
+R(A)^{\perp} = N(A^T)\\
 N(A)^{\perp} = R(A^T)
 #+END_QUOTE
 
-In combination with the previous orthogonal complementary subspaces this means that R(A) and R(A)^{\perp} span all of R^{n} and therefore
+In combination with the previous orthogonal complementary subspaces this means that *R(A)* and *R(A)^{\perp}* span all of *R^{n}* and therefore
 
 #+BEGIN_QUOTE
-R^{n} = R(A) R(A)^{\perp{}} = R(A) N(A^T)
-R^{m} = N(A) N(A)^{\perp{}} = N(A) R(A^T)
+R^{n} = R(A) and R(A)^{\perp{}} = R(A) and N(A^T)\\
+R^{m} = N(A) and N(A)^{\perp{}} = N(A) and R(A^T)\\
 #+END_QUOTE
 
-This final set of equations is truely bizarre as the columns of matrix A along with the nullspace of the rows of A cover all of R^{n}
+This final set of equations is truely bizarre as the columns of matrix *A* along with the nullspace of the rows of *A* cover all of *R^{n}*
 
 * URV factorization
 
-If we express ranges and nullspaces with orthonormal bases then we can concatenate them to make an orthogonal basis for all of R^n
+If we choose to express ranges and nullspaces with /orthonormal/ bases then we can concatenate them to make an orthonormal basis for all of R^n
 
 #+BEGIN_QUOTE
 B_{R^{N}} = U = [ B_{R(A)} | B_{N(A^T)} ] \\
 B_{R^{N}} = V = [ B_{R(A^T)} | B_{N(A)} ]
 #+END_QUOTE
 
-Now notice that if we write *U^{T}AV* the nullspace bases zero out terms and we end up with an upper left block matrix we call *R*
+Now notice that if we write *U^{T}AV* in block matrix form then the nullspace-bases blocks will zero out *A* sub-blocks. Only the upper left block remains.
 
 \begin{equation}
 U^{T}AV
@@ -137,7 +138,7 @@ C & 0 \\
 = R
 \end{equation}
 
-We can then flip the equation to make a factorization (reminder that for orthonormal matrices *A^{-1} = A^T* )
+We can then flip the equation to make a factorization. This is done trivially b/c orthonormal matrices are inverted by transposition - *A^{-1} = A^T*.
 
 
 \begin{equation}
@@ -156,4 +157,4 @@ B_{N(A)}
 \end{bmatrix}
 \end{equation}
 
-The bases are not unique, so the factorization is not unique either.
+The original orthonormal bases we chose for the range and nullspace were not unique, hence the factorization is not unique either.

@@ -40,18 +40,18 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org01ddb47">Complementary Subspaces</a></li>
-<li><a href="#orge3c52a7">Projection matrix</a></li>
-<li><a href="#orgdb85ce9">Orthogonal Complementary Subspaces</a></li>
-<li><a href="#org8472ba4">Orthogonal Decomposition Theorem</a></li>
-<li><a href="#org9cdbf15">URV factorization</a></li>
+<li><a href="#org843acb4">Complementary Subspaces</a></li>
+<li><a href="#org1a50e29">Projection matrix</a></li>
+<li><a href="#org507ce37">Orthogonal Complementary Subspaces</a></li>
+<li><a href="#orgf26b5a2">Orthogonal Decomposition Theorem</a></li>
+<li><a href="#orgd896765">URV factorization</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org01ddb47" class="outline-2">
-<h2 id="org01ddb47">Complementary Subspaces</h2>
-<div class="outline-text-2" id="text-org01ddb47">
+<div id="outline-container-org843acb4" class="outline-2">
+<h2 id="org843acb4">Complementary Subspaces</h2>
+<div class="outline-text-2" id="text-org843acb4">
 <p>
 When you have two subspaces of a space V are complimentary when they don't overlap but in combination they cover the whole space
 </p>
@@ -94,9 +94,9 @@ B<sub>y</sub> = [ B<sub>x</sub> | B<sub>y</sub> ]
 </div>
 
 
-<div id="outline-container-orge3c52a7" class="outline-2">
-<h2 id="orge3c52a7">Projection matrix</h2>
-<div class="outline-text-2" id="text-orge3c52a7">
+<div id="outline-container-org1a50e29" class="outline-2">
+<h2 id="org1a50e29">Projection matrix</h2>
+<div class="outline-text-2" id="text-org1a50e29">
 <p>
 Because each vector <b>v</b> in V has a unique <b>x</b> and <b>y</b> vectors in the X and Y subspaces we need a simple way to get an <b>x</b> and <b>y</b> given a <b>v</b>. This is what a <b>projection matrix</b> does.
 </p>
@@ -139,9 +139,9 @@ In fact you can go further and say any matrix that is idempotent (ie. A<sup>2</s
 </div>
 </div>
 
-<div id="outline-container-orgdb85ce9" class="outline-2">
-<h2 id="orgdb85ce9">Orthogonal Complementary Subspaces</h2>
-<div class="outline-text-2" id="text-orgdb85ce9">
+<div id="outline-container-org507ce37" class="outline-2">
+<h2 id="org507ce37">Orthogonal Complementary Subspaces</h2>
+<div class="outline-text-2" id="text-org507ce37">
 <p>
 The subspaces X Y can be chosen arbitrarily as long as they satify the condition of spanning all of V and having not overlap. Interesting pairs to consider are <b>orthogonal complementary</b> pairs. You choose one basis M and then the other is the space orthogonal to it - M<sup>&perp;</sup>
 </p>
@@ -151,7 +151,7 @@ In other words all vectors in M<sup>&perp;</sup> are orthogonal to all vectors i
 </p>
 
 <p>
-For instance.. If V = <b>R<sup>2</sup></b> M can be a line and M<sup>&perp;</sup> can be another line.<br>
+For instance.. If V = <b>R<sup>2</sup></b> M can be a line and M<sup>&perp;</sup> can be another line. (Note that <b>M</b> doesn't strictly need to be a subspace..)<br>
 Or if V = <b>R<sup>3</sup></b> M<sup>&perp;</sup> can be a line and M can be a plane - or vice versa.
 </p>
 
@@ -168,23 +168,24 @@ dim( M<sup>&perp;</sup> ) = n - dim( M )<br>
 </div>
 </div>
 
-<div id="outline-container-org8472ba4" class="outline-2">
-<h2 id="org8472ba4">Orthogonal Decomposition Theorem</h2>
-<div class="outline-text-2" id="text-org8472ba4">
+<div id="outline-container-orgf26b5a2" class="outline-2">
+<h2 id="orgf26b5a2">Orthogonal Decomposition Theorem</h2>
+<div class="outline-text-2" id="text-orgf26b5a2">
 <p>
 A non-obvious decomposition emerges
 </p>
 
 <p>
-For all y &isin; R<sup>n</sup>
+We construct an <b>x</b> which is orthogonal to the range of <b>A</b>. So for all values of <b>Ay</b> (where <b>y</b> &isin; <b>R<sup>n</sup></b>) the <b>x</b> is orthogonal (here the book uses bracket notation which I translate to matrix products
 </p>
 <blockquote>
 <p>
 x &isin; R(A)<sup>&perp;</sup> <br>
-&lt;Ay|x&gt; = 0 -&gt;  [Ay]<sup>T</sup>x = 0 <br>
-y<sup>T</sup>A<sup>T</sup>x = 0 <br>
+<i>we define the x such that &lt;Ay|x&gt; = 0 -&gt;  [Ay]<sup>T</sup>x = 0</i> <br>
+y<sup>T</sup>A<sup>T</sup>x = 0 <i>(distribution of the transposition operator)</i><br>
 &lt;y|A<sup>T</sup>x&gt; = 0 <br>
-A<sup>T</sup>x = 0   <i>.. b/c y can be any value</i> <br>
+<i>This means that ..</i>
+A<sup>T</sup>x = 0   <i>.. b/c the only way this product is zero is if <b>Ax</b> is zero</i> <br>
 so.. <br>
 x &isin; N(A<sup>T</sup>)
 </p>
@@ -196,33 +197,33 @@ This is a very strange an unintuitive conclusion
 
 <blockquote>
 <p>
-R(A)<sup>&perp;</sup> = N(A<sup>T</sup>)
+R(A)<sup>&perp;</sup> = N(A<sup>T</sup>)<br>
 N(A)<sup>&perp;</sup> = R(A<sup>T</sup>)
 </p>
 </blockquote>
 
 <p>
-In combination with the previous orthogonal complementary subspaces this means that R(A) and R(A)<sup>&perp;</sup> span all of R<sup>n</sup> and therefore
+In combination with the previous orthogonal complementary subspaces this means that <b>R(A)</b> and <b>R(A)<sup>&perp;</sup></b> span all of <b>R<sup>n</sup></b> and therefore
 </p>
 
 <blockquote>
 <p>
-R<sup>n</sup> = R(A) R(A)<sup>&perp;</sup> = R(A) N(A<sup>T</sup>)
-R<sup>m</sup> = N(A) N(A)<sup>&perp;</sup> = N(A) R(A<sup>T</sup>)
+R<sup>n</sup> = R(A) and R(A)<sup>&perp;</sup> = R(A) and N(A<sup>T</sup>)<br>
+R<sup>m</sup> = N(A) and N(A)<sup>&perp;</sup> = N(A) and R(A<sup>T</sup>)<br>
 </p>
 </blockquote>
 
 <p>
-This final set of equations is truely bizarre as the columns of matrix A along with the nullspace of the rows of A cover all of R<sup>n</sup>
+This final set of equations is truely bizarre as the columns of matrix <b>A</b> along with the nullspace of the rows of <b>A</b> cover all of <b>R<sup>n</sup></b>
 </p>
 </div>
 </div>
 
-<div id="outline-container-org9cdbf15" class="outline-2">
-<h2 id="org9cdbf15">URV factorization</h2>
-<div class="outline-text-2" id="text-org9cdbf15">
+<div id="outline-container-orgd896765" class="outline-2">
+<h2 id="orgd896765">URV factorization</h2>
+<div class="outline-text-2" id="text-orgd896765">
 <p>
-If we express ranges and nullspaces with orthonormal bases then we can concatenate them to make an orthogonal basis for all of R<sup>n</sup>
+If we choose to express ranges and nullspaces with <i>orthonormal</i> bases then we can concatenate them to make an orthonormal basis for all of R<sup>n</sup>
 </p>
 
 <blockquote>
@@ -233,7 +234,7 @@ B<sub>R<sup>N</sup></sub> = V = [ B<sub>R(A<sup>T</sup>)</sub> | B<sub>N(A)</sub
 </blockquote>
 
 <p>
-Now notice that if we write <b>U<sup>T</sup>AV</b> the nullspace bases zero out terms and we end up with an upper left block matrix we call <b>R</b>
+Now notice that if we write <b>U<sup>T</sup>AV</b> in block matrix form then the nullspace-bases blocks will zero out <b>A</b> sub-blocks. Only the upper left block remains.
 </p>
 
 \begin{equation}
@@ -259,7 +260,7 @@ C & 0 \\
 \end{equation}
 
 <p>
-We can then flip the equation to make a factorization (reminder that for orthonormal matrices <b>A<sup>-1</sup> = A<sup>T</sup></b> )
+We can then flip the equation to make a factorization. This is done trivially b/c orthonormal matrices are inverted by transposition - <b>A<sup>-1</sup> = A<sup>T</sup></b>.
 </p>
 
 
@@ -280,7 +281,7 @@ B_{N(A)}
 \end{equation}
 
 <p>
-The bases are not unique, so the factorization is not unique either.
+The original orthonormal bases we chose for the range and nullspace were not unique, hence the factorization is not unique either.
 </p>
 </div>
 </div>
